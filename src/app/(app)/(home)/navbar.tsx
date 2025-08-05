@@ -40,6 +40,7 @@ const navbarItems = [
   { href: "/about", children: "About" },
   { href: "/service", children: "Services" },
   { href: "/portfolio", children: "Portfolio" },
+  { href: "/equipment", children: "Equipment" },
   { href: "/contact", children: "Contact" },
   { href: "/bookmeeting", children: "Book meeting" },
   { href: "/design", children: "Design" },
