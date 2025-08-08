@@ -1,4 +1,4 @@
-const equipment = () => {
-  return <div>This is an equipment page</div>;
+const equipment = async () => {
+  return <div>Equipment page</div>;
 };
 export default equipment;
