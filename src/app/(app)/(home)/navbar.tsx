@@ -79,9 +79,20 @@ export const Navbar = () => {
         <Button
           asChild
           variant="secondary"
+          className="boder-l border-t-0 border-b-0 border-r-0 px-12 h-full rounded-none bg-white text-black hover:bg-blue-500 hover:text-white transition-colors text-lg"
+        >
+          <Link prefetch href="/sign-in">
+            Log in
+          </Link>
+        </Button>
+        <Button
+          asChild
+          variant="secondary"
           className="boder-l border-t-0 border-b-0 border-r-0 px-12 h-full rounded-none bg-black text-white hover:bg-blue-500 hover:text-black transition-colors text-lg"
         >
-          <Link href="/sign-in">Log in</Link>
+          <Link prefetch href="/sign-up">
+            Sign up
+          </Link>
         </Button>
       </div>
 
