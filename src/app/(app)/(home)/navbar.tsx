@@ -2,13 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useTRPC } from "@/trpc/client";
 import { useQuery } from "@tanstack/react-query";
-import { MenuIcon } from "lucide-react";
 import { Poppins } from "next/font/google";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { NavbarSidebar } from "./navbar-sidebar";
 
 const poppins = Poppins({
@@ -41,88 +40,182 @@ const navbarItems = [
   { href: "/", children: "Home" },
   { href: "/about", children: "About" },
   { href: "/service", children: "Services" },
-  { href: "/portfolio", children: "Portfolio" },
   { href: "/equipment", children: "Equipment" },
   { href: "/contact", children: "Contact" },
   { href: "/bookmeeting", children: "Book meeting" },
   { href: "/design", children: "Design" },
 ];
 
-export const Navbar = () => {
+export function Navbar() {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const pathname = usePathname();
+  const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  const trpc = useTRPC();
-  const session = useQuery(trpc.auth.session.queryOptions());
+  // Check authentication status with better error handling
+  const {
+    data: authData,
+    refetch,
+    isError,
+  } = useQuery({
+    queryKey: ["auth", "me"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/auth/me");
+        if (!response.ok) {
+          if (response.status === 401) {
+            // User is not authenticated - this is normal, not an error
+            console.log("👋 You're logged out - this is normal!");
+            return { success: false, authenticated: false, user: null };
+          }
+          throw new Error("Authentication check failed");
+        }
+        const data = await response.json();
+        if (data.success && data.authenticated) {
+          console.log(`🎉 Welcome back, ${data.user?.username || "User"}!`);
+        }
+        return data;
+      } catch (error) {
+        // Only log actual errors, not 401 responses
+        if (error instanceof Error && !error.message.includes("401")) {
+          console.error("🚨 Auth error:", error);
+        }
+        throw error;
+      }
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
+    // Refresh authentication status more frequently
+    refetchInterval: 5000, // Check every 5 seconds
+    refetchIntervalInBackground: false,
+  });
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        toast.success("Logged out successfully");
+        console.log("👋 See you later! You've been logged out.");
+        // Clear the query cache for auth and force a refresh
+        refetch();
+        // Force a page refresh to ensure clean state
+        router.refresh();
+        router.push("/");
+      } else {
+        throw new Error("Logout failed");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Logout failed");
+    }
+  };
+
+  // Determine authentication status - treat 401 as not authenticated (not an error)
+  const isAuthenticated =
+    authData?.success && authData?.authenticated && !isError;
 
   return (
-    <nav className="h-20 flex border-b justify-between font-medium bg-white">
-      <Link href="/" className="pl-6 flex items-center">
-        <span className={cn("text-5xl font-semibold", poppins.className)}>
-          LOGO
-        </span>
-      </Link>
+    <nav
+      className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-300 ${
+        isScrolled
+          ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200"
+          : "bg-white border-b border-gray-200"
+      }`}
+    >
+      <div className="h-full flex items-center justify-between px-6">
+        <Link href="/" className="flex items-center">
+          <span className={cn("text-5xl font-semibold", poppins.className)}>
+            LOGO
+          </span>
+        </Link>
 
-      <NavbarSidebar
-        items={navbarItems}
-        open={isSidebarOpen}
-        onOpenChange={setIsSidebarOpen}
-      />
+        <NavbarSidebar
+          items={navbarItems}
+          open={isSidebarOpen}
+          onOpenChange={setIsSidebarOpen}
+        />
 
-      <div className="items-center gap-4 hidden lg:flex">
-        {navbarItems.map((item) => (
-          <NavbarItem
-            key={item.href}
-            href={item.href}
-            isActive={pathname === item.href}
-          >
-            {item.children}
-          </NavbarItem>
-        ))}
-      </div>
-      {session.data?.user ? (
-        <div className="hidden lg:flex">
-          <Button
-            variant="secondary"
-            className="boder-l border-t-0 border-b-0 border-r-0 px-12 h-full rounded-none bg-black text-white hover:bg-blue-500 hover:text-white transition-colors text-lg"
-          >
-            <Link prefetch href="/sign-in">
+        <div className="items-center gap-4 hidden lg:flex">
+          {navbarItems.map((item) => (
+            <NavbarItem
+              key={item.href}
+              href={item.href}
+              isActive={pathname === item.href}
+            >
+              {item.children}
+            </NavbarItem>
+          ))}
+        </div>
+
+        {isAuthenticated ? (
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-700">
+              Welcome, {authData?.user?.username || "User"}
+            </span>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="bg-black text-white hover:bg-gray-800"
+            >
               Log out
-            </Link>
-          </Button>
-        </div>
-      ) : (
-        <div className="hidden lg:flex">
-          <Button
-            asChild
-            variant="secondary"
-            className="boder-l border-t-0 border-b-0 border-r-0 px-12 h-full rounded-none bg-white text-black hover:bg-blue-500 hover:text-white transition-colors text-lg"
-          >
-            <Link prefetch href="/sign-in">
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => router.push("/sign-in")}
+              variant="outline"
+              size="sm"
+            >
               Log in
-            </Link>
-          </Button>
-          <Button
-            asChild
-            variant="secondary"
-            className="boder-l border-t-0 border-b-0 border-r-0 px-12 h-full rounded-none bg-black text-white hover:bg-blue-500 hover:text-black transition-colors text-lg"
-          >
-            <Link prefetch href="/sign-up">
+            </Button>
+            <Button
+              onClick={() => router.push("/sign-up")}
+              size="sm"
+              className="bg-black text-white hover:bg-gray-800"
+            >
               Sign up
-            </Link>
+            </Button>
+          </div>
+        )}
+
+        {/* Mobile menu button */}
+        <div className="flex lg:hidden items-center justify-center">
+          <Button
+            variant="ghost"
+            className="size-12 border-transparent bg-white"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <svg
+              className="size-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
           </Button>
         </div>
-      )}
-
-      <div className="flex lg:hidden items-center justify-center px-5">
-        <Button
-          variant="ghost"
-          className="size-12 border-transparent bg-white"
-          onClick={() => setIsSidebarOpen(true)}
-        >
-          <MenuIcon className="size-9" />
-        </Button>
       </div>
     </nav>
   );
-};
+}

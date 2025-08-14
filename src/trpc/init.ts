@@ -1,30 +1,68 @@
-import config from "@payload-config";
+import { getSafePayload } from "@/lib/db-wrapper";
 import { initTRPC } from "@trpc/server";
-import { getPayload } from "payload";
 import { cache } from "react";
 import superjson from "superjson";
 
-export const createTRPCContext = cache(async () => {
+// Define the context type
+interface TRPCContext {
+  userId: string;
+  db: unknown | null;
+  hasError: boolean;
+  error?: string;
+}
+
+export const createTRPCContext = cache(async (): Promise<TRPCContext> => {
   /**
    * @see https://trpc.io/docs/server/context
    */
-  return { userId: "user_123" };
+  try {
+    const payload = await getSafePayload();
+
+    if (!payload) {
+      return {
+        userId: "user_123",
+        db: null,
+        hasError: true,
+        error: "Database connection failed",
+      };
+    }
+
+    return {
+      userId: "user_123",
+      db: payload, // Pass the PayloadCMS instance directly
+      hasError: false,
+    };
+  } catch (error) {
+    console.warn("Database connection error in tRPC context:", error);
+    return {
+      userId: "user_123",
+      db: null,
+      hasError: true,
+      error: "Database connection failed",
+    };
+  }
 });
+
 // Avoid exporting the entire t-object
 // since it's not very descriptive.
 // For instance, the use of a t variable
 // is common in i18n libraries.
-const t = initTRPC.create({
+const t = initTRPC.context<TRPCContext>().create({
   /**
    * @see https://trpc.io/docs/server/data-transformers
    */
   transformer: superjson,
 });
+
 // Base router and procedure helpers
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
-export const baseProcedure = t.procedure.use(async ({ next }) => {
-  const payload = await getPayload({ config });
 
-  return next({ ctx: { db: payload } });
+export const baseProcedure = t.procedure.use(async ({ next, ctx }) => {
+  // The database context is now provided by createTRPCContext
+  if (ctx.hasError || !ctx.db) {
+    throw new Error(ctx.error || "Database connection failed");
+  }
+
+  return next();
 });

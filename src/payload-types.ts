@@ -70,19 +70,17 @@ export interface Config {
     users: User;
     media: Media;
     categories: Category;
+    equipment: Equipment;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {
-    categories: {
-      subcategories: 'categories';
-    };
-  };
+  collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
+    equipment: EquipmentSelect<false> | EquipmentSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -172,12 +170,28 @@ export interface Category {
   name: string;
   slug: string;
   color?: string | null;
-  parent?: (string | null) | Category;
-  subcategories?: {
-    docs?: (string | Category)[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "equipment".
+ */
+export interface Equipment {
+  id: string;
+  name: string;
+  brand?: string | null;
+  quantity: number;
+  category: string | Category;
+  image?: (string | null) | Media;
+  description?: string | null;
+  specifications?: {
+    power?: string | null;
+    dimensions?: string | null;
+    weight?: string | null;
   };
+  status: 'available' | 'in_use' | 'maintenance' | 'out_of_service';
   updatedAt: string;
   createdAt: string;
 }
@@ -199,6 +213,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'categories';
         value: string | Category;
+      } | null)
+    | ({
+        relationTo: 'equipment';
+        value: string | Equipment;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -291,8 +309,29 @@ export interface CategoriesSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   color?: T;
-  parent?: T;
-  subcategories?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "equipment_select".
+ */
+export interface EquipmentSelect<T extends boolean = true> {
+  name?: T;
+  brand?: T;
+  quantity?: T;
+  category?: T;
+  image?: T;
+  description?: T;
+  specifications?:
+    | T
+    | {
+        power?: T;
+        dimensions?: T;
+        weight?: T;
+      };
+  status?: T;
   updatedAt?: T;
   createdAt?: T;
 }
