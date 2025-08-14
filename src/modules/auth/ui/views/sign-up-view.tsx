@@ -12,12 +12,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useTRPC } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Poppins } from "next/font/google";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
@@ -30,20 +29,7 @@ const poppins = Poppins({
 
 export const SignUpView = () => {
   const router = useRouter();
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-
-  const register = useMutation(
-    trpc.auth.register.mutationOptions({
-      onError: (error) => {
-        toast.error(error.message);
-      },
-      onSuccess: async () => {
-        await queryClient.invalidateQueries(trpc.auth.session.queryFilter());
-        router.push("/");
-      },
-    })
-  );
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof registerSchema>>({
     mode: "all",
@@ -55,8 +41,43 @@ export const SignUpView = () => {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof registerSchema>) => {
-    register.mutate(values);
+  const onSubmit = async (values: z.infer<typeof registerSchema>) => {
+    try {
+      setIsLoading(true);
+
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+
+      if (data.success) {
+        toast.success("Account created successfully! You are now logged in.");
+        console.log(
+          "🎉 Welcome to EmotionWork! Your account has been created."
+        );
+        // Redirect to home page and refresh to update navbar state
+        router.push("/");
+        router.refresh();
+      } else {
+        throw new Error(data.error || "Registration failed");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Registration failed"
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const username = form.watch("username");
@@ -140,13 +161,13 @@ export const SignUpView = () => {
               )}
             />
             <Button
-              disabled={register.isPending}
+              disabled={isLoading}
               type="submit"
               size="lg"
               variant="elevated"
               className="bg-black text-white hover:bg-blue-400 hover:text-primary"
             >
-              Create account
+              {isLoading ? "Creating account..." : "Create account"}
             </Button>
           </form>
         </Form>

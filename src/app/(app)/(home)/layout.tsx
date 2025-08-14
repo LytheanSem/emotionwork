@@ -1,17 +1,16 @@
-import Footer from "./footer";
+import { Footer } from "./footer";
 import { Navbar } from "./navbar";
 
-interface Props {
+export default function HomeLayout({
+  children,
+}: {
   children: React.ReactNode;
-}
-
-const Layout = ({ children }: Props) => {
+}) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <main className="flex-1 bg-[#F4F4F0]">{children}</main>
+      <main className="pt-24 pb-24">{children}</main>
       <Footer />
     </div>
   );
-};
-export default Layout;
+}
