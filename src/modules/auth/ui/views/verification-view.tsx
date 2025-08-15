@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Poppins } from "next/font/google";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const poppins = Poppins({
@@ -26,6 +26,19 @@ export const VerificationView = ({
 }: VerificationViewProps) => {
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Clean up session storage when component unmounts or user navigates away
+  useEffect(() => {
+    return () => {
+      // Only clean up if verification was successful (check if user is logged in)
+      // This prevents cleanup during normal navigation
+    };
+  }, []);
+
+  // Clean up session storage if user goes back to sign-up
+  const handleBackToSignUp = () => {
+    sessionStorage.removeItem("pendingRegistration");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +75,9 @@ export const VerificationView = ({
         console.log(
           "🎉 Welcome to EmotionWork! Your account has been verified."
         );
+
+        // Clean up session storage
+        sessionStorage.removeItem("pendingRegistration");
 
         // Trigger navbar auth refresh
         localStorage.setItem("auth-refresh", Date.now().toString());
@@ -136,7 +152,7 @@ export const VerificationView = ({
               size="sm"
               className="text-base border-none underline"
             >
-              <Link prefetch href="/sign-in">
+              <Link prefetch href="/sign-in" onClick={handleBackToSignUp}>
                 Sign in
               </Link>
             </Button>

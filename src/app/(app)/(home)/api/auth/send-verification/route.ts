@@ -1,5 +1,6 @@
 import { getSafePayload } from "@/lib/db-wrapper";
 import { generateVerificationCode, sendVerificationEmail } from "@/lib/email";
+import { verificationRateLimiter } from "@/lib/rate-limiter";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -35,6 +36,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "User already exists" },
         { status: 400 }
+      );
+    }
+
+    // Check rate limiting
+    if (!verificationRateLimiter.isAllowed(email)) {
+      const remainingTime = verificationRateLimiter.getTimeUntilReset(email);
+      const minutes = Math.ceil(remainingTime / (60 * 1000));
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Too many verification attempts. Please wait ${minutes} minutes before trying again.`,
+        },
+        { status: 429 }
       );
     }
 

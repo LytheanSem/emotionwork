@@ -1,3 +1,4 @@
+import { randomInt } from "crypto";
 import nodemailer from "nodemailer";
 
 // Create a transporter using Gmail (you can change this to any email service)
@@ -50,5 +51,6 @@ export const sendVerificationEmail = async (
 };
 
 export const generateVerificationCode = (): string => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // Generate cryptographically secure random number 0..999999 then left-pad to 6 digits
+  return String(randomInt(0, 1_000_000)).padStart(6, "0");
 };

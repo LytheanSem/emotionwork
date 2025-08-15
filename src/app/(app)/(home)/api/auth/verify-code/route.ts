@@ -1,18 +1,13 @@
 import { getSafePayload } from "@/lib/db-wrapper";
+import { verificationCodeSchema } from "@/modules/auth/schemas";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-const verifyCodeSchema = z.object({
-  email: z.string().email(),
-  username: z.string().min(3),
-  password: z.string().min(3),
-  code: z.string().length(6),
-});
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, username, password, code } = verifyCodeSchema.parse(body);
+    const { email, username, password, code } =
+      verificationCodeSchema.parse(body);
 
     const payload = await getSafePayload();
 
@@ -45,6 +40,14 @@ export async function POST(request: NextRequest) {
     }
 
     const codeDoc = verificationCode.docs[0];
+
+    // Check if code is already used before updating
+    if (codeDoc.used) {
+      return NextResponse.json(
+        { success: false, error: "Verification code already used" },
+        { status: 400 }
+      );
+    }
 
     // Mark the code as used
     await payload.update({

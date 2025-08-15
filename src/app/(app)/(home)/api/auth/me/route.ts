@@ -20,7 +20,14 @@ export async function GET() {
     const headersList = await headers();
     const cookieHeader = headersList.get("cookie") || "";
 
-    console.log("🍪 Received cookies:", cookieHeader);
+    if (process.env.NODE_ENV === "production") {
+      const cookieNames = cookieHeader
+        .split(";")
+        .map((s) => s.split("=")[0].trim())
+        .filter(Boolean);
+
+      console.log("🍪 Received cookies:", cookieNames);
+    }
 
     // Create a proper Headers object for PayloadCMS
     const headersObj = new Headers();

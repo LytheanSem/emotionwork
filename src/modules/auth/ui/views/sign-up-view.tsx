@@ -68,14 +68,18 @@ export const SignUpView = () => {
       if (verificationData.success) {
         toast.success("Verification code sent! Check your email.");
 
-        // Redirect to verification page with user data
-        const params = new URLSearchParams({
-          email: values.email,
-          username: values.username,
-          password: values.password,
-        });
+        // Store sensitive data temporarily in session storage
+        sessionStorage.setItem(
+          "pendingRegistration",
+          JSON.stringify({
+            email: values.email,
+            username: values.username,
+            password: values.password,
+          })
+        );
 
-        router.push(`/verify-email?${params.toString()}`);
+        // Only pass email in URL for user experience
+        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
       } else {
         throw new Error(
           verificationData.error || "Failed to send verification code"
@@ -169,6 +173,10 @@ export const SignUpView = () => {
                   <FormControl>
                     <Input {...field} type="password" />
                   </FormControl>
+                  <FormDescription>
+                    Password must be at least 8 characters and contain an
+                    uppercase letter, lowercase letter, and number
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

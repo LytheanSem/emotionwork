@@ -1,26 +1,67 @@
+"use client";
+
 import { VerificationView } from "@/modules/auth/ui/views/verification-view";
-import { redirect } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 
-interface VerifyEmailPageProps {
-  searchParams: Promise<{
-    email?: string;
-    username?: string;
-    password?: string;
-  }>;
-}
+function VerifyEmailContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [registrationData, setRegistrationData] = useState<{
+    email: string;
+    username: string;
+    password: string;
+  } | null>(null);
 
-export default async function VerifyEmailPage({
-  searchParams,
-}: VerifyEmailPageProps) {
-  const params = await searchParams;
-  const { email, username, password } = params;
+  useEffect(() => {
+    const email = searchParams.get("email");
 
-  // Redirect if missing required parameters
-  if (!email || !username || !password) {
-    redirect("/sign-up");
+    if (!email) {
+      router.push("/sign-up");
+      return;
+    }
+
+    // Get registration data from session storage
+    const storedData = sessionStorage.getItem("pendingRegistration");
+
+    if (!storedData) {
+      router.push("/sign-up");
+      return;
+    }
+
+    try {
+      const data = JSON.parse(storedData);
+
+      // Verify the email matches what's in storage
+      if (data.email !== email) {
+        router.push("/sign-up");
+        return;
+      }
+
+      setRegistrationData(data);
+    } catch (error) {
+      console.error("Error parsing registration data:", error);
+      router.push("/sign-up");
+    }
+  }, [searchParams, router]);
+
+  if (!registrationData) {
+    return <div>Loading...</div>;
   }
 
   return (
-    <VerificationView email={email} username={username} password={password} />
+    <VerificationView
+      email={registrationData.email}
+      username={registrationData.username}
+      password={registrationData.password}
+    />
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }
