@@ -1,19 +1,13 @@
 "use client";
 
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Poppins } from "next/font/google";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { NavbarSidebar } from "./navbar-sidebar";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["700"],
-});
 
 interface NavbarItemProps {
   href: string;
@@ -26,10 +20,11 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
     <Button
       asChild
       variant="outline"
-      className={cn(
-        "bg-transparent hover:bg-transparent rounded-full hover:border-primary border-transparent px-3.5 text-lg",
-        isActive && "bg-blue-400 text-white hover:bg-blue-500 hover:text-white"
-      )}
+      className={`bg-transparent hover:bg-transparent rounded-full hover:border-primary border-transparent px-3.5 text-lg ${
+        isActive
+          ? "bg-blue-400 text-white hover:bg-blue-500 hover:text-white"
+          : ""
+      }`}
     >
       <Link href={href}>{children}</Link>
     </Button>
@@ -137,9 +132,7 @@ export function Navbar() {
     >
       <div className="h-full flex items-center justify-between px-6">
         <Link href="/" className="flex items-center">
-          <span className={cn("text-5xl font-semibold", poppins.className)}>
-            LOGO
-          </span>
+          <Logo width={80} height={48} />
         </Link>
 
         <NavbarSidebar

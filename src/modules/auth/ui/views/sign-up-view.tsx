@@ -126,9 +126,9 @@ export const SignUpView = () => {
                   <FormDescription
                     className={cn("hidden", showPreview && "block")}
                   >
-                    Your domain name will be&nbsp;
+                    Your username will be&nbsp;
                     {/* TODO: Use proper method to generate preview url*/}
-                    <strong>{username}</strong>.emotionwork.com
+                    <strong>{username}</strong>
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
