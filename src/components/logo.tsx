@@ -14,7 +14,7 @@ export function Logo({ className = "", width = 200, height = 120 }: LogoProps) {
         alt="Visual Emotion Work"
         width={width}
         height={height}
-        className="h-auto object-contain"
+        className="h-auto w-auto object-contain"
         priority
       />
     </div>

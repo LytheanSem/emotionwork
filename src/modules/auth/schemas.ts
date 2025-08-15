@@ -22,3 +22,10 @@ export const registerSchema = z.object({
     )
     .transform((val) => val.toLowerCase()),
 });
+
+export const verificationCodeSchema = z.object({
+  email: z.string().email(),
+  username: z.string().min(3),
+  password: z.string().min(3),
+  code: z.string().length(6, "Verification code must be exactly 6 digits"),
+});

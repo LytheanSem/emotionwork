@@ -45,35 +45,48 @@ export const SignUpView = () => {
     try {
       setIsLoading(true);
 
-      const response = await fetch("/api/auth/register", {
+      // First, send verification code
+      const verificationResponse = await fetch("/api/auth/send-verification", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          email: values.email,
+          username: values.username,
+        }),
       });
 
-      const data = await response.json();
+      const verificationData = await verificationResponse.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Registration failed");
+      if (!verificationResponse.ok) {
+        throw new Error(
+          verificationData.error || "Failed to send verification code"
+        );
       }
 
-      if (data.success) {
-        toast.success("Account created successfully! You are now logged in.");
-        console.log(
-          "🎉 Welcome to EmotionWork! Your account has been created."
-        );
-        // Redirect to home page and refresh to update navbar state
-        router.push("/");
-        router.refresh();
+      if (verificationData.success) {
+        toast.success("Verification code sent! Check your email.");
+
+        // Redirect to verification page with user data
+        const params = new URLSearchParams({
+          email: values.email,
+          username: values.username,
+          password: values.password,
+        });
+
+        router.push(`/verify-email?${params.toString()}`);
       } else {
-        throw new Error(data.error || "Registration failed");
+        throw new Error(
+          verificationData.error || "Failed to send verification code"
+        );
       }
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("Sign-up error:", error);
       toast.error(
-        error instanceof Error ? error.message : "Registration failed"
+        error instanceof Error
+          ? error.message
+          : "Failed to send verification code"
       );
     } finally {
       setIsLoading(false);
@@ -167,7 +180,9 @@ export const SignUpView = () => {
               variant="elevated"
               className="bg-black text-white hover:bg-blue-400 hover:text-primary"
             >
-              {isLoading ? "Creating account..." : "Create account"}
+              {isLoading
+                ? "Sending verification code..."
+                : "Send verification code"}
             </Button>
           </form>
         </Form>

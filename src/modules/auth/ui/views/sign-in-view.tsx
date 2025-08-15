@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Poppins } from "next/font/google";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -27,7 +26,6 @@ const poppins = Poppins({
 });
 
 export const SignInView = () => {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -60,9 +58,14 @@ export const SignInView = () => {
       if (data.success) {
         toast.success("Login successful!");
         console.log("🎉 Welcome back! You're now logged in.");
-        // Redirect to home page and refresh to update navbar state
-        router.push("/");
-        router.refresh();
+
+        // Trigger navbar auth refresh
+        localStorage.setItem("auth-refresh", Date.now().toString());
+
+        // Wait a moment for the cookie to be set, then force a complete page reload
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1000);
       } else {
         throw new Error(data.error || "Login failed");
       }

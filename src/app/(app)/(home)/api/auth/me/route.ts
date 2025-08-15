@@ -20,12 +20,20 @@ export async function GET() {
     const headersList = await headers();
     const cookieHeader = headersList.get("cookie") || "";
 
+    console.log("🍪 Received cookies:", cookieHeader);
+
     // Create a proper Headers object for PayloadCMS
     const headersObj = new Headers();
     headersObj.set("cookie", cookieHeader);
 
     // Check authentication status
     const { user } = await payload.auth({ headers: headersObj });
+
+    console.log("👤 Auth result:", {
+      hasUser: !!user,
+      userId: user?.id,
+      username: user?.username,
+    });
 
     if (user) {
       return NextResponse.json({
