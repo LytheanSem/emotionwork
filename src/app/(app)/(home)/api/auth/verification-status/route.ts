@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const remainingAttempts =
       verificationRateLimiter.getRemainingAttempts(email);
     const timeUntilReset = verificationRateLimiter.getTimeUntilReset(email);
-    const isAllowed = verificationRateLimiter.isAllowed(email);
+    const isAllowed = remainingAttempts > 0;
 
     return NextResponse.json({
       success: true,
