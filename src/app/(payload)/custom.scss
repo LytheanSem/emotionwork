@@ -1,0 +1,260 @@
+// Simple Payload Admin Panel Improvements
+
+// CSS Custom Properties for Light Mode
+:root {
+  --admin-bg-primary: #ffffff;
+  --admin-bg-secondary: #f8fafc;
+  --admin-bg-sidebar: #1e293b;
+  --admin-bg-sidebar-hover: #334155;
+  --admin-bg-sidebar-active: #3b82f6;
+
+  --admin-text-primary: #0f172a;
+  --admin-text-secondary: #475569;
+  --admin-text-sidebar: #e2e8f0;
+  --admin-text-sidebar-active: #ffffff;
+
+  --admin-border-primary: #e2e8f0;
+  --admin-accent-primary: #3b82f6;
+  --admin-accent-success: #10b981;
+  --admin-accent-warning: #f59e0b;
+  --admin-accent-error: #ef4444;
+
+  --admin-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+// Dark mode colors
+[data-theme="dark"] {
+  --admin-bg-primary: #0f172a;
+  --admin-bg-secondary: #1e293b;
+  --admin-bg-sidebar: #020617;
+  --admin-bg-sidebar-hover: #1e293b;
+  --admin-bg-sidebar-active: #3b82f6;
+
+  --admin-text-primary: #f8fafc;
+  --admin-text-secondary: #cbd5e1;
+  --admin-text-sidebar: #cbd5e1;
+  --admin-text-sidebar-active: #ffffff;
+
+  --admin-border-primary: #334155;
+  --admin-accent-primary: #60a5fa;
+  --admin-accent-success: #34d399;
+  --admin-accent-warning: #fbbf24;
+  --admin-accent-error: #f87171;
+
+  --admin-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+}
+
+// Simple global improvements
+body {
+  background: var(--admin-bg-primary);
+  color: var(--admin-text-primary);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+// Custom logo styling
+.custom-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+
+  img {
+    max-height: 40px;
+    width: auto;
+    object-fit: contain;
+  }
+}
+
+// Simple sidebar improvements
+aside,
+nav[role="navigation"],
+.sidebar {
+  background: var(--admin-bg-sidebar) !important;
+  border-right: 1px solid var(--admin-border-primary) !important;
+
+  a,
+  button,
+  [role="menuitem"] {
+    color: var(--admin-text-sidebar) !important;
+    transition: all 0.2s ease !important;
+
+    &:hover {
+      background: var(--admin-bg-sidebar-hover) !important;
+      color: white !important;
+    }
+
+    &[aria-current="true"],
+    &.active,
+    &[data-active="true"] {
+      background: #f59e0b !important; // Bright orange for maximum visibility
+      color: #1f2937 !important; // Dark text for contrast
+      font-weight: 700 !important;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4) !important;
+    }
+  }
+}
+
+// Simple main content improvements
+main,
+.main,
+.content {
+  background: var(--admin-bg-secondary) !important;
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--admin-text-primary) !important;
+  }
+}
+
+// Simple collection card improvements
+.collection-card,
+.card,
+.dashboard-card {
+  background: var(--admin-bg-primary) !important;
+  border: 1px solid var(--admin-border-primary) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--admin-shadow) !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.1),
+      0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+    transform: translateY(-2px) !important;
+  }
+
+  h3,
+  h4,
+  h5 {
+    color: var(--admin-text-primary) !important;
+  }
+}
+
+// Simple button improvements
+button,
+.btn,
+.button {
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+
+  &:hover {
+    transform: translateY(-1px) !important;
+  }
+
+  // Primary buttons
+  &[type="submit"],
+  &.primary,
+  &.save {
+    background: var(--admin-accent-primary) !important;
+    color: white !important;
+  }
+
+  // Success buttons
+  &.success,
+  &.create,
+  &.add {
+    background: var(--admin-accent-success) !important;
+    color: white !important;
+  }
+
+  // Danger buttons
+  &.danger,
+  &.delete,
+  &.remove {
+    background: var(--admin-accent-error) !important;
+    color: white !important;
+  }
+}
+
+// Simple form improvements
+form,
+.form {
+  background: var(--admin-bg-primary) !important;
+  border: 1px solid var(--admin-border-primary) !important;
+  border-radius: 8px !important;
+  padding: 1.5rem !important;
+
+  input,
+  textarea,
+  select {
+    border: 1px solid var(--admin-border-primary) !important;
+    border-radius: 6px !important;
+    transition: border-color 0.2s ease !important;
+
+    &:focus {
+      border-color: var(--admin-accent-primary) !important;
+      outline: none !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    }
+  }
+
+  label {
+    color: var(--admin-text-primary) !important;
+    font-weight: 500 !important;
+  }
+}
+
+// Simple table improvements
+table,
+.table {
+  background: var(--admin-bg-primary) !important;
+  border: 1px solid var(--admin-border-primary) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+
+  thead {
+    background: var(--admin-bg-secondary) !important;
+
+    th {
+      color: var(--admin-text-primary) !important;
+      font-weight: 600 !important;
+    }
+  }
+
+  tbody tr {
+    transition: background-color 0.2s ease !important;
+
+    &:hover {
+      background: var(--admin-bg-secondary) !important;
+    }
+
+    td {
+      color: var(--admin-text-primary) !important;
+    }
+  }
+}
+
+// Theme toggle button - positioned in top-right corner for visibility
+.payload-admin-theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  background: var(--admin-accent-primary);
+  border: none;
+  color: white;
+  cursor: pointer;
+  box-shadow: var(--admin-shadow);
+  transition: all 0.2s ease;
+  z-index: 1000;
+
+  &:hover {
+    transform: scale(1.1);
+    box-shadow:
+      0 4px 6px -1px rgb(0 0 0 / 0.1),
+      0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}

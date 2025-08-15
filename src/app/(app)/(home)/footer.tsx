@@ -1,3 +1,4 @@
+import { Logo } from "@/components/logo";
 import Link from "next/link";
 
 export function Footer() {
@@ -6,7 +7,7 @@ export function Footer() {
       <div className="container mx-auto px-4 py-6">
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="flex items-center space-x-4">
-            <span className="text-2xl font-semibold text-gray-900">LOGO</span>
+            <Logo width={70} height={42} />
             <p className="text-sm text-gray-600">
               Professional event equipment and services
             </p>
@@ -34,7 +35,7 @@ export function Footer() {
         </div>
         <div className="mt-4 pt-4 border-t border-gray-200 text-center">
           <p className="text-xs text-gray-500">
-            © 2024 EmotionWork. All rights reserved.
+            © 2025 EmotionWork. All rights reserved.
           </p>
         </div>
       </div>

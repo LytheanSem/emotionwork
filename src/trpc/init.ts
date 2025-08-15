@@ -1,14 +1,23 @@
 import { getSafePayload } from "@/lib/db-wrapper";
 import { initTRPC } from "@trpc/server";
+import type { Payload } from "payload";
 import { cache } from "react";
 import superjson from "superjson";
 
 // Define the context type
 interface TRPCContext {
   userId: string;
-  db: unknown | null;
+  db: Payload | null;
   hasError: boolean;
   error?: string;
+}
+
+// Define a context type where db is guaranteed to be available
+interface TRPCContextWithDB {
+  userId: string;
+  db: Payload;
+  hasError: false;
+  error?: never;
 }
 
 export const createTRPCContext = cache(async (): Promise<TRPCContext> => {
@@ -64,5 +73,14 @@ export const baseProcedure = t.procedure.use(async ({ next, ctx }) => {
     throw new Error(ctx.error || "Database connection failed");
   }
 
-  return next();
+  // Create a new context with guaranteed db availability
+  const ctxWithDB: TRPCContextWithDB = {
+    userId: ctx.userId,
+    db: ctx.db,
+    hasError: false,
+  };
+
+  return next({
+    ctx: ctxWithDB,
+  });
 });
