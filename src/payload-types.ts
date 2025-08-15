@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     categories: Category;
     equipment: Equipment;
+    'verification-codes': VerificationCode;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -81,6 +82,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     equipment: EquipmentSelect<false> | EquipmentSelect<true>;
+    'verification-codes': VerificationCodesSelect<false> | VerificationCodesSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -124,6 +126,14 @@ export interface UserAuthOperations {
 export interface User {
   id: string;
   username: string;
+  /**
+   * Whether the user's email has been verified
+   */
+  emailVerified?: boolean | null;
+  /**
+   * When the email was verified
+   */
+  emailVerifiedAt?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -197,6 +207,19 @@ export interface Equipment {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "verification-codes".
+ */
+export interface VerificationCode {
+  id: string;
+  email: string;
+  code: string;
+  expiresAt: string;
+  used?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -217,6 +240,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'equipment';
         value: string | Equipment;
+      } | null)
+    | ({
+        relationTo: 'verification-codes';
+        value: string | VerificationCode;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -266,6 +293,8 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   username?: T;
+  emailVerified?: T;
+  emailVerifiedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -332,6 +361,18 @@ export interface EquipmentSelect<T extends boolean = true> {
         weight?: T;
       };
   status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "verification-codes_select".
+ */
+export interface VerificationCodesSelect<T extends boolean = true> {
+  email?: T;
+  code?: T;
+  expiresAt?: T;
+  used?: T;
   updatedAt?: T;
   createdAt?: T;
 }

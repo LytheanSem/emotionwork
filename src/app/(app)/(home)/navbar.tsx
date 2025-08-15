@@ -60,8 +60,8 @@ export function Navbar() {
   // Check authentication status with better error handling
   const {
     data: authData,
-    refetch,
     isError,
+    refetch,
   } = useQuery({
     queryKey: ["auth", "me"],
     queryFn: async () => {
@@ -70,7 +70,10 @@ export function Navbar() {
         if (!response.ok) {
           if (response.status === 401) {
             // User is not authenticated - this is normal, not an error
-            console.log("👋 You're logged out - this is normal!");
+            // Only log this once to reduce console noise
+            if (!authData) {
+              console.log("👋 You're logged out - this is normal!");
+            }
             return { success: false, authenticated: false, user: null };
           }
           throw new Error("Authentication check failed");
@@ -90,10 +93,23 @@ export function Navbar() {
     },
     retry: false,
     refetchOnWindowFocus: false,
-    // Refresh authentication status more frequently
-    refetchInterval: 5000, // Check every 5 seconds
-    refetchIntervalInBackground: false,
+    // Only check auth when needed, not continuously
+    staleTime: 60000, // Consider data fresh for 1 minute
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
+
+  // Listen for storage events to refresh auth when needed
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      // Refresh auth state when auth-refresh changes (indicates login/logout)
+      if (e.key === "auth-refresh") {
+        refetch();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [refetch]);
 
   const handleLogout = async () => {
     try {
@@ -104,11 +120,11 @@ export function Navbar() {
       if (response.ok) {
         toast.success("Logged out successfully");
         console.log("👋 See you later! You've been logged out.");
-        // Clear the query cache for auth and force a refresh
-        refetch();
-        // Force a page refresh to ensure clean state
-        router.refresh();
-        router.push("/");
+
+        // Force a complete page reload to ensure clean state
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 500);
       } else {
         throw new Error("Logout failed");
       }

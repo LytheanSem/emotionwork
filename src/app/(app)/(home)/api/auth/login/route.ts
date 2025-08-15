@@ -1,11 +1,7 @@
 import { getSafePayload } from "@/lib/db-wrapper";
+import { loginSchema } from "@/modules/auth/schemas";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string(),
-});
 
 export async function POST(request: NextRequest) {
   try {

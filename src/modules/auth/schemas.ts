@@ -1,13 +1,22 @@
 import z from "zod";
 
+// Centralized password validation schema
+export const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    "Password must contain an uppercase letter, a lowercase letter, and a number"
+  );
+
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string(),
+  password: passwordSchema,
 });
 
 export const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(3),
+  password: passwordSchema,
   username: z
     .string()
     .min(3, "Username must be at least 3 characters")
@@ -21,4 +30,11 @@ export const registerSchema = z.object({
       "Username cannot contain consecutive hyphens"
     )
     .transform((val) => val.toLowerCase()),
+});
+
+export const verificationCodeSchema = z.object({
+  email: z.string().email(),
+  username: z.string().min(3),
+  password: passwordSchema,
+  code: z.string().length(6, "Verification code must be exactly 6 digits"),
 });
