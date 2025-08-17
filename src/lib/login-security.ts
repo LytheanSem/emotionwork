@@ -123,6 +123,7 @@ export class LoginSecurityService {
           await payload.delete({
             collection: "login-attempts",
             id: record.id,
+            overrideAccess: true,
           });
           console.log(`✅ Expired lockout record deleted for ${email}`);
 
@@ -147,8 +148,44 @@ export class LoginSecurityService {
                   // Force a small update to trigger PayloadCMS to recalculate auth state
                   updatedAt: new Date(),
                 },
+                overrideAccess: true,
               });
               console.log(`🔓 User unlocked in PayloadCMS for ${email}`);
+
+              // ADDITIONAL: Force a more aggressive state reset
+              try {
+                // Try to update with a unique timestamp to force state recalculation
+                await payload.update({
+                  collection: "users",
+                  id: user.docs[0].id,
+                  data: {
+                    updatedAt: new Date(Date.now() + 1), // Ensure it's different
+                  },
+                  overrideAccess: true,
+                });
+                console.log(`🔓 Additional unlock attempt for ${email}`);
+
+                // CRITICAL: Try to force a complete user state refresh
+                // This might help clear PayloadCMS internal lockout
+                try {
+                  await payload.update({
+                    collection: "users",
+                    id: user.docs[0].id,
+                    data: {
+                      // Force multiple updates to trigger state recalculation
+                      updatedAt: new Date(Date.now() + 2),
+                      // Add a temporary field that might trigger internal state refresh
+                      _forceRefresh: Date.now(),
+                    },
+                    overrideAccess: true,
+                  });
+                  console.log(`🔓 Force refresh attempt for ${email}`);
+                } catch {
+                  console.log(`Note: Force refresh not needed for ${email}`);
+                }
+              } catch {
+                console.log(`Note: Additional unlock not needed for ${email}`);
+              }
             }
           } catch (unlockError) {
             console.error(
@@ -161,6 +198,17 @@ export class LoginSecurityService {
           // This fixes the issue where correct credentials fail after lockout expires
           const { resetConnection } = await import("./db-wrapper");
           resetConnection();
+          // Also clear local cache so a fresh instance is fetched next time
+          this.payload = null;
+
+          // ADDITIONAL: Wait longer for the connection to fully reset
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          // CRITICAL: Force a second connection reset to ensure complete refresh
+          resetConnection();
+          this.payload = null;
+          await new Promise((resolve) => setTimeout(resolve, 200));
+
           console.log(
             `🔄 PayloadCMS connection reset to clear stale auth state for ${email}`
           );
@@ -187,6 +235,7 @@ export class LoginSecurityService {
             await payload.delete({
               collection: "login-attempts",
               id: record.id,
+              overrideAccess: true,
             });
             console.log(`✅ Reset failed attempts for ${email} due to timeout`);
 
@@ -211,6 +260,7 @@ export class LoginSecurityService {
                     // Force a small update to trigger PayloadCMS to recalculate auth state
                     updatedAt: new Date(),
                   },
+                  overrideAccess: true,
                 });
                 console.log(
                   `🔓 User unlocked in PayloadCMS after timeout for ${email}`
@@ -226,6 +276,8 @@ export class LoginSecurityService {
             // Also reset connection to ensure clean state
             const { resetConnection } = await import("./db-wrapper");
             resetConnection();
+            // Also clear local cache so a fresh instance is fetched next time
+            this.payload = null;
             console.log(
               `🔄 PayloadCMS connection reset after timeout for ${email}`
             );
@@ -325,6 +377,7 @@ export class LoginSecurityService {
             lockoutUntil,
             lastAttemptAt: new Date(),
           },
+          overrideAccess: true,
         });
       } else {
         // Create new record for first failed attempt
@@ -337,6 +390,7 @@ export class LoginSecurityService {
             failedAttempts: 1,
             lastAttemptAt: new Date(),
           },
+          overrideAccess: true,
         });
       }
 
@@ -370,6 +424,7 @@ export class LoginSecurityService {
         await payload.delete({
           collection: "login-attempts",
           id: existingRecord.docs[0].id,
+          overrideAccess: true,
         });
       }
     } catch (error) {
@@ -457,6 +512,7 @@ export class LoginSecurityService {
               // Force a small update to trigger PayloadCMS to recalculate auth state
               updatedAt: new Date(),
             },
+            overrideAccess: true,
           });
           console.log(`🔓 User unlocked in PayloadCMS for ${email}`);
         }
@@ -470,6 +526,8 @@ export class LoginSecurityService {
       // Reset connection to ensure clean state
       const { resetConnection } = await import("./db-wrapper");
       resetConnection();
+      // Also clear local cache so a fresh instance is fetched next time
+      this.payload = null;
       console.log(
         `🔄 PayloadCMS connection reset after manual unlock for ${email}`
       );
@@ -507,6 +565,7 @@ export class LoginSecurityService {
             await payload.delete({
               collection: "login-attempts",
               id: record.id,
+              overrideAccess: true,
             });
             lockoutsCleared++;
             console.log(`🧹 Cleared expired lockout for ${record.email}`);
@@ -532,6 +591,7 @@ export class LoginSecurityService {
                     // Force a small update to trigger PayloadCMS to recalculate auth state
                     updatedAt: new Date(),
                   },
+                  overrideAccess: true,
                 });
                 console.log(
                   `🔓 User unlocked in PayloadCMS during cleanup for ${record.email}`
@@ -552,6 +612,7 @@ export class LoginSecurityService {
             await payload.delete({
               collection: "login-attempts",
               id: record.id,
+              overrideAccess: true,
             });
             attemptsReset++;
             console.log(`⏰ Reset timed-out attempts for ${record.email}`);

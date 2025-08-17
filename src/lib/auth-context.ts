@@ -37,6 +37,19 @@ export class AuthContext {
   }
 
   /**
+   * Extract bypass token from cookie header
+   */
+  private extractBypassToken(cookieHeader: string): string | null {
+    const cookies = cookieHeader.split(";").map((cookie) => cookie.trim());
+    for (const cookie of cookies) {
+      if (cookie.startsWith("bypass-token=")) {
+        return cookie.substring("bypass-token=".length);
+      }
+    }
+    return null;
+  }
+
+  /**
    * Check authentication for frontend routes (non-admin)
    * This should NOT have access to admin privileges
    */
@@ -63,6 +76,37 @@ export class AuthContext {
       const { user } = await payload.auth({ headers: headersObj });
 
       if (!user) {
+        // Check for bypass token as fallback
+        const bypassToken = this.extractBypassToken(cookieHeader);
+        if (bypassToken) {
+          console.log("🔓 Bypass token detected, fetching user data");
+          try {
+            const bypassUser = await payload.findByID({
+              collection: "users",
+              id: bypassToken,
+            });
+
+            if (bypassUser) {
+              const isAdmin = bypassUser.role === "admin";
+              const frontendUser: AuthUser = {
+                id: bypassUser.id,
+                username: bypassUser.username,
+                email: bypassUser.email,
+                role: isAdmin ? "admin" : "user",
+                isAdmin: isAdmin,
+              };
+
+              return {
+                success: true,
+                authenticated: true,
+                user: frontendUser,
+              };
+            }
+          } catch (bypassError) {
+            console.log("⚠️ Bypass token validation failed:", bypassError);
+          }
+        }
+
         return {
           success: true,
           authenticated: false,

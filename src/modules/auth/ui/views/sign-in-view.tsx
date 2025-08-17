@@ -124,7 +124,7 @@ export const SignInView = () => {
               </h3>
               <div className="mt-2 text-sm text-red-700">
                 <p>
-                  Too many failed login attempts. Please try again in{" "}
+                  Too many failed login attempts. Please reload and try again in{" "}
                   {lockoutInfo.timeRemaining}.
                 </p>
               </div>
