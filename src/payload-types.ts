@@ -72,6 +72,7 @@ export interface Config {
     categories: Category;
     equipment: Equipment;
     'verification-codes': VerificationCode;
+    'login-attempts': LoginAttempt;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -83,6 +84,7 @@ export interface Config {
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     equipment: EquipmentSelect<false> | EquipmentSelect<true>;
     'verification-codes': VerificationCodesSelect<false> | VerificationCodesSelect<true>;
+    'login-attempts': LoginAttemptsSelect<false> | LoginAttemptsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -126,6 +128,10 @@ export interface UserAuthOperations {
 export interface User {
   id: string;
   username: string;
+  /**
+   * User role - determines access privileges
+   */
+  role: 'user' | 'admin';
   /**
    * Whether the user's email has been verified
    */
@@ -219,6 +225,41 @@ export interface VerificationCode {
   createdAt: string;
 }
 /**
+ * Track failed login attempts and account lockouts - This collection monitors security events and appears when there are failed login attempts to investigate.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "login-attempts".
+ */
+export interface LoginAttempt {
+  id: string;
+  /**
+   * Email address with failed login attempts
+   */
+  email: string;
+  /**
+   * IP address of the most recent failed attempt
+   */
+  ipAddress?: string | null;
+  /**
+   * User agent of the most recent failed attempt
+   */
+  userAgent?: string | null;
+  /**
+   * Number of consecutive failed attempts (1-5)
+   */
+  failedAttempts: number;
+  /**
+   * Account is locked until this time (if applicable)
+   */
+  lockoutUntil?: string | null;
+  /**
+   * When the last failed attempt was made
+   */
+  lastAttemptAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
@@ -244,6 +285,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'verification-codes';
         value: string | VerificationCode;
+      } | null)
+    | ({
+        relationTo: 'login-attempts';
+        value: string | LoginAttempt;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -293,6 +338,7 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   username?: T;
+  role?: T;
   emailVerified?: T;
   emailVerifiedAt?: T;
   updatedAt?: T;
@@ -373,6 +419,20 @@ export interface VerificationCodesSelect<T extends boolean = true> {
   code?: T;
   expiresAt?: T;
   used?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "login-attempts_select".
+ */
+export interface LoginAttemptsSelect<T extends boolean = true> {
+  email?: T;
+  ipAddress?: T;
+  userAgent?: T;
+  failedAttempts?: T;
+  lockoutUntil?: T;
+  lastAttemptAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

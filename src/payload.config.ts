@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 
 import { Categories } from "./collections/Categories";
 import { Equipment } from "./collections/Equipment";
+import { LoginAttempts } from "./collections/LoginAttempts";
 import { Media } from "./collections/Media";
 import { Users } from "./collections/Users";
 import { VerificationCodes } from "./collections/VerificationCodes";
@@ -23,7 +24,14 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Categories, Equipment, VerificationCodes],
+  collections: [
+    Users,
+    Media,
+    Categories,
+    Equipment,
+    VerificationCodes,
+    LoginAttempts,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || "",
   typescript: {

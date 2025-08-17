@@ -20,6 +20,25 @@ export const Users: CollectionConfig = {
       type: "email",
     },
     {
+      name: "role",
+      type: "select",
+      required: true,
+      defaultValue: "user",
+      options: [
+        {
+          label: "User",
+          value: "user",
+        },
+        {
+          label: "Admin",
+          value: "admin",
+        },
+      ],
+      admin: {
+        description: "User role - determines access privileges",
+      },
+    },
+    {
       name: "emailVerified",
       type: "checkbox",
       defaultValue: false,

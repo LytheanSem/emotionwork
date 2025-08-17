@@ -78,6 +78,7 @@ export const authRouter = createTRPCRouter({
           password: input.password,
           emailVerified: true,
           emailVerifiedAt: new Date().toISOString(),
+          role: "user", // Default role for new users
         },
       });
 
@@ -136,6 +137,7 @@ export const authRouter = createTRPCRouter({
           email: input.email,
           username: input.username,
           password: input.password, // This will be hashed
+          role: "user", // Default role for new users
         },
       });
 

@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    // Use the new authentication context for frontend routes
-    const authResult = await authContext.checkFrontendAuth();
+    // Use the admin authentication context for admin routes
+    const authResult = await authContext.checkAdminAuth();
 
-    console.log("👤 Frontend Auth result:", {
+    console.log("👑 Admin Auth result:", {
       hasUser: !!authResult.user,
       userId: authResult.user?.id,
       username: authResult.user?.username,
@@ -29,16 +29,16 @@ export async function GET() {
     } else {
       return NextResponse.json(
         {
-          success: true,
+          success: false,
           authenticated: false,
           user: null,
-          error: authResult.error,
+          error: authResult.error || "Admin access required",
         },
         { status: 401 }
       );
     }
   } catch (error) {
-    console.error("Frontend auth check error:", error);
+    console.error("Admin auth check error:", error);
     return NextResponse.json(
       {
         success: false,

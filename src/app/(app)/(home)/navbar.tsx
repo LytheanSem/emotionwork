@@ -80,7 +80,15 @@ export function Navbar() {
         }
         const data = await response.json();
         if (data.success && data.authenticated) {
-          console.log(`🎉 Welcome back, ${data.user?.username || "User"}!`);
+          const isAdmin = data.user?.isAdmin || false;
+
+          if (isAdmin) {
+            console.log(
+              `🎉 Welcome back, ${data.user?.username || "Admin"}! (Admin user on frontend)`
+            );
+          } else {
+            console.log(`🎉 Welcome back, ${data.user?.username || "User"}!`);
+          }
         }
         return data;
       } catch (error) {
@@ -138,6 +146,20 @@ export function Navbar() {
   const isAuthenticated =
     authData?.success && authData?.authenticated && !isError;
 
+  // Get user display information
+  const getUserDisplay = () => {
+    if (!authData?.user) return { displayName: "User", isAdmin: false };
+
+    const { username, role, isAdmin } = authData.user;
+    return {
+      displayName: username || "User",
+      role: role || "user",
+      isAdmin: isAdmin || false,
+    };
+  };
+
+  const { displayName, isAdmin } = getUserDisplay();
+
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-300 ${
@@ -171,9 +193,16 @@ export function Navbar() {
 
         {isAuthenticated ? (
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-700">
-              Welcome, {authData?.user?.username || "User"}
-            </span>
+            <div className="flex flex-col items-end">
+              <span className="text-sm text-gray-700">
+                Welcome, {displayName}
+              </span>
+              {isAdmin && (
+                <span className="text-xs text-orange-600 font-medium">
+                  Admin User (Frontend Mode)
+                </span>
+              )}
+            </div>
             <Button
               onClick={handleLogout}
               variant="outline"

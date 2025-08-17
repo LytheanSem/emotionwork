@@ -166,7 +166,11 @@ export const VerificationView = ({
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+          <form
+            onSubmit={handleSubmit}
+            method="POST"
+            className="flex flex-col gap-6"
+          >
             <div className="text-center">
               <label
                 htmlFor="code"

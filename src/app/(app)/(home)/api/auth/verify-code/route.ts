@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
         password, // PayloadCMS will hash this automatically
         emailVerified: true,
         emailVerifiedAt: new Date().toISOString(),
+        role: "user", // Default role for new users
       },
     });
 
