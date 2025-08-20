@@ -1,13 +1,23 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Equipment } from "@/payload-types";
+import { Equipment } from "@/lib/db";
 import { useState } from "react";
 import { EquipmentCard } from "./equipment-card";
 import { EquipmentFallback } from "./equipment-fallback";
 
+interface EquipmentWithId extends Equipment {
+  id: string;
+  category?: {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+  };
+}
+
 interface EquipmentGridProps {
-  equipment: Equipment[];
+  equipment: EquipmentWithId[];
   categories: Array<{ id: string; name: string; slug: string }>;
 }
 
@@ -15,12 +25,7 @@ export function EquipmentGrid({ equipment, categories }: EquipmentGridProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const filteredEquipment = selectedCategory
-    ? equipment.filter(
-        (eq) =>
-          eq.category &&
-          typeof eq.category === "object" &&
-          eq.category.id === selectedCategory
-      )
+    ? equipment.filter((eq) => eq.categoryId === selectedCategory)
     : equipment;
 
   const handleCategoryFilter = (categoryId: string | null) => {
@@ -65,8 +70,11 @@ export function EquipmentGrid({ equipment, categories }: EquipmentGridProps) {
       {/* Equipment Grid */}
       {filteredEquipment.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredEquipment.map((item) => (
-            <EquipmentCard key={item.id} equipment={item} />
+          {filteredEquipment.map((item, idx) => (
+            <EquipmentCard
+              key={item.id ?? `${item._id ?? "i"}-${idx}`}
+              equipment={item}
+            />
           ))}
         </div>
       ) : (

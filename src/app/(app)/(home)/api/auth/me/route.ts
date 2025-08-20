@@ -1,29 +1,22 @@
-import { authContext } from "@/lib/auth-context";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    // Use the new authentication context for frontend routes
-    const authResult = await authContext.checkFrontendAuth();
+    const session = await getServerSession(authOptions);
 
-    console.log("👤 Frontend Auth result:", {
-      hasUser: !!authResult.user,
-      userId: authResult.user?.id,
-      username: authResult.user?.username,
-      role: authResult.user?.role,
-      isAdmin: authResult.user?.isAdmin,
-    });
-
-    if (authResult.success && authResult.authenticated && authResult.user) {
+    if (session?.user) {
       return NextResponse.json({
         success: true,
         authenticated: true,
         user: {
-          id: authResult.user.id,
-          username: authResult.user.username,
-          email: authResult.user.email,
-          role: authResult.user.role,
-          isAdmin: authResult.user.isAdmin,
+          id: session.user.id,
+          username:
+            session.user.name || session.user.email?.split("@")[0] || "user",
+          email: session.user.email,
+          role: session.user.role,
+          isAdmin: session.user.isAdmin,
         },
       });
     } else {
@@ -32,13 +25,12 @@ export async function GET() {
           success: true,
           authenticated: false,
           user: null,
-          error: authResult.error,
         },
         { status: 401 }
       );
     }
   } catch (error) {
-    console.error("Frontend auth check error:", error);
+    console.error("Auth check error:", error);
     return NextResponse.json(
       {
         success: false,

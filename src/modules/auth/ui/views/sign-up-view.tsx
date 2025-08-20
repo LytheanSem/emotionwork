@@ -1,26 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { signIn, useSession } from "next-auth/react";
 import { Poppins } from "next/font/google";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 import { toast } from "sonner";
-import z from "zod";
-import { registerSchema } from "../../schemas";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -28,89 +15,30 @@ const poppins = Poppins({
 });
 
 export const SignUpView = () => {
+  const { data: session, status } = useSession();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<z.infer<typeof registerSchema>>({
-    mode: "all",
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      username: "",
-    },
-  });
+  useEffect(() => {
+    if (session) {
+      toast.success("Account created successfully!");
+      router.push("/");
+    }
+  }, [session, router]);
 
-  const onSubmit = async (values: z.infer<typeof registerSchema>) => {
+  const handleGoogleSignUp = async () => {
     try {
-      setIsLoading(true);
-
-      // First, send verification code
-      const verificationResponse = await fetch("/api/auth/send-verification", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: values.email,
-          username: values.username,
-        }),
-      });
-
-      const verificationData = await verificationResponse.json();
-
-      if (!verificationResponse.ok) {
-        throw new Error(
-          verificationData.error || "Failed to send verification code"
-        );
-      }
-
-      if (verificationData.success) {
-        toast.success("Verification code sent! Check your email.");
-
-        // Store sensitive data temporarily in session storage
-        sessionStorage.setItem(
-          "pendingRegistration",
-          JSON.stringify({
-            email: values.email,
-            username: values.username,
-            password: values.password,
-          })
-        );
-
-        // Only pass email in URL for user experience
-        router.push(`/verify-email?email=${encodeURIComponent(values.email)}`);
-      } else {
-        throw new Error(
-          verificationData.error || "Failed to send verification code"
-        );
-      }
+      await signIn("google", { callbackUrl: "/" });
     } catch (error) {
-      console.error("Sign-up error:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to send verification code"
-      );
-    } finally {
-      setIsLoading(false);
+      console.error("Google sign-up error:", error);
+      toast.error("Failed to sign up with Google");
     }
   };
 
-  const username = form.watch("username");
-  const usernameErrors = form.formState.errors.username;
-
-  const showPreview = username && !usernameErrors;
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-5">
-      <div className="bg-[#F4F4F0] h-screen w-full lg:col-span-3 overflow-y-auto">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            method="POST"
-            className="flex flex-col gap-8 p-4 lg:p-16"
-          >
+  if (status === "loading") {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-5">
+        <div className="bg-[#F4F4F0] h-screen w-full lg:col-span-3 overflow-y-auto">
+          <div className="flex flex-col gap-8 p-4 lg:p-16">
             <div className="flex items-center justify-between mb-8">
               <Link href="/">
                 <span
@@ -119,82 +47,92 @@ export const SignUpView = () => {
                   EmotionWork
                 </span>
               </Link>
-              <Button
-                asChild
-                variant="ghost"
-                size="sm"
-                className="text-base border-none underline"
-              >
-                <Link prefetch href="/sign-in">
-                  Sign in
-                </Link>
-              </Button>
             </div>
-            <h1 className="text-4xl font-medium">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
+                <p className="text-lg">Loading...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          className="h-screen w-full lg:col-span-2 hidden lg:block"
+          style={{
+            backgroundImage: "url('/auth-bg.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        ></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-5">
+      <div className="bg-[#F4F4F0] h-screen w-full lg:col-span-3 overflow-y-auto">
+        <div className="flex flex-col gap-8 p-4 lg:p-16">
+          <div className="flex items-center justify-between mb-8">
+            <Link href="/">
+              <span className={cn("text-2xl font-semibold", poppins.className)}>
+                EmotionWork
+              </span>
+            </Link>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-base border-none underline"
+            >
+              <Link prefetch href="/sign-in">
+                Sign in
+              </Link>
+            </Button>
+          </div>
+
+          <div className="text-center">
+            <h1 className="text-4xl font-medium mb-8">
               Create an account to use our design feature
             </h1>
-            <FormField
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Username</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormDescription
-                    className={cn("hidden", showPreview && "block")}
-                  >
-                    Your username will be&nbsp;
-                    {/* TODO: Use proper method to generate preview url*/}
-                    <strong>{username}</strong>
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <p className="text-lg text-gray-600 mb-12">
+              Join thousands of users creating amazing designs
+            </p>
 
-            <FormField
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-base">Password</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="password" />
-                  </FormControl>
-                  <FormDescription>
-                    Password must be at least 8 characters and contain an
-                    uppercase letter, lowercase letter, and number
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <Button
-              disabled={isLoading}
-              type="submit"
+              onClick={handleGoogleSignUp}
               size="lg"
-              variant="elevated"
-              className="bg-black text-white hover:bg-blue-400 hover:text-primary"
+              variant="outline"
+              className="w-full max-w-md bg-white text-gray-700 hover:bg-gray-50 border-2 border-gray-200 hover:border-gray-300"
             >
-              {isLoading
-                ? "Sending verification code..."
-                : "Send verification code"}
+              <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                />
+              </svg>
+              Continue with Google
             </Button>
-          </form>
-        </Form>
+
+            <div className="mt-8 text-sm text-gray-500">
+              <p>
+                By continuing, you agree to our Terms of Service and Privacy
+                Policy
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
       <div
         className="h-screen w-full lg:col-span-2 hidden lg:block"

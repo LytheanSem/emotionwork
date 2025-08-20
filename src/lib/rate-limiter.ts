@@ -83,14 +83,18 @@ class RateLimiter {
 }
 
 // Create a singleton instance for verification codes
-export const verificationRateLimiter = new RateLimiter(3, 60 * 60 * 1000); // 3 attempts per hour
+export const verificationRateLimiter = new RateLimiter(3, 60 * 60 * 1000);
+
+// Create rate limiters for different endpoints
+export const adminRateLimiter = new RateLimiter(100, 15 * 60 * 1000); // 100 requests per 15 minutes
+export const authRateLimiter = new RateLimiter(5, 15 * 60 * 1000); // 5 requests per 15 minutes
 
 // Clean up old entries every hour
-if (typeof setInterval !== "undefined") {
-  setInterval(
-    () => {
-      verificationRateLimiter.cleanup();
-    },
-    60 * 60 * 1000
-  ); // Run cleanup every hour
-}
+setInterval(
+  () => {
+    verificationRateLimiter.cleanup();
+    adminRateLimiter.cleanup();
+    authRateLimiter.cleanup();
+  },
+  60 * 60 * 1000
+);

@@ -2,7 +2,7 @@
 
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -43,6 +43,10 @@ const navbarItems = [
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const { data: session, status } = useSession();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,108 +57,31 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const pathname = usePathname();
-  const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  // Check authentication status with better error handling
-  const {
-    data: authData,
-    isError,
-    refetch,
-  } = useQuery({
-    queryKey: ["auth", "me"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/api/auth/me");
-        if (!response.ok) {
-          if (response.status === 401) {
-            // User is not authenticated - this is normal, not an error
-            // Only log this once to reduce console noise
-            if (!authData) {
-              console.log("👋 You're logged out - this is normal!");
-            }
-            return { success: false, authenticated: false, user: null };
-          }
-          throw new Error("Authentication check failed");
-        }
-        const data = await response.json();
-        if (data.success && data.authenticated) {
-          const isAdmin = data.user?.isAdmin || false;
-
-          if (isAdmin) {
-            console.log(
-              `🎉 Welcome back, ${data.user?.username || "Admin"}! (Admin user on frontend)`
-            );
-          } else {
-            console.log(`🎉 Welcome back, ${data.user?.username || "User"}!`);
-          }
-        }
-        return data;
-      } catch (error) {
-        // Only log actual errors, not 401 responses
-        if (error instanceof Error && !error.message.includes("401")) {
-          console.error("🚨 Auth error:", error);
-        }
-        throw error;
-      }
-    },
-    retry: false,
-    refetchOnWindowFocus: false,
-    // Only check auth when needed, not continuously
-    staleTime: 60000, // Consider data fresh for 1 minute
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-  });
-
-  // Listen for storage events to refresh auth when needed
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      // Refresh auth state when auth-refresh changes (indicates login/logout)
-      if (e.key === "auth-refresh") {
-        refetch();
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, [refetch]);
-
   const handleLogout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-
-      if (response.ok) {
-        toast.success("Logged out successfully");
-        console.log("👋 See you later! You've been logged out.");
-
-        // Force a complete page reload to ensure clean state
-        setTimeout(() => {
-          window.location.href = "/";
-        }, 500);
-      } else {
-        throw new Error("Logout failed");
-      }
+      await signOut({ callbackUrl: "/" });
+      toast.success("Logged out successfully");
+      console.log("👋 See you later! You've been logged out.");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Logout failed");
     }
   };
 
-  // Determine authentication status - treat 401 as not authenticated (not an error)
-  const isAuthenticated =
-    authData?.success && authData?.authenticated && !isError;
+  // Determine authentication status
+  const isAuthenticated = status === "authenticated" && session?.user;
 
   // Get user display information
   const getUserDisplay = () => {
-    if (!authData?.user) return { displayName: "User", isAdmin: false };
+    if (!session?.user) return { displayName: "User", isAdmin: false };
 
-    const { username, role, isAdmin } = authData.user;
+    const { name, email, role } = session.user;
+    const isAdmin = role === "admin";
+
     return {
-      displayName: username || "User",
+      displayName: name || email?.split("@")[0] || "User",
       role: role || "user",
-      isAdmin: isAdmin || false,
+      isAdmin: isAdmin,
     };
   };
 
@@ -199,7 +126,7 @@ export function Navbar() {
               </span>
               {isAdmin && (
                 <span className="text-xs text-orange-600 font-medium">
-                  Admin User (Frontend Mode)
+                  Admin User
                 </span>
               )}
             </div>

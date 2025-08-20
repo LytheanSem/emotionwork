@@ -1,42 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files and API routes that handle their own auth
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/favicon.ico") ||
-    pathname.includes(".")
-  ) {
-    return NextResponse.next();
-  }
-
-  // Admin routes - ensure they're properly protected
+  // Protect admin routes
   if (pathname.startsWith("/admin")) {
-    // Admin routes are handled by PayloadCMS's built-in authentication
-    // We just need to ensure they're not accessible from frontend context
+    // Admin routes are protected by the admin page component itself
+    // which checks for admin privileges using NextAuth session
     return NextResponse.next();
   }
 
-  // Frontend routes - ensure they don't have admin privileges
-  if (
-    pathname === "/" ||
-    pathname.startsWith("/about") ||
-    pathname.startsWith("/service") ||
-    pathname.startsWith("/equipment") ||
-    pathname.startsWith("/contact") ||
-    pathname.startsWith("/bookmeeting") ||
-    pathname.startsWith("/design") ||
-    pathname.startsWith("/sign-in") ||
-    pathname.startsWith("/sign-up")
-  ) {
-    // Frontend routes are accessible to all users
-    // Authentication is handled by the navbar component
-    return NextResponse.next();
-  }
-
+  // Allow all other routes
   return NextResponse.next();
 }
 

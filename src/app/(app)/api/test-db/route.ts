@@ -1,13 +1,13 @@
-import { getSafePayload } from "@/lib/db-wrapper";
+import { getDb } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
     console.log("Testing database connection...");
 
-    const payload = await getSafePayload();
+    const db = await getDb();
 
-    if (!payload) {
+    if (!db) {
       return NextResponse.json(
         {
           success: false,
@@ -17,32 +17,42 @@ export async function GET() {
       );
     }
 
-    console.log("Payload instance:", typeof payload);
-    console.log("Payload methods:", Object.getOwnPropertyNames(payload));
+    console.log("MongoDB connection:", typeof db);
+    console.log("Database name:", db.databaseName);
 
-    // Try to use PayloadCMS API to find equipment
+    // Try to use MongoDB API to find equipment
     try {
-      const equipment = await payload.find({
-        collection: "equipment",
-        limit: 1,
-      });
+      const equipment = await db
+        .collection("equipment")
+        .find({})
+        .limit(1)
+        .toArray();
+      const users = await db.collection("users").find({}).limit(1).toArray();
+      const categories = await db
+        .collection("categories")
+        .find({})
+        .limit(1)
+        .toArray();
 
       return NextResponse.json({
         success: true,
-        message: "Database connected successfully via PayloadCMS",
-        equipmentCount: equipment.totalDocs,
-        payloadType: typeof payload,
+        message: "Database connected successfully via MongoDB",
+        collections: {
+          equipment: equipment.length,
+          users: users.length,
+          categories: categories.length,
+        },
+        databaseName: db.databaseName,
+        connectionType: "MongoDB Native Driver",
       });
-    } catch (payloadError) {
-      console.error("PayloadCMS query error:", payloadError);
+    } catch (mongoError) {
+      console.error("MongoDB query error:", mongoError);
       return NextResponse.json(
         {
           success: false,
-          error: "PayloadCMS query failed",
-          payloadError:
-            payloadError instanceof Error
-              ? payloadError.message
-              : "Unknown error",
+          error: "MongoDB query failed",
+          mongoError:
+            mongoError instanceof Error ? mongoError.message : "Unknown error",
         },
         { status: 500 }
       );
