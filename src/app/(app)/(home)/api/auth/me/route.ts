@@ -1,61 +1,28 @@
-import { getSafePayload } from "@/lib/db-wrapper";
-import { headers } from "next/headers";
+import { authOptions } from "@/lib/auth";
+import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const payload = await getSafePayload();
+    const session = await getServerSession(authOptions);
 
-    if (!payload) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Database connection failed",
-        },
-        { status: 500 }
-      );
-    }
-
-    // Get cookies from the request
-    const headersList = await headers();
-    const cookieHeader = headersList.get("cookie") || "";
-
-    if (process.env.NODE_ENV === "production") {
-      const cookieNames = cookieHeader
-        .split(";")
-        .map((s) => s.split("=")[0].trim())
-        .filter(Boolean);
-
-      console.log("🍪 Received cookies:", cookieNames);
-    }
-
-    // Create a proper Headers object for PayloadCMS
-    const headersObj = new Headers();
-    headersObj.set("cookie", cookieHeader);
-
-    // Check authentication status
-    const { user } = await payload.auth({ headers: headersObj });
-
-    console.log("👤 Auth result:", {
-      hasUser: !!user,
-      userId: user?.id,
-      username: user?.username,
-    });
-
-    if (user) {
+    if (session?.user) {
       return NextResponse.json({
         success: true,
         authenticated: true,
         user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
+          id: session.user.id,
+          username:
+            session.user.name || session.user.email?.split("@")[0] || "user",
+          email: session.user.email,
+          role: session.user.role,
+          isAdmin: session.user.isAdmin,
         },
       });
     } else {
       return NextResponse.json(
         {
-          success: false,
+          success: true,
           authenticated: false,
           user: null,
         },

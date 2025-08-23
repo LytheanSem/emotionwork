@@ -1,96 +1,84 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Equipment } from "@/payload-types";
+import { Equipment } from "@/lib/db";
 import Image from "next/image";
 
 interface EquipmentCardProps {
   equipment: Equipment;
 }
 
+function resolveImageSrc(image?: string | File): string | null {
+  if (!image) return null;
+
+  // If image is a File object, we can't display it directly in the frontend
+  // This should only happen during form submission, not display
+  if (image instanceof File) {
+    return "/placeholder-equipment.svg";
+  }
+
+  // Handle string images (URLs or paths)
+  if (typeof image === "string") {
+    // Accept absolute URLs or root-relative paths
+    const isAbsolute = /^https?:\/\//i.test(image);
+    const isRootRelative = image.startsWith("/");
+    if (isAbsolute || isRootRelative) return image;
+    // Unknown format (e.g., ObjectId). Use placeholder instead
+    return "/placeholder-equipment.svg";
+  }
+
+  return "/placeholder-equipment.svg";
+}
+
 export function EquipmentCard({ equipment }: EquipmentCardProps) {
-  const imageUrl =
-    equipment.image &&
-    typeof equipment.image === "object" &&
-    equipment.image.url
-      ? equipment.image.url
-      : "/placeholder-equipment.svg";
-
-  // Get category name - handle both populated and unpopulated cases
-  const getCategoryName = () => {
-    if (equipment.category && typeof equipment.category === "object") {
-      return equipment.category.name;
-    }
-    if (equipment.category && typeof equipment.category === "string") {
-      // This shouldn't happen with depth: 2, but fallback just in case
-      return "Loading...";
-    }
-    return "Uncategorized";
-  };
-
-  const categoryName = getCategoryName();
-
+  const imageSrc = resolveImageSrc(equipment.image);
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
-      <div className="aspect-square relative overflow-hidden">
-        <Image
-          src={imageUrl}
-          alt={equipment.name}
-          fill
-          className="object-cover hover:scale-105 transition-transform duration-200"
-          onError={(e) => {
-            // Fallback to a data URL if the image fails to load
-            const target = e.target as HTMLImageElement;
-            target.src =
-              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiNGM0Y0RjYiLz4KICA8cmVjdCB4PSIxMDAiIHk9IjEwMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNEMUQ1REIiIHJ4PSI4Ii8+CiAgPGNpcmNsZSBjeD0iMjAwIiBjeT0iMjAwIiByPSI0MCIgZmlsbD0iIzlDQTNBRiIvPgogIDxwYXRoIGQ9Ik0xODAgMjAwIEwyMjAgMjAwIE0yMDAgMTgwIEwyMDAgMjIwIiBzdHJva2U9IiM2QjcyODAiIHN0cm9rZS13aWR0aD0iNCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo=";
-          }}
-        />
-        <div className="absolute top-2 right-2">
-          <Badge
-            variant={equipment.status === "available" ? "default" : "secondary"}
-          >
-            {equipment.status === "available"
-              ? "Available"
-              : equipment.status === "in_use"
-                ? "In Use"
-                : equipment.status === "maintenance"
-                  ? "Maintenance"
-                  : "Out of Service"}
-          </Badge>
+    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+      {imageSrc && (
+        <div className="aspect-square overflow-hidden">
+          <Image
+            src={imageSrc}
+            alt={equipment.name}
+            width={400}
+            height={400}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          />
         </div>
-      </div>
-      <CardHeader className="pb-2">
-        <div className="space-y-1">
-          <h3 className="font-semibold text-lg leading-tight">
+      )}
+
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
             {equipment.name}
           </h3>
-          {equipment.brand && (
-            <p className="text-sm text-muted-foreground">{equipment.brand}</p>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <div className="flex items-center justify-between">
-          <Badge variant="outline" className="text-xs">
-            {categoryName}
+          <Badge
+            variant={
+              equipment.status === "available"
+                ? "default"
+                : equipment.status === "in_use"
+                  ? "secondary"
+                  : "destructive"
+            }
+            className="ml-2 flex-shrink-0"
+          >
+            {equipment.status}
           </Badge>
-          <div className="text-right">
-            <p className="text-sm font-medium">
-              Quantity:{" "}
-              <span className="text-primary">{equipment.quantity}</span>
-            </p>
-            {equipment.specifications?.power && (
-              <p className="text-xs text-muted-foreground">
-                {equipment.specifications.power}
-              </p>
-            )}
-          </div>
         </div>
-        {equipment.description && (
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-            {equipment.description}
-          </p>
+
+        {equipment.brand && (
+          <p className="text-sm text-gray-600 mb-2">Brand: {equipment.brand}</p>
         )}
-      </CardContent>
-    </Card>
+
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-gray-500">
+            Quantity: {equipment.quantity}
+          </span>
+
+          <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors duration-200 text-sm">
+            View Details
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

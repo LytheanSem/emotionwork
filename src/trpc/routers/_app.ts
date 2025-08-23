@@ -1,10 +1,8 @@
-import { authRouter } from "@/modules/auth/server/procedures";
 import { categoriesRouter } from "@/modules/categories/server/procedures";
 import { equipmentRouter } from "@/modules/equipment/server/procedures";
 import { createTRPCRouter } from "../init";
 
 export const appRouter = createTRPCRouter({
-  auth: authRouter,
   categories: categoriesRouter,
   equipment: equipmentRouter,
 });

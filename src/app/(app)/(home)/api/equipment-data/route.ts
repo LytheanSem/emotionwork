@@ -1,11 +1,11 @@
-import { getSafePayload } from "@/lib/db-wrapper";
+import { getDb } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const payload = await getSafePayload();
+    const db = await getDb();
 
-    if (!payload) {
+    if (!db) {
       return NextResponse.json(
         {
           success: false,
@@ -15,28 +15,58 @@ export async function GET() {
       );
     }
 
-    // Fetch equipment using PayloadCMS
-    const equipment = await payload.find({
-      collection: "equipment",
-      depth: 2, // Populate category and image
-      pagination: false,
-      sort: "name",
-    });
+    // Fetch equipment using MongoDB
+    const equipment = await db
+      .collection("equipment")
+      .find({})
+      .sort({ name: 1 })
+      .toArray();
 
     // Fetch categories
-    const categories = await payload.find({
-      collection: "categories",
-      depth: 1,
-      pagination: false,
-      sort: "name",
+    const categories = await db
+      .collection("categories")
+      .find({})
+      .sort({ name: 1 })
+      .toArray();
+
+    // Populate category information for equipment
+    const equipmentWithCategories = equipment.map((item) => {
+      const category = categories.find(
+        (cat) => cat._id?.toString() === item.categoryId?.toString()
+      );
+      return {
+        id: item._id?.toString(),
+        name: item.name,
+        brand: item.brand,
+        status: item.status,
+        quantity: item.quantity,
+        categoryId: item.categoryId,
+        image: item.image,
+        description: item.description,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+        category: category
+          ? {
+              id: category._id?.toString(),
+              name: category.name,
+              slug: category.slug,
+              description: category.description,
+            }
+          : null,
+      };
     });
 
     return NextResponse.json({
       success: true,
-      equipment: equipment.docs,
-      categories: categories.docs,
-      equipmentCount: equipment.totalDocs,
-      categoriesCount: categories.totalDocs,
+      equipment: equipmentWithCategories,
+      categories: categories.map((cat) => ({
+        id: cat._id?.toString(),
+        name: cat.name,
+        slug: cat.slug,
+        description: cat.description,
+      })),
+      equipmentCount: equipment.length,
+      categoriesCount: categories.length,
     });
   } catch (error) {
     console.error("Error fetching equipment:", error);
