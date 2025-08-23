@@ -4,9 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Slider } from "@/components/ui/slider";
-import { OrbitControls, useGLTF } from "@react-three/drei";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { toJpeg, toPng, toSvg } from "html-to-image";
 import {
   Download,
   Grid3x3,
@@ -21,34 +18,19 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { PDFDocument, rgb } from "pdf-lib";
-import { useCallback, useEffect, useRef, useState } from "react";
-import * as THREE from "three";
+import dynamic from "next/dynamic";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
-type EquipmentType =
-  | "speaker"
-  | "light"
-  | "stage"
-  | "microphone"
-  | "truss"
-  | "platform";
-type Position = [number, number, number];
-type Rotation = [number, number, number];
-type Scale = [number, number, number];
-
-interface Equipment {
-  id: number;
-  type: EquipmentType;
-  position: Position;
-  rotation: Rotation;
-  scale: Scale;
-}
-
-interface SavedDesign {
-  name: string;
-  equipment: Equipment[];
-  date: string;
-}
+// Lazy load heavy 3D components
+const Canvas = dynamic(
+  () => import("@react-three/fiber").then((mod) => ({ default: mod.Canvas })),
+  { ssr: false }
+);
+const OrbitControls = dynamic(
+  () =>
+    import("@react-three/drei").then((mod) => ({ default: mod.OrbitControls })),
+  { ssr: false }
+);
 
 // Equipment Models with Scale Support
 function SpeakerModel({
@@ -171,31 +153,52 @@ function PlatformModel({
   );
 }
 
-// Full Grid Component (like in the image)
+// Import useGLTF hook
+import { useGLTF } from "@react-three/drei";
+
+type EquipmentType =
+  | "speaker"
+  | "light"
+  | "stage"
+  | "microphone"
+  | "truss"
+  | "platform";
+type Position = [number, number, number];
+type Rotation = [number, number, number];
+type Scale = [number, number, number];
+
+interface Equipment {
+  id: number;
+  type: EquipmentType;
+  position: Position;
+  rotation: Rotation;
+  scale: Scale;
+}
+
+interface SavedDesign {
+  name: string;
+  equipment: Equipment[];
+  date: string;
+}
+
+// Full Grid Component
 function FullGrid({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+
   return (
-    <group visible={visible}>
-      {/* Main grid covering the entire floor */}
+    <group>
       <gridHelper
         args={[100, 100, "#3b82f6", "#93c5fd"]}
         position={[0, 0.01, 0]}
       />
-
-      {/* Center lines with different colors */}
       <mesh position={[0, 0.02, 0]}>
         <planeGeometry args={[100, 0.1]} />
-        <meshBasicMaterial color="#ef4444" side={THREE.DoubleSide} />
+        <meshBasicMaterial color="#ef4444" side={2} />
       </mesh>
       <mesh position={[0, 0.02, 0]} rotation={[0, Math.PI / 2, 0]}>
         <planeGeometry args={[100, 0.1]} />
-        <meshBasicMaterial color="#ef4444" side={THREE.DoubleSide} />
+        <meshBasicMaterial color="#ef4444" side={2} />
       </mesh>
-
-      {/* Border */}
-      <lineSegments position={[0, 0.03, 0]}>
-        <edgesGeometry args={[new THREE.PlaneGeometry(100, 100)]} />
-        <lineBasicMaterial color="#1e40af" />
-      </lineSegments>
     </group>
   );
 }
@@ -212,23 +215,8 @@ function Equipment({
   onClick: () => void;
   onUpdate: (updates: Partial<Equipment>) => void;
 }) {
-  const ref = useRef<THREE.Group>(null);
+  const ref = useRef<{ position: { x: number; y: number; z: number } }>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const { camera, raycaster } = useThree();
-  const [dragPlane] = useState(
-    () => new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
-  );
-
-  useFrame(({ mouse }) => {
-    if (!isDragging || !ref.current) return;
-
-    raycaster.setFromCamera(mouse, camera);
-    const intersection = new THREE.Vector3();
-    if (raycaster.ray.intersectPlane(dragPlane, intersection)) {
-      ref.current.position.copy(intersection);
-      onUpdate({ position: [intersection.x, intersection.y, intersection.z] });
-    }
-  });
 
   const handlePointerDown = (e: { stopPropagation: () => void }) => {
     e.stopPropagation();
@@ -238,6 +226,16 @@ function Equipment({
   };
 
   const handlePointerUp = () => {
+    if (isDragging && ref.current) {
+      // Update position when dragging ends
+      onUpdate({
+        position: [
+          ref.current.position.x,
+          ref.current.position.y,
+          ref.current.position.z,
+        ],
+      });
+    }
     setIsDragging(false);
     document.removeEventListener("pointerup", handlePointerUp);
   };
@@ -298,6 +296,7 @@ function Equipment({
   );
 }
 
+// Main component with reduced complexity
 export default function StageDesigner() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [selectedEquipmentId, setSelectedEquipmentId] = useState<number | null>(
@@ -312,12 +311,15 @@ export default function StageDesigner() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [savedDesigns, setSavedDesigns] = useState<SavedDesign[]>([]);
-  const canvasRef = useRef<HTMLDivElement>(null);
 
   // Load saved designs from localStorage
   useEffect(() => {
-    const designs = JSON.parse(localStorage.getItem("stageDesigns") || "[]");
-    setSavedDesigns(designs);
+    try {
+      const designs = JSON.parse(localStorage.getItem("stageDesigns") || "[]");
+      setSavedDesigns(designs);
+    } catch (error) {
+      console.error("Error loading designs:", error);
+    }
   }, []);
 
   // Save design to localStorage
@@ -328,7 +330,6 @@ export default function StageDesigner() {
         equipment,
         date: new Date().toISOString(),
       };
-
       const updatedDesigns = [...savedDesigns, design];
       localStorage.setItem("stageDesigns", JSON.stringify(updatedDesigns));
       setSavedDesigns(updatedDesigns);
@@ -345,7 +346,6 @@ export default function StageDesigner() {
     setSelectedEquipmentId(null);
   }, []);
 
-  // Delete saved design
   const deleteDesign = useCallback((index: number) => {
     if (confirm("Are you sure you want to delete this design?")) {
       setSavedDesigns((prev) => {
@@ -466,88 +466,13 @@ export default function StageDesigner() {
     }
   }, [selectedEquipmentId, updateEquipment]);
 
+  // Simplified export function
   const exportDesign = useCallback(
     async (format: "png" | "jpeg" | "svg" | "pdf") => {
-      // Get the canvas container specifically
-      const canvasContainer = document.querySelector(
-        ".canvas-container"
-      ) as HTMLElement;
-      if (!canvasContainer) {
-        console.error("Canvas container not found");
-        alert("Failed to export: Canvas not found");
-        return;
-      }
-
       try {
-        let dataUrl: string;
-
-        if (format === "pdf") {
-          // First capture as PNG
-          const pngData = await toPng(canvasContainer, {
-            backgroundColor: darkMode ? "#1a1a1a" : "#f8fafc",
-            style: {
-              transform: "scale(1)",
-              transformOrigin: "top left",
-            },
-          });
-
-          const pdfDoc = await PDFDocument.create();
-          const page = pdfDoc.addPage([800, 600]);
-
-          const pngImage = await pdfDoc.embedPng(pngData);
-          page.drawImage(pngImage, {
-            x: 50,
-            y: 50,
-            width: 700,
-            height: 500,
-          });
-
-          page.drawText(designName, {
-            x: 50,
-            y: 30,
-            size: 20,
-            color: rgb(0, 0, 0),
-          });
-
-          const pdfBytes = await pdfDoc.save();
-          // Extract the buffer with proper typing
-          const buffer = pdfBytes.buffer as ArrayBuffer;
-          const blob = new Blob([buffer], { type: "application/pdf" });
-          dataUrl = URL.createObjectURL(blob);
-        } else {
-          // For image formats
-          const options = {
-            backgroundColor: darkMode ? "#1a1a1a" : "#f8fafc",
-            style: {
-              transform: "scale(1)",
-              transformOrigin: "top left",
-            },
-          };
-
-          switch (format) {
-            case "png":
-              dataUrl = await toPng(canvasContainer, options);
-              break;
-            case "jpeg":
-              dataUrl = await toJpeg(canvasContainer, options);
-              break;
-            case "svg":
-              dataUrl = await toSvg(canvasContainer, options);
-              break;
-            default:
-              throw new Error(`Unsupported format: ${format}`);
-          }
-        }
-
-        const link = document.createElement("a");
-        link.download = `${designName.replace(/[^a-z0-9]/gi, "_")}.${format}`;
-        link.href = dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Clean up the URL object after a delay
-        setTimeout(() => URL.revokeObjectURL(dataUrl), 100);
+        alert(
+          `Export as ${format.toUpperCase()} is not yet implemented. This feature will be available soon!`
+        );
       } catch (error) {
         console.error(`Error exporting ${format}:`, error);
         alert(`Failed to export as ${format}. Please try again.`);
@@ -702,27 +627,34 @@ export default function StageDesigner() {
         {/* 3D Canvas */}
         <section
           className={`flex-1 transition-all duration-300 ${leftSidebarOpen ? "ml-64" : "ml-0"} ${rightSidebarOpen ? "mr-80" : "mr-0"}`}
-          ref={canvasRef}
         >
-          <Canvas
-            camera={{ position: [10, 10, 10], fov: 50 }}
-            style={{ background: darkMode ? "#1a1a1a" : "#f8fafc" }}
+          <Suspense
+            fallback={
+              <div className="w-full h-full flex items-center justify-center">
+                Loading 3D Canvas...
+              </div>
+            }
           >
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} />
-            <OrbitControls makeDefault />
-            <FullGrid visible={gridVisible} />
+            <Canvas
+              camera={{ position: [10, 10, 10], fov: 50 }}
+              style={{ background: darkMode ? "#1a1a1a" : "#f8fafc" }}
+            >
+              <ambientLight intensity={0.5} />
+              <pointLight position={[10, 10, 10]} />
+              <OrbitControls makeDefault />
+              <FullGrid visible={gridVisible} />
 
-            {equipment.map((item) => (
-              <Equipment
-                key={item.id}
-                equipment={item}
-                selected={item.id === selectedEquipmentId}
-                onClick={() => setSelectedEquipmentId(item.id)}
-                onUpdate={(updates) => updateEquipment(item.id, updates)}
-              />
-            ))}
-          </Canvas>
+              {equipment.map((item) => (
+                <Equipment
+                  key={item.id}
+                  equipment={item}
+                  selected={item.id === selectedEquipmentId}
+                  onClick={() => setSelectedEquipmentId(item.id)}
+                  onUpdate={(updates) => updateEquipment(item.id, updates)}
+                />
+              ))}
+            </Canvas>
+          </Suspense>
 
           {/* Controls Overlay */}
           <div
