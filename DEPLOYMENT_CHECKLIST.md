@@ -54,7 +54,6 @@
 ### **Environment Variables**
 
 - [ ] `DATABASE_URI` - MongoDB Atlas connection string
-- [ ] `PAYLOAD_SECRET` - Strong random secret
 - [ ] `NEXTAUTH_SECRET` - Strong random secret
 - [ ] `NEXTAUTH_URL` - Your Vercel domain
 - [ ] `GOOGLE_CLIENT_ID` - Google OAuth client ID

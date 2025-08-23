@@ -15,6 +15,7 @@ import { Modal } from "@/components/ui/modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -506,7 +507,8 @@ export default function AdminPanel() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Total Users */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -515,17 +517,13 @@ export default function AdminPanel() {
             <CardContent>
               <div className="text-2xl font-bold">{users.length}</div>
               <p className="text-xs text-muted-foreground">
-                <span className="text-blue-600 font-medium">
-                  {users.filter((u) => u.role === "admin").length} admins
-                </span>
-                ,{" "}
-                <span className="text-green-600 font-medium">
-                  {users.filter((u) => u.role === "user").length} users
-                </span>
+                {users.filter((u) => u.role === "admin").length} admins,{" "}
+                {users.filter((u) => u.role === "user").length} users
               </p>
             </CardContent>
           </Card>
 
+          {/* Categories */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Categories</CardTitle>
@@ -539,6 +537,7 @@ export default function AdminPanel() {
             </CardContent>
           </Card>
 
+          {/* Equipment */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Equipment</CardTitle>
@@ -551,26 +550,14 @@ export default function AdminPanel() {
               </p>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Media Files</CardTitle>
-              <Badge variant="secondary">{0}</Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{0}</div>
-              <p className="text-xs text-muted-foreground">Images and files</p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="users" className="space-y-6">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="equipment">Equipment</TabsTrigger>
-            <TabsTrigger value="media">Media</TabsTrigger>
           </TabsList>
 
           {/* Users Tab */}
@@ -606,10 +593,12 @@ export default function AdminPanel() {
                       >
                         <div className="flex items-center space-x-4">
                           {user.image && (
-                            <img
+                            <Image
                               src={user.image}
                               alt={user.username}
-                              className="w-10 h-10 rounded-full"
+                              width={40}
+                              height={40}
+                              className="rounded-full"
                             />
                           )}
                           <div>
@@ -684,10 +673,12 @@ export default function AdminPanel() {
                       >
                         <div className="flex items-center space-x-4">
                           {user.image && (
-                            <img
+                            <Image
                               src={user.image}
                               alt={user.username}
-                              className="w-10 h-10 rounded-full"
+                              width={40}
+                              height={40}
+                              className="rounded-full"
                             />
                           )}
                           <div>
@@ -830,15 +821,12 @@ export default function AdminPanel() {
                           typeof item.image === "string" &&
                           (item.image.startsWith("http") ||
                           item.image.startsWith("/") ? (
-                            <img
+                            <Image
                               src={item.image}
                               alt={item.name}
-                              className="w-16 h-16 object-cover rounded-lg"
-                              onError={(e) => {
-                                // Fallback to placeholder if image fails to load
-                                const target = e.target as HTMLImageElement;
-                                target.src = "/placeholder-equipment.svg";
-                              }}
+                              width={64}
+                              height={64}
+                              className="object-cover rounded-lg"
                             />
                           ) : (
                             // Show placeholder for ObjectIds or invalid paths
@@ -902,30 +890,6 @@ export default function AdminPanel() {
                       </div>
                     </div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Media Tab */}
-          <TabsContent value="media" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Media Management</CardTitle>
-                    <CardDescription>
-                      Manage uploaded files and images
-                    </CardDescription>
-                  </div>
-                  <Button size="sm" disabled>
-                    Media Disabled
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-gray-500">
-                  <p>Media management is currently disabled.</p>
                 </div>
               </CardContent>
             </Card>
@@ -1163,17 +1127,6 @@ export default function AdminPanel() {
           </div>
           <Button type="submit">Create Equipment</Button>
         </form>
-      </Modal>
-
-      {/* Create Media Modal */}
-      <Modal
-        isOpen={false} // Media creation is disabled
-        onClose={() => {}}
-        title="Create New Media"
-      >
-        <div className="text-center py-8 text-gray-500">
-          <p>Media creation is currently disabled.</p>
-        </div>
       </Modal>
 
       {/* Edit User Modal */}
@@ -1440,17 +1393,6 @@ export default function AdminPanel() {
             <Button type="submit">Update Equipment</Button>
           </form>
         )}
-      </Modal>
-
-      {/* Edit Media Modal */}
-      <Modal
-        isOpen={false} // Media editing is disabled
-        onClose={() => {}}
-        title="Edit Media"
-      >
-        <div className="text-center py-8 text-gray-500">
-          <p>Media editing is currently disabled.</p>
-        </div>
       </Modal>
     </div>
   );

@@ -1,5 +1,8 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import { Equipment } from "@/lib/db";
+import Image from "next/image";
 
 interface EquipmentCardProps {
   equipment: Equipment;
@@ -33,9 +36,11 @@ export function EquipmentCard({ equipment }: EquipmentCardProps) {
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       {imageSrc && (
         <div className="aspect-square overflow-hidden">
-          <img
+          <Image
             src={imageSrc}
             alt={equipment.name}
+            width={400}
+            height={400}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           />
         </div>
