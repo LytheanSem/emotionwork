@@ -14,8 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { VirtualList } from "@/components/ui/virtual-list";
-import { useUserListVirtualScroll } from "@/hooks/use-virtual-scroll";
+
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -59,9 +58,6 @@ export default function AdminPanel() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Virtual scrolling configuration
-  const userListConfig = useUserListVirtualScroll();
 
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -204,30 +200,24 @@ export default function AdminPanel() {
 
   // Create user
   const createUser = async () => {
-    console.log("Creating user:", newUser);
     const { username, email, role } = newUser;
     if (!username.trim() || !email.trim()) {
       toast.error("Username and email are required");
       return;
     }
     try {
-      console.log("Sending request to /api/admin/users");
       const res = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, role }),
       });
-      console.log("Response status:", res.status);
       if (res.ok) {
-        const data = await res.json();
-        console.log("Success response:", data);
         toast.success("User created");
         setShowCreateUser(false);
         setNewUser({ username: "", email: "", role: "user" });
         loadAdminData();
       } else {
         const data = await res.json();
-        console.log("Error response:", data);
         toast.error(data.error || "Failed to create user");
       }
     } catch (error) {
@@ -238,7 +228,6 @@ export default function AdminPanel() {
 
   // Create equipment
   const createEquipment = async () => {
-    console.log("Creating equipment:", newEquipment);
     const { name, status, quantity, brand, categoryId, image, description } =
       newEquipment;
     if (!name.trim() || quantity < 1) {
@@ -246,12 +235,13 @@ export default function AdminPanel() {
       return;
     }
     try {
-      console.log("Sending request to /api/admin/equipment");
       const formData = new FormData();
       formData.append("name", name);
       formData.append("status", status);
       formData.append("quantity", quantity.toString());
-      formData.append("brand", brand || "");
+      if (brand) {
+        formData.append("brand", brand);
+      }
       formData.append("categoryId", categoryId || "");
       if (image) {
         formData.append("image", image);
@@ -262,10 +252,7 @@ export default function AdminPanel() {
         method: "POST",
         body: formData,
       });
-      console.log("Response status:", res.status);
       if (res.ok) {
-        const data = await res.json();
-        console.log("Success response:", data);
         toast.success("Equipment created");
         setShowCreateEquipment(false);
         setNewEquipment({
@@ -280,7 +267,6 @@ export default function AdminPanel() {
         loadAdminData();
       } else {
         const data = await res.json();
-        console.log("Error response:", data);
         toast.error(data.error || "Failed to create equipment");
       }
     } catch (error) {
@@ -487,15 +473,15 @@ export default function AdminPanel() {
     }
   };
 
-  // Optimized render functions with virtualization
+  // Optimized render functions
   const renderUserItem = useCallback(
     (user: User) => (
       <div
         key={user.id}
-        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors w-full"
       >
         <div className="flex items-center space-x-4">
-          {user.image && (
+          {user.image ? (
             <Image
               src={user.image}
               alt={user.username}
@@ -504,6 +490,10 @@ export default function AdminPanel() {
               className="rounded-full"
               loading="lazy"
             />
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg">
+              {user.username.charAt(0).toUpperCase()}
+            </div>
           )}
           <div>
             <p className="font-medium">{user.username}</p>
@@ -710,16 +700,15 @@ export default function AdminPanel() {
                 <div className="space-y-4">
                   {filteredUsers.filter((user) => user.role === "admin")
                     .length > 0 ? (
-                    <VirtualList
-                      items={filteredUsers.filter(
-                        (user) => user.role === "admin"
-                      )}
-                      height={userListConfig.containerHeight}
-                      itemHeight={userListConfig.itemHeight}
-                      overscanCount={userListConfig.overscanCount}
-                      renderItemAction={(user) => renderUserItem(user)}
-                      className="border rounded-lg"
-                    />
+                    <div className="space-y-3">
+                      {filteredUsers
+                        .filter((user) => user.role === "admin")
+                        .map((user) => (
+                          <div key={user.id} className="w-full">
+                            {renderUserItem(user)}
+                          </div>
+                        ))}
+                    </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
                       <p>No admin users found</p>
@@ -753,16 +742,15 @@ export default function AdminPanel() {
                 <div className="space-y-4">
                   {filteredUsers.filter((user) => user.role === "user").length >
                   0 ? (
-                    <VirtualList
-                      items={filteredUsers.filter(
-                        (user) => user.role === "user"
-                      )}
-                      height={userListConfig.containerHeight}
-                      itemHeight={userListConfig.itemHeight}
-                      overscanCount={userListConfig.overscanCount}
-                      renderItemAction={(user) => renderUserItem(user)}
-                      className="border rounded-lg"
-                    />
+                    <div className="space-y-3">
+                      {filteredUsers
+                        .filter((user) => user.role === "user")
+                        .map((user) => (
+                          <div key={user.id} className="w-full">
+                            {renderUserItem(user)}
+                          </div>
+                        ))}
+                    </div>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
                       <p>No regular users found</p>
@@ -946,7 +934,6 @@ export default function AdminPanel() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            console.log("Category form submitted");
             createCategory();
           }}
           className="space-y-4"
@@ -986,7 +973,6 @@ export default function AdminPanel() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            console.log("User form submitted");
             createUser();
           }}
           className="space-y-4"
@@ -1045,7 +1031,6 @@ export default function AdminPanel() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            console.log("Equipment form submitted");
             createEquipment();
           }}
           className="space-y-4"
