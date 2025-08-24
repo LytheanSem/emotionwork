@@ -160,7 +160,7 @@ export function usePerformance() {
   }, [measureMetrics]);
 
   return {
-    metrics: getMetrics(),
+    getMetrics,
     logMetrics,
   };
 }
