@@ -107,7 +107,7 @@ export function VirtualGrid<T>({
         <div
           style={{
             position: "absolute",
-            top: visibleStart * (itemHeight / columns),
+            top: Math.floor(visibleStart / columns) * itemHeight,
             left: 0,
             right: 0,
           }}
