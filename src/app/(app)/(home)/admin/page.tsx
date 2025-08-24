@@ -14,10 +14,12 @@ import { Label } from "@/components/ui/label";
 import { Modal } from "@/components/ui/modal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { VirtualList } from "@/components/ui/virtual-list";
+import { useUserListVirtualScroll } from "@/hooks/use-virtual-scroll";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 interface User {
@@ -58,6 +60,13 @@ export default function AdminPanel() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Virtual scrolling configuration
+  const userListConfig = useUserListVirtualScroll();
+
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentTab, setCurrentTab] = useState("users");
+
   // Modal states
   const [showCreateCategory, setShowCreateCategory] = useState(false);
   const [newCategory, setNewCategory] = useState({ name: "", description: "" });
@@ -88,20 +97,36 @@ export default function AdminPanel() {
     null
   );
 
-  useEffect(() => {
-    if (status === "loading") return;
+  // Memoized filtered data for performance
+  const filteredUsers = useMemo(() => {
+    if (!searchTerm) return users;
+    return users.filter(
+      (user) =>
+        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [users, searchTerm]);
 
-    if (!session || !session.user.isAdmin) {
-      toast.error("Access denied. Admin privileges required.");
-      router.push("/");
-      return;
-    }
+  const filteredCategories = useMemo(() => {
+    if (!searchTerm) return categories;
+    return categories.filter(
+      (category) =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        category.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [categories, searchTerm]);
 
-    // Load admin data
-    loadAdminData();
-  }, [session, status, router]);
+  const filteredEquipment = useMemo(() => {
+    if (!searchTerm) return equipment;
+    return equipment.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [equipment, searchTerm]);
 
-  const loadAdminData = async () => {
+  const loadAdminData = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -131,7 +156,20 @@ export default function AdminPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session || !session.user.isAdmin) {
+      toast.error("Access denied. Admin privileges required.");
+      router.push("/");
+      return;
+    }
+
+    // Load admin data
+    loadAdminData();
+  }, [session, status, router, loadAdminData]);
 
   // Create category function
   const createCategory = async () => {
@@ -251,45 +289,52 @@ export default function AdminPanel() {
     }
   };
 
-  const promoteUser = async (userId: string) => {
-    try {
-      const response = await fetch(`/api/admin/users/${userId}/promote`, {
-        method: "PATCH",
-      });
+  // Promote user function
+  const promoteUser = useCallback(
+    async (userId: string) => {
+      try {
+        const response = await fetch(`/api/admin/users/${userId}/promote`, {
+          method: "PATCH",
+        });
 
-      if (response.ok) {
-        toast.success("User promoted to admin successfully!");
-        loadAdminData(); // Reload data
-      } else {
+        if (response.ok) {
+          toast.success("User promoted to admin successfully!");
+          loadAdminData(); // Reload data
+        } else {
+          toast.error("Failed to promote user");
+        }
+      } catch (error) {
+        console.error("Error promoting user:", error);
         toast.error("Failed to promote user");
       }
-    } catch (error) {
-      console.error("Error promoting user:", error);
-      toast.error("Failed to promote user");
-    }
-  };
+    },
+    [loadAdminData]
+  );
 
   // Delete functions for each collection
-  const deleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+  const deleteUser = useCallback(
+    async (userId: string) => {
+      if (!confirm("Are you sure you want to delete this user?")) return;
 
-    try {
-      const response = await fetch(`/api/admin/users/${userId}`, {
-        method: "DELETE",
-      });
+      try {
+        const response = await fetch(`/api/admin/users/${userId}`, {
+          method: "DELETE",
+        });
 
-      if (response.ok) {
-        toast.success("User deleted successfully!");
-        loadAdminData(); // Reload data
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || "Failed to delete user");
+        if (response.ok) {
+          toast.success("User deleted successfully!");
+          loadAdminData(); // Reload data
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.error || "Failed to delete user");
+        }
+      } catch (error) {
+        console.error("Error deleting user:", error);
+        toast.error("Failed to delete user");
       }
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      toast.error("Failed to delete user");
-    }
-  };
+    },
+    [loadAdminData]
+  );
 
   const deleteCategory = async (categoryId: string) => {
     if (!confirm("Are you sure you want to delete this category?")) return;
@@ -334,10 +379,10 @@ export default function AdminPanel() {
   };
 
   // Edit handlers
-  const handleEditUser = (user: User) => {
+  const handleEditUser = useCallback((user: User) => {
     setEditingUser(user);
     setShowEditUser(true);
-  };
+  }, []);
 
   const handleEditCategory = (category: Category) => {
     setEditingCategory(category);
@@ -441,6 +486,65 @@ export default function AdminPanel() {
       toast.error("Failed to update equipment");
     }
   };
+
+  // Optimized render functions with virtualization
+  const renderUserItem = useCallback(
+    (user: User) => (
+      <div
+        key={user.id}
+        className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center space-x-4">
+          {user.image && (
+            <Image
+              src={user.image}
+              alt={user.username}
+              width={40}
+              height={40}
+              className="rounded-full"
+              loading="lazy"
+            />
+          )}
+          <div>
+            <p className="font-medium">{user.username}</p>
+            <p className="text-sm text-gray-600">{user.email}</p>
+            <div className="flex items-center space-x-2 mt-1">
+              <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+                {user.role}
+              </Badge>
+              <Badge variant="outline">{user.provider}</Badge>
+            </div>
+          </div>
+        </div>
+        <div className="flex space-x-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleEditUser(user)}
+          >
+            Edit
+          </Button>
+          {user.role === "user" && (
+            <Button
+              size="sm"
+              onClick={() => promoteUser(user.id)}
+              variant="outline"
+            >
+              Promote
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => deleteUser(user.id)}
+          >
+            Delete
+          </Button>
+        </div>
+      </div>
+    ),
+    [handleEditUser, promoteUser, deleteUser]
+  );
 
   if (status === "loading" || loading) {
     return (
@@ -552,12 +656,32 @@ export default function AdminPanel() {
           </Card>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <Input
+            placeholder="Search users, categories, or equipment..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-md"
+          />
+        </div>
+
         {/* Main Content Tabs */}
-        <Tabs defaultValue="users" className="space-y-6">
+        <Tabs
+          value={currentTab}
+          onValueChange={setCurrentTab}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="equipment">Equipment</TabsTrigger>
+            <TabsTrigger value="users">
+              Users ({filteredUsers.length})
+            </TabsTrigger>
+            <TabsTrigger value="categories">
+              Categories ({filteredCategories.length})
+            </TabsTrigger>
+            <TabsTrigger value="equipment">
+              Equipment ({filteredEquipment.length})
+            </TabsTrigger>
           </TabsList>
 
           {/* Users Tab */}
@@ -584,56 +708,19 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {users
-                    .filter((user) => user.role === "admin")
-                    .map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center justify-between p-4 border rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50"
-                      >
-                        <div className="flex items-center space-x-4">
-                          {user.image && (
-                            <Image
-                              src={user.image}
-                              alt={user.username}
-                              width={40}
-                              height={40}
-                              className="rounded-full"
-                            />
-                          )}
-                          <div>
-                            <p className="font-medium">{user.username}</p>
-                            <p className="text-sm text-gray-600">
-                              {user.email}
-                            </p>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Badge variant="default">admin</Badge>
-                              <Badge variant="outline">{user.provider}</Badge>
-                              <Badge
-                                variant="outline"
-                                className="text-xs bg-blue-100 text-blue-800"
-                              >
-                                Admin Collection
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEditUser(user)}
-                          >
-                            Edit
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            View Permissions
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  {users.filter((user) => user.role === "admin").length ===
-                    0 && (
+                  {filteredUsers.filter((user) => user.role === "admin")
+                    .length > 0 ? (
+                    <VirtualList
+                      items={filteredUsers.filter(
+                        (user) => user.role === "admin"
+                      )}
+                      height={userListConfig.containerHeight}
+                      itemHeight={userListConfig.itemHeight}
+                      overscanCount={userListConfig.overscanCount}
+                      renderItemAction={(user) => renderUserItem(user)}
+                      className="border rounded-lg"
+                    />
+                  ) : (
                     <div className="text-center py-8 text-gray-500">
                       <p>No admin users found</p>
                     </div>
@@ -664,67 +751,19 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {users
-                    .filter((user) => user.role === "user")
-                    .map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center justify-between p-4 border rounded-lg"
-                      >
-                        <div className="flex items-center space-x-4">
-                          {user.image && (
-                            <Image
-                              src={user.image}
-                              alt={user.username}
-                              width={40}
-                              height={40}
-                              className="rounded-full"
-                            />
-                          )}
-                          <div>
-                            <p className="font-medium">{user.username}</p>
-                            <p className="text-sm text-gray-600">
-                              {user.email}
-                            </p>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Badge variant="secondary">user</Badge>
-                              <Badge variant="outline">{user.provider}</Badge>
-                              <Badge
-                                variant="outline"
-                                className="text-xs bg-green-100 text-green-800"
-                              >
-                                User Collection
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            size="sm"
-                            onClick={() => promoteUser(user.id)}
-                            variant="outline"
-                          >
-                            Promote to Admin
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEditUser(user)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => deleteUser(user.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  {users.filter((user) => user.role === "user").length ===
-                    0 && (
+                  {filteredUsers.filter((user) => user.role === "user").length >
+                  0 ? (
+                    <VirtualList
+                      items={filteredUsers.filter(
+                        (user) => user.role === "user"
+                      )}
+                      height={userListConfig.containerHeight}
+                      itemHeight={userListConfig.itemHeight}
+                      overscanCount={userListConfig.overscanCount}
+                      renderItemAction={(user) => renderUserItem(user)}
+                      className="border rounded-lg"
+                    />
+                  ) : (
                     <div className="text-center py-8 text-gray-500">
                       <p>No regular users found</p>
                     </div>
@@ -752,7 +791,7 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {categories.map((category) => (
+                  {filteredCategories.map((category) => (
                     <div
                       key={category.id}
                       className="flex items-center justify-between p-4 border rounded-lg"
@@ -810,7 +849,7 @@ export default function AdminPanel() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {equipment.map((item) => (
+                  {filteredEquipment.map((item) => (
                     <div
                       key={item.id}
                       className="flex items-center justify-between p-4 border rounded-lg"
@@ -827,6 +866,7 @@ export default function AdminPanel() {
                               width={64}
                               height={64}
                               className="object-cover rounded-lg"
+                              loading="lazy"
                             />
                           ) : (
                             // Show placeholder for ObjectIds or invalid paths

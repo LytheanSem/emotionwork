@@ -2,6 +2,7 @@
 
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import { useRoutePrefetch } from "@/hooks/use-route-prefetch";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -47,6 +48,7 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { prefetchOnHover } = useRoutePrefetch();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -112,6 +114,7 @@ export function Navbar() {
               key={item.href}
               href={item.href}
               isActive={pathname === item.href}
+              {...prefetchOnHover(item.href)}
             >
               {item.children}
             </NavbarItem>
