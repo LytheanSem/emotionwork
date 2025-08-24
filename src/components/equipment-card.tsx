@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Equipment } from "@/lib/db";
 import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 
 interface EquipmentCardProps {
   equipment: Equipment;
@@ -32,17 +33,54 @@ function resolveImageSrc(image?: string | File): string | null {
 
 export function EquipmentCard({ equipment }: EquipmentCardProps) {
   const imageSrc = resolveImageSrc(equipment.image);
+  const [isImageVisible, setIsImageVisible] = useState(false);
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const imageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsImageVisible(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: "50px", // Start loading 50px before the image comes into view
+        threshold: 0.1,
+      }
+    );
+
+    if (imageRef.current) {
+      observer.observe(imageRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
       {imageSrc && (
-        <div className="aspect-square overflow-hidden">
-          <Image
-            src={imageSrc}
-            alt={equipment.name}
-            width={400}
-            height={400}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-          />
+        <div ref={imageRef} className="aspect-square overflow-hidden">
+          {isImageVisible ? (
+            <Image
+              src={imageSrc}
+              alt={equipment.name}
+              width={400}
+              height={400}
+              className={`w-full h-full object-cover transition-all duration-300 ${
+                isImageLoaded ? "hover:scale-105" : "blur-sm"
+              }`}
+              onLoad={() => setIsImageLoaded(true)}
+              loading="lazy"
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 animate-pulse flex items-center justify-center">
+              <div className="text-gray-400 text-sm">Loading...</div>
+            </div>
+          )}
         </div>
       )}
 
