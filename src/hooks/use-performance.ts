@@ -105,15 +105,15 @@ export function usePerformance() {
         });
       });
 
+      // Observe each entry type with buffering to capture early (already fired) entries
+      observer.current.observe({ type: "paint", buffered: true });
       observer.current.observe({
-        entryTypes: [
-          "paint",
-          "largest-contentful-paint",
-          "first-input",
-          "layout-shift",
-          "navigation",
-        ],
+        type: "largest-contentful-paint",
+        buffered: true,
       });
+      observer.current.observe({ type: "first-input", buffered: true });
+      observer.current.observe({ type: "layout-shift", buffered: true });
+      observer.current.observe({ type: "navigation", buffered: true });
     } catch {
       console.warn("PerformanceObserver not supported");
     }
