@@ -87,7 +87,10 @@ export function usePerformance() {
               }
 
               // CLS is the largest session value
-              metrics.current.cls = Math.max(...sessions.map((s) => s.value));
+              metrics.current.cls =
+                sessions.length > 0
+                  ? Math.max(...sessions.map((s) => s.value))
+                  : 0;
               console.log("CLS:", metrics.current.cls);
               break;
             }
