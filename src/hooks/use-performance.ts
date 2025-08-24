@@ -106,14 +106,25 @@ export function usePerformance() {
       });
 
       // Observe each entry type with buffering to capture early (already fired) entries
-      observer.current.observe({ type: "paint", buffered: true });
-      observer.current.observe({
-        type: "largest-contentful-paint",
-        buffered: true,
-      });
-      observer.current.observe({ type: "first-input", buffered: true });
-      observer.current.observe({ type: "layout-shift", buffered: true });
-      observer.current.observe({ type: "navigation", buffered: true });
+      // Use try-catch for each type to handle partial browser support gracefully
+      try {
+        observer.current!.observe({ type: "paint", buffered: true });
+      } catch {}
+      try {
+        observer.current!.observe({
+          type: "largest-contentful-paint",
+          buffered: true,
+        });
+      } catch {}
+      try {
+        observer.current!.observe({ type: "first-input", buffered: true });
+      } catch {}
+      try {
+        observer.current!.observe({ type: "layout-shift", buffered: true });
+      } catch {}
+      try {
+        observer.current!.observe({ type: "navigation", buffered: true });
+      } catch {}
     } catch {
       console.warn("PerformanceObserver not supported");
     }
