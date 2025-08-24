@@ -10,6 +10,12 @@ interface PerformanceMetrics {
   ttfb: number | null;
 }
 
+// LayoutShift interface for proper CLS calculation
+interface LayoutShift extends PerformanceEntry {
+  value: number;
+  hadRecentInput: boolean;
+}
+
 export function usePerformance() {
   const metrics = useRef<PerformanceMetrics>({
     fcp: null,
@@ -20,6 +26,10 @@ export function usePerformance() {
   });
 
   const observer = useRef<PerformanceObserver | null>(null);
+  // Track CLS sessions to compute the largest window (gap > 1s or window > 5s)
+  const clsSessions = useRef<{ value: number; start: number; last: number }[]>(
+    []
+  );
 
   const measureMetrics = useCallback(() => {
     if (!("PerformanceObserver" in window)) return;
@@ -39,7 +49,7 @@ export function usePerformance() {
               metrics.current.lcp = entry.startTime;
               console.log("LCP:", entry.startTime);
               break;
-            case "first-input":
+            case "first-input": {
               const firstInputEntry = entry as PerformanceEntry & {
                 processingStart: number;
                 startTime: number;
@@ -51,15 +61,37 @@ export function usePerformance() {
                 firstInputEntry.processingStart - firstInputEntry.startTime
               );
               break;
-            case "layout-shift":
-              const layoutShiftEntry = entry as PerformanceEntry & {
-                value: number;
-              };
-              metrics.current.cls =
-                (metrics.current.cls || 0) + layoutShiftEntry.value;
+            }
+            case "layout-shift": {
+              const ls = entry as unknown as LayoutShift; // lib.dom typings
+
+              // Ignore shifts triggered by recent user input
+              if (ls.hadRecentInput) {
+                break;
+              }
+
+              const start = entry.startTime;
+              const sessions = clsSessions.current;
+              const last = sessions[sessions.length - 1];
+
+              // Start a new session if gap > 1s or session length > 5s
+              if (
+                !last ||
+                start - last.last > 1000 ||
+                start - last.start > 5000
+              ) {
+                sessions.push({ value: ls.value, start, last: start });
+              } else {
+                last.value += ls.value;
+                last.last = start;
+              }
+
+              // CLS is the largest session value
+              metrics.current.cls = Math.max(...sessions.map((s) => s.value));
               console.log("CLS:", metrics.current.cls);
               break;
-            case "navigation":
+            }
+            case "navigation": {
               const navigationEntry = entry as PerformanceEntry & {
                 responseStart: number;
                 requestStart: number;
@@ -68,6 +100,7 @@ export function usePerformance() {
                 navigationEntry.responseStart - navigationEntry.requestStart;
               console.log("TTFB:", metrics.current.ttfb);
               break;
+            }
           }
         });
       });
