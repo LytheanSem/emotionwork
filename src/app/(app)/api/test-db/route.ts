@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    console.log("Testing database connection...");
+    // console.log("Testing database connection...");
 
     const db = await getDb();
 
@@ -17,29 +17,20 @@ export async function GET() {
       );
     }
 
-    console.log("MongoDB connection:", typeof db);
-    console.log("Database name:", db.databaseName);
+    // console.log("MongoDB connection:", typeof db);
+    // console.log("Database name:", db.databaseName);
 
     // Try to use MongoDB API to find equipment
     try {
-      const equipment = await db
-        .collection("equipment")
-        .find({})
-        .limit(1)
-        .toArray();
-      const users = await db.collection("users").find({}).limit(1).toArray();
-      const categories = await db
-        .collection("categories")
-        .find({})
-        .limit(1)
-        .toArray();
+      const equipment = await db.collection("equipment").find({}).limit(1).toArray();
+      // const users = await db.collection("users").find({}).limit(1).toArray(); // Collection removed
+      const categories = await db.collection("categories").find({}).limit(1).toArray();
 
       return NextResponse.json({
         success: true,
         message: "Database connected successfully via MongoDB",
         collections: {
           equipment: equipment.length,
-          users: users.length,
           categories: categories.length,
         },
         databaseName: db.databaseName,
@@ -51,8 +42,7 @@ export async function GET() {
         {
           success: false,
           error: "MongoDB query failed",
-          mongoError:
-            mongoError instanceof Error ? mongoError.message : "Unknown error",
+          mongoError: mongoError instanceof Error ? mongoError.message : "Unknown error",
         },
         { status: 500 }
       );

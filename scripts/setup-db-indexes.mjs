@@ -12,57 +12,8 @@ async function setupDatabaseIndexes() {
 
     const db = client.db();
 
-    // Users collection indexes
-    console.log("\n👥 Setting up Users collection indexes...");
-    const usersCollection = db.collection("users");
-
-    try {
-      // Create unique index on email
-      await usersCollection.createIndex({ email: 1 }, { unique: true });
-      console.log("   ✅ Created unique index on email");
-    } catch (error) {
-      if (error.code === 86) {
-        console.log("   ℹ️  Email index already exists");
-      } else {
-        console.log("   ❌ Error creating email index:", error.message);
-      }
-    }
-
-    try {
-      // Create unique index on username
-      await usersCollection.createIndex({ username: 1 }, { unique: true });
-      console.log("   ✅ Created unique index on username");
-    } catch (error) {
-      if (error.code === 86) {
-        console.log("   ℹ️  Username index already exists");
-      } else {
-        console.log("   ❌ Error creating username index:", error.message);
-      }
-    }
-
-    try {
-      // Create index on providerId for OAuth
-      await usersCollection.createIndex({ providerId: 1 });
-      console.log("   ✅ Created index on providerId");
-    } catch (error) {
-      if (error.code === 86) {
-        console.log("   ℹ️  ProviderId index already exists");
-      } else {
-        console.log("   ❌ Error creating providerId index:", error.message);
-      }
-    }
-
-    try {
-      // Create index on role for admin queries
-      await usersCollection.createIndex({ role: 1 });
-      console.log("   ✅ Created index on role");
-    } catch (error) {
-      if (error.code === 86) {
-        console.log("   ℹ️  Role index already exists");
-      } else {
-        console.log("   ❌ Error creating role index:", error.message);
-      }
-    }
+    // Users collection indexes - REMOVED (using adminUsers and regularUsers instead)
+    console.log("\n👥 Users collection indexes skipped (using adminUsers and regularUsers)");
 
     // Categories collection indexes
     console.log("\n📂 Setting up Categories collection indexes...");
@@ -132,39 +83,14 @@ async function setupDatabaseIndexes() {
       }
     }
 
-    // Media collection indexes
-    console.log("\n🖼️  Setting up Media collection indexes...");
-    const mediaCollection = db.collection("media");
-
-    try {
-      // Create unique index on filename
-      await mediaCollection.createIndex({ filename: 1 }, { unique: true });
-      console.log("   ✅ Created unique index on filename");
-    } catch (error) {
-      if (error.code === 86) {
-        console.log("   ℹ️  Filename index already exists");
-      } else {
-        console.log("   ❌ Error creating filename index:", error.message);
-      }
-    }
-
-    try {
-      // Create index on originalName for search
-      await mediaCollection.createIndex({ originalName: 1 });
-      console.log("   ✅ Created index on originalName");
-    } catch (error) {
-      if (error.code === 86) {
-        console.log("   ℹ️  OriginalName index already exists");
-      } else {
-        console.log("   ❌ Error creating originalName index:", error.message);
-      }
-    }
+    // Media collection indexes - REMOVED (not needed)
+    console.log("\n🖼️  Media collection indexes skipped (not needed)");
 
     console.log("\n🎉 Database indexes setup completed!");
 
     // Show all indexes
     console.log("\n📊 Current indexes:");
-    const collections = ["users", "categories", "equipment", "media"];
+    const collections = ["categories", "equipment"];
 
     for (const collectionName of collections) {
       const collection = db.collection(collectionName);

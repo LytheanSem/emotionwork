@@ -22,9 +22,7 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
       asChild
       variant="outline"
       className={`bg-transparent hover:bg-transparent rounded-full hover:border-primary border-transparent px-3.5 text-lg ${
-        isActive
-          ? "bg-blue-400 text-white hover:bg-blue-500 hover:text-white"
-          : ""
+        isActive ? "bg-blue-400 text-white hover:bg-blue-500 hover:text-white" : ""
       }`}
     >
       <Link href={href}>{children}</Link>
@@ -63,7 +61,7 @@ export function Navbar() {
     try {
       await signOut({ callbackUrl: "/" });
       toast.success("Logged out successfully");
-      console.log("👋 See you later! You've been logged out.");
+      // console.log("👋 See you later! You've been logged out.");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Logout failed");
@@ -102,11 +100,7 @@ export function Navbar() {
           <Logo width={80} height={48} />
         </Link>
 
-        <NavbarSidebar
-          items={navbarItems}
-          open={isSidebarOpen}
-          onOpenChange={setIsSidebarOpen}
-        />
+        <NavbarSidebar items={navbarItems} open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
 
         <div className="items-center gap-4 hidden lg:flex">
           {navbarItems.map((item) => (
@@ -124,14 +118,8 @@ export function Navbar() {
         {isAuthenticated ? (
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end">
-              <span className="text-sm text-gray-700">
-                Welcome, {displayName}
-              </span>
-              {isAdmin && (
-                <span className="text-xs text-orange-600 font-medium">
-                  Admin User
-                </span>
-              )}
+              <span className="text-sm text-gray-700">Welcome, {displayName}</span>
+              {isAdmin && <span className="text-xs text-orange-600 font-medium">Admin User</span>}
             </div>
             <Button
               onClick={handleLogout}
@@ -144,18 +132,10 @@ export function Navbar() {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Button
-              onClick={() => router.push("/sign-in")}
-              variant="outline"
-              size="sm"
-            >
+            <Button onClick={() => router.push("/sign-in")} variant="outline" size="sm">
               Log in
             </Button>
-            <Button
-              onClick={() => router.push("/sign-up")}
-              size="sm"
-              className="bg-black text-white hover:bg-gray-800"
-            >
+            <Button onClick={() => router.push("/sign-up")} size="sm" className="bg-black text-white hover:bg-gray-800">
               Sign up
             </Button>
           </div>
@@ -168,18 +148,8 @@ export function Navbar() {
             className="size-12 border-transparent bg-white"
             onClick={() => setIsSidebarOpen(true)}
           >
-            <svg
-              className="size-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
+            <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </Button>
         </div>
