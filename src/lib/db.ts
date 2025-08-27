@@ -105,7 +105,12 @@ export interface Equipment {
   status: "available" | "in_use" | "maintenance";
   quantity: number;
   categoryId?: string;
+  // Legacy image field (for backward compatibility)
   image?: string | File;
+  // Cloudinary fields
+  imageUrl?: string;
+  imagePublicId?: string;
+  imageResourceType?: string;
   description?: string;
   createdAt: Date;
   updatedAt: Date;

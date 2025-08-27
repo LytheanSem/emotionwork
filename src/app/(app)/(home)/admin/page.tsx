@@ -20,6 +20,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import EquipmentMediaUpload from "@/components/equipment-media-upload";
 
 interface User {
   id: string;
@@ -47,7 +48,10 @@ interface Equipment {
   quantity: number;
   category?: Category;
   categoryId?: string;
-  image?: string | File;
+  // Cloudinary fields
+  imageUrl?: string;
+  imagePublicId?: string;
+  imageResourceType?: string;
   description?: string;
 }
 
@@ -79,7 +83,9 @@ export default function AdminPanel() {
     status: "available" as "available" | "in_use" | "maintenance",
     quantity: 1,
     categoryId: "",
-    image: null as File | null,
+    imageUrl: "",
+    imagePublicId: "",
+    imageResourceType: "image",
     description: "",
   });
 
@@ -228,29 +234,29 @@ export default function AdminPanel() {
 
   // Create equipment
   const createEquipment = async () => {
-    const { name, status, quantity, brand, categoryId, image, description } =
+    const { name, status, quantity, brand, categoryId, imageUrl, imagePublicId, imageResourceType, description } =
       newEquipment;
     if (!name.trim() || quantity < 1) {
       toast.error("Name and quantity are required");
       return;
     }
     try {
-      const formData = new FormData();
-      formData.append("name", name);
-      formData.append("status", status);
-      formData.append("quantity", quantity.toString());
-      if (brand) {
-        formData.append("brand", brand);
-      }
-      formData.append("categoryId", categoryId || "");
-      if (image) {
-        formData.append("image", image);
-      }
-      formData.append("description", description || "");
+      const equipmentData = {
+        name,
+        status,
+        quantity,
+        brand: brand || "",
+        categoryId: categoryId || "",
+        description: description || "",
+        imageUrl: imageUrl || "",
+        imagePublicId: imagePublicId || "",
+        imageResourceType: imageResourceType || "image",
+      };
 
       const res = await fetch("/api/admin/equipment", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(equipmentData),
       });
       if (res.ok) {
         toast.success("Equipment created");
@@ -261,7 +267,9 @@ export default function AdminPanel() {
           status: "available",
           quantity: 1,
           categoryId: "",
-          image: null,
+          imageUrl: "",
+          imagePublicId: "",
+          imageResourceType: "image",
           description: "",
         });
         loadAdminData();
@@ -442,20 +450,22 @@ export default function AdminPanel() {
     if (!editingEquipment) return;
 
     try {
-      const formData = new FormData();
-      formData.append("name", editingEquipment.name);
-      formData.append("brand", editingEquipment.brand || "");
-      formData.append("status", editingEquipment.status);
-      formData.append("quantity", editingEquipment.quantity.toString());
-      formData.append("categoryId", editingEquipment.categoryId || "");
-      if (editingEquipment.image instanceof File) {
-        formData.append("image", editingEquipment.image);
-      }
-      formData.append("description", editingEquipment.description || "");
+      const equipmentData = {
+        name: editingEquipment.name,
+        brand: editingEquipment.brand || "",
+        status: editingEquipment.status,
+        quantity: editingEquipment.quantity,
+        categoryId: editingEquipment.categoryId || "",
+        description: editingEquipment.description || "",
+        imageUrl: editingEquipment.imageUrl || "",
+        imagePublicId: editingEquipment.imagePublicId || "",
+        imageResourceType: editingEquipment.imageResourceType || "image",
+      };
 
       const res = await fetch(`/api/admin/equipment/${editingEquipment.id}`, {
         method: "PUT",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(equipmentData),
       });
 
       if (res.ok) {
@@ -843,27 +853,15 @@ export default function AdminPanel() {
                       className="flex items-center justify-between p-4 border rounded-lg"
                     >
                       <div className="flex items-center space-x-4">
-                        {item.image ? (
-                          // Check if image is a valid URL or path
-                          typeof item.image === "string" &&
-                          (item.image.startsWith("http") ||
-                          item.image.startsWith("/") ? (
-                            <Image
-                              src={item.image}
-                              alt={item.name}
-                              width={64}
-                              height={64}
-                              className="object-cover rounded-lg"
-                              loading="lazy"
-                            />
-                          ) : (
-                            // Show placeholder for ObjectIds or invalid paths
-                            <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                              <span className="text-xs text-gray-500">
-                                Image
-                              </span>
-                            </div>
-                          ))
+                        {item.imageUrl ? (
+                          <Image
+                            src={item.imageUrl}
+                            alt={item.name}
+                            width={64}
+                            height={64}
+                            className="object-cover rounded-lg"
+                            loading="lazy"
+                          />
                         ) : (
                           // No image provided
                           <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -1034,7 +1032,6 @@ export default function AdminPanel() {
             createEquipment();
           }}
           className="space-y-4"
-          encType="multipart/form-data"
         >
           <div>
             <Label htmlFor="eqName">Name</Label>
@@ -1119,23 +1116,36 @@ export default function AdminPanel() {
               </select>
             </div>
           </div>
-          <div>
-            <Label htmlFor="eqImage">Equipment Image</Label>
-            <Input
-              id="eqImage"
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setNewEquipment({ ...newEquipment, image: file });
-                }
-              }}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Upload an image from your local drive (JPG, PNG, GIF)
-            </p>
-          </div>
+          <EquipmentMediaUpload
+            onUploadComplete={(result) => {
+              setNewEquipment({
+                ...newEquipment,
+                imageUrl: result.secure_url,
+                imagePublicId: result.public_id,
+                imageResourceType: result.resource_type,
+              });
+            }}
+            onUploadError={(error) => {
+              toast.error(error);
+            }}
+            onRemove={() => {
+              setNewEquipment({
+                ...newEquipment,
+                imageUrl: "",
+                imagePublicId: "",
+                imageResourceType: "image",
+              });
+            }}
+            currentMedia={
+              newEquipment.imageUrl
+                ? {
+                    url: newEquipment.imageUrl,
+                    public_id: newEquipment.imagePublicId,
+                    resource_type: newEquipment.imageResourceType as "image" | "video",
+                  }
+                : undefined
+            }
+          />
           <div>
             <Label htmlFor="eqDesc">Description</Label>
             <Textarea
@@ -1375,32 +1385,36 @@ export default function AdminPanel() {
                 </select>
               </div>
             </div>
-            <div>
-              <Label htmlFor="editEqImage">Equipment Image</Label>
-              <Input
-                id="editEqImage"
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    setEditingEquipment({
-                      ...editingEquipment,
-                      image: file,
-                    });
-                  }
-                }}
-              />
-              {typeof editingEquipment.image === "string" &&
-                editingEquipment.image && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Current image: {editingEquipment.image}
-                  </p>
-                )}
-              <p className="text-xs text-gray-500 mt-1">
-                Upload a new image to replace the current one (JPG, PNG, GIF)
-              </p>
-            </div>
+            <EquipmentMediaUpload
+              onUploadComplete={(result) => {
+                setEditingEquipment({
+                  ...editingEquipment,
+                  imageUrl: result.secure_url,
+                  imagePublicId: result.public_id,
+                  imageResourceType: result.resource_type,
+                });
+              }}
+              onUploadError={(error) => {
+                toast.error(error);
+              }}
+              onRemove={() => {
+                setEditingEquipment({
+                  ...editingEquipment,
+                  imageUrl: "",
+                  imagePublicId: "",
+                  imageResourceType: "image",
+                });
+              }}
+              currentMedia={
+                editingEquipment.imageUrl
+                  ? {
+                      url: editingEquipment.imageUrl,
+                      public_id: editingEquipment.imagePublicId || "",
+                      resource_type: editingEquipment.imageResourceType as "image" | "video",
+                    }
+                  : undefined
+              }
+            />
             <div>
               <Label htmlFor="editEqDesc">Description</Label>
               <Textarea

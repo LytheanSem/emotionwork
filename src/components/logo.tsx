@@ -7,15 +7,18 @@ interface LogoProps {
 }
 
 export function Logo({ className = "", width = 200, height = 120 }: LogoProps) {
+  const combinedClassName = className ? `flex items-center ${className}`.trim() : "flex items-center";
+  
   return (
-    <div className={`flex items-center ${className}`}>
+    <div className={combinedClassName}>
       <Image
         src="/LOGO.JPG"
         alt="Visual Emotion Work"
         width={width}
         height={height}
         className="h-auto w-auto object-contain"
-        priority
+        priority={true}
+        unoptimized={false}
       />
     </div>
   );

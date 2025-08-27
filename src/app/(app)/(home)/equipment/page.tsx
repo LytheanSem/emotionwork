@@ -3,9 +3,17 @@
 import { EquipmentGrid } from "@/components/equipment-grid";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 function EquipmentPageContent() {
+  const queryClient = useQueryClient();
+
+  // Clear cache on component mount to ensure fresh data
+  useEffect(() => {
+    queryClient.removeQueries({ queryKey: ["equipment", "direct"] });
+  }, [queryClient]);
+
   // Use direct API instead of tRPC for now
   const {
     data: equipmentData,
@@ -22,6 +30,7 @@ function EquipmentPageContent() {
     },
     retry: 3,
     refetchOnWindowFocus: false,
+    staleTime: 0, // Always consider data stale
   });
 
   // Show loading state

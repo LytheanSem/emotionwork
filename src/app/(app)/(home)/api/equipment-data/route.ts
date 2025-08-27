@@ -41,7 +41,10 @@ export async function GET() {
         status: item.status,
         quantity: item.quantity,
         categoryId: item.categoryId,
-        image: item.image,
+        // Cloudinary fields
+        imageUrl: item.imageUrl || null,
+        imagePublicId: item.imagePublicId || null,
+        imageResourceType: item.imageResourceType || null,
         description: item.description,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,

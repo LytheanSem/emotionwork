@@ -1,9 +1,7 @@
 import { authOptions } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { mkdir, writeFile } from "fs/promises";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
-import { join } from "path";
 
 export async function GET() {
   try {
@@ -43,7 +41,10 @@ export async function GET() {
           status: item.status,
           quantity: item.quantity,
           categoryId: item.categoryId,
-          image: item.image,
+          // Cloudinary fields
+          imageUrl: item.imageUrl || null,
+          imagePublicId: item.imagePublicId || null,
+          imageResourceType: item.imageResourceType || null,
           description: item.description,
           category: category
             ? {
@@ -85,14 +86,19 @@ export async function POST(request: Request) {
       );
     }
 
-    const formData = await request.formData();
-    const name = formData.get("name") as string;
-    const brand = formData.get("brand") as string;
-    const status = formData.get("status") as string;
-    const quantity = parseInt(formData.get("quantity") as string);
-    const categoryId = formData.get("categoryId") as string;
-    const description = formData.get("description") as string;
-    const imageFile = formData.get("image") as File | null;
+    // Parse JSON request
+    const jsonData = await request.json();
+    const {
+      name,
+      brand = "",
+      status,
+      quantity,
+      categoryId = "",
+      description = "",
+      imageUrl = "",
+      imagePublicId = "",
+      imageResourceType = "image",
+    } = jsonData;
 
     if (!name || !status || !quantity) {
       return NextResponse.json(
@@ -123,71 +129,17 @@ export async function POST(request: Request) {
       );
     }
 
-    let imagePath = null;
-
-    // Handle image upload if provided
-    if (imageFile) {
-      try {
-        // Validate file type
-        const allowedTypes = [
-          "image/jpeg",
-          "image/jpg",
-          "image/png",
-          "image/gif",
-          "image/webp",
-        ];
-        if (!allowedTypes.includes(imageFile.type)) {
-          return NextResponse.json(
-            {
-              error:
-                "Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.",
-            },
-            { status: 400 }
-          );
-        }
-
-        // Validate file size (5MB limit)
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        if (imageFile.size > maxSize) {
-          return NextResponse.json(
-            { error: "File too large. Maximum size is 5MB." },
-            { status: 400 }
-          );
-        }
-
-        // Create uploads directory if it doesn't exist
-        const uploadsDir = join(process.cwd(), "public", "uploads");
-        await mkdir(uploadsDir, { recursive: true });
-
-        // Generate unique filename
-        const timestamp = Date.now();
-        const fileExtension = imageFile.name.split(".").pop();
-        const filename = `equipment_${timestamp}.${fileExtension}`;
-        const filePath = join(uploadsDir, filename);
-
-        // Convert File to Buffer and save
-        const bytes = await imageFile.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        await writeFile(filePath, buffer);
-
-        imagePath = `/uploads/${filename}`;
-      } catch (error) {
-        console.error("Error saving image:", error);
-        return NextResponse.json(
-          { error: "Failed to save image" },
-          { status: 500 }
-        );
-      }
-    }
-
     const newEquipment = {
       name,
-      brand: brand || "",
+      brand,
       status,
       quantity,
-      categoryId: categoryId || null,
-      image: imagePath,
-      description: description || "",
+      categoryId,
+      // Cloudinary fields
+      imageUrl: imageUrl || null,
+      imagePublicId: imagePublicId || null,
+      imageResourceType: imageResourceType || "image",
+      description,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
