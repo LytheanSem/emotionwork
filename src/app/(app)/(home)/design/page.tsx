@@ -13,6 +13,7 @@ import { FullGrid } from '@/app/(app)/(home)/design/components/FullGrid'
 import { EquipmentLibrary } from '@/app/(app)/(home)/design/components/EquipmentLibrary'
 import ControlsPanel from '@/app/(app)/(home)/design/components/ControlsPanel'
 import { loadTemplate } from '@/app/(app)/(home)/design/templates/stageTemplates'
+import { shouldHandleGlobalShortcut } from '@/lib/keyboard-utils'
 
 export default function StageDesigner() {
   const {
@@ -65,6 +66,11 @@ export default function StageDesigner() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedEquipmentId) return
+
+      // Check if user is typing in a text input - if so, don't handle shortcuts
+      if (!shouldHandleGlobalShortcut()) {
+        return
+      }
 
       switch (e.key) {
         case 'ArrowUp':
@@ -174,48 +180,81 @@ export default function StageDesigner() {
         let dataUrl: string
 
         if (format === 'pdf') {
-          // Create PDF with design information
+          // Create PDF with design information and embedded canvas snapshot
           const pdfDoc = await PDFDocument.create()
-          const page = pdfDoc.addPage([600, 400])
+          const page = pdfDoc.addPage([800, 600])
           const { height } = page.getSize()
           
+          // Embed the canvas snapshot as an image
+          try {
+            // Convert canvas to blob first to avoid btoa OOM
+            const canvasBlob = await new Promise<Blob>((resolve, reject) => {
+              canvas.toBlob((blob) => {
+                if (blob) resolve(blob)
+                else reject(new Error('Failed to convert canvas to blob'))
+              }, 'image/png', 0.9)
+            })
+            
+            // Convert blob to array buffer
+            const arrayBuffer = await canvasBlob.arrayBuffer()
+            const uint8Array = new Uint8Array(arrayBuffer)
+            
+            // Embed the image in PDF
+            const pngImage = await pdfDoc.embedPng(uint8Array)
+            const imageDims = pngImage.scale(0.6) // Scale to fit page
+            
+            // Draw the canvas snapshot
+            page.drawImage(pngImage, {
+              x: 50,
+              y: height - imageDims.height - 50,
+              width: imageDims.width,
+              height: imageDims.height,
+            })
+          } catch (imageError) {
+            console.warn('Failed to embed canvas image, using text only:', imageError)
+          }
+          
+          // Add design information
           page.drawText(`Stage Design: ${designName}`, {
             x: 50,
-            y: height - 50,
+            y: height - 30,
             size: 20,
             color: rgb(0, 0, 0),
           })
           
           page.drawText(`Equipment Count: ${equipment.length}`, {
             x: 50,
-            y: height - 80,
+            y: 50,
             size: 12,
             color: rgb(0, 0, 0),
           })
           
           page.drawText(`Venue Dimensions: ${venueDimensions.width}m x ${venueDimensions.depth}m x ${venueDimensions.height}m`, {
             x: 50,
-            y: height - 100,
+            y: 30,
             size: 12,
             color: rgb(0, 0, 0),
           })
           
-          // Add equipment list
-          let yPos = height - 130
-          equipment.forEach((item, index) => {
-            if (yPos > 50 && index < 20) {
+          // Add equipment list (if there's space)
+          let yPos = 10
+          equipment.slice(0, 10).forEach((item, index) => {
+            if (yPos > 10) {
               page.drawText(`${index + 1}. ${item.type} at (${item.position[0].toFixed(1)}, ${item.position[1].toFixed(1)}, ${item.position[2].toFixed(1)})`, {
                 x: 50,
                 y: yPos,
-                size: 10,
+                size: 8,
                 color: rgb(0, 0, 0),
               })
-              yPos -= 15
+              yPos -= 12
             }
           })
           
           const pdfBytes = await pdfDoc.save()
-          dataUrl = `data:application/pdf;base64,${btoa(String.fromCharCode(...pdfBytes))}`
+          
+          // Use Blob and object URL instead of btoa to avoid OOM
+          const pdfBlob = new Blob([new Uint8Array(pdfBytes)], { type: 'application/pdf' })
+          dataUrl = URL.createObjectURL(pdfBlob)
         } else if (format === 'svg') {
           // Create SVG representation
           const svgContent = `
@@ -248,8 +287,14 @@ export default function StageDesigner() {
           `
           dataUrl = URL.createObjectURL(new Blob([svgContent], { type: 'image/svg+xml' }))
         } else {
-          // For PNG/JPEG, capture the canvas
-          dataUrl = canvas.toDataURL(`image/${format === 'jpeg' ? 'jpeg' : format}`, 1.0)
+          // For PNG/JPEG, use toBlob to avoid memory issues with large canvases
+          const canvasBlob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob((blob) => {
+              if (blob) resolve(blob)
+              else reject(new Error(`Failed to convert canvas to ${format}`))
+            }, `image/${format === 'jpeg' ? 'jpeg' : format}`, 0.9)
+          })
+          dataUrl = URL.createObjectURL(canvasBlob)
         }
 
         const fileName = `${designName.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.${format}`
@@ -259,8 +304,10 @@ export default function StageDesigner() {
         link.click()
         document.body.removeChild(link)
 
-        // Clean up the URL after a delay
-        setTimeout(() => URL.revokeObjectURL(dataUrl), 1000)
+        // Clean up the object URL after a delay (only for object URLs, not data URLs)
+        if (dataUrl.startsWith('blob:')) {
+          setTimeout(() => URL.revokeObjectURL(dataUrl), 1000)
+        }
         
         // Show success message
         alert(`Design exported successfully as ${fileName}`)
