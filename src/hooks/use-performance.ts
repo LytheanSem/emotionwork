@@ -42,12 +42,10 @@ export function usePerformance() {
             case "paint":
               if (entry.name === "first-contentful-paint") {
                 metrics.current.fcp = entry.startTime;
-                console.log("FCP:", entry.startTime);
               }
               break;
             case "largest-contentful-paint":
               metrics.current.lcp = entry.startTime;
-              console.log("LCP:", entry.startTime);
               break;
             case "first-input": {
               const firstInputEntry = entry as PerformanceEntry & {
@@ -56,10 +54,6 @@ export function usePerformance() {
               };
               metrics.current.fid =
                 firstInputEntry.processingStart - firstInputEntry.startTime;
-              console.log(
-                "FID:",
-                firstInputEntry.processingStart - firstInputEntry.startTime
-              );
               break;
             }
             case "layout-shift": {
@@ -91,7 +85,6 @@ export function usePerformance() {
                 sessions.length > 0
                   ? Math.max(...sessions.map((s) => s.value))
                   : 0;
-              console.log("CLS:", metrics.current.cls);
               break;
             }
             case "navigation": {
@@ -101,7 +94,6 @@ export function usePerformance() {
               };
               metrics.current.ttfb =
                 navigationEntry.responseStart - navigationEntry.requestStart;
-              console.log("TTFB:", metrics.current.ttfb);
               break;
             }
           }
@@ -138,13 +130,8 @@ export function usePerformance() {
   }, []);
 
   const logMetrics = useCallback(() => {
-    console.group("Performance Metrics");
-    console.log("FCP:", metrics.current.fcp);
-    console.log("LCP:", metrics.current.lcp);
-    console.log("FID:", metrics.current.fid);
-    console.log("CLS:", metrics.current.cls);
-    console.log("TTFB:", metrics.current.ttfb);
-    console.groupEnd();
+    // Performance metrics are available in metrics.current
+    // Logging removed for production
   }, []);
 
   useEffect(() => {

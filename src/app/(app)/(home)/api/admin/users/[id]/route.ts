@@ -26,8 +26,6 @@ export async function PUT(
 
     const body = await request.json();
     const { username, email, role } = body;
-    console.log(`PUT request for user ID: ${id}`);
-    console.log(`Updating user with data:`, { username, email, role });
 
     if (!username || !email || !role) {
       return NextResponse.json(
@@ -69,14 +67,6 @@ export async function PUT(
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-    
-    console.log(`Found user in collection: ${collection}`);
-    console.log(`Current user data:`, { 
-      id: user._id, 
-      username: user.username, 
-      email: user.email, 
-      role: user.role 
-    });
 
     // Check if email already exists in any collection (excluding current user)
     const existingAdminUser = await db
@@ -120,7 +110,6 @@ export async function PUT(
     
     if (currentRole !== newRole) {
       // Role changed - need to move user between collections
-      console.log(`Role change: ${currentRole} -> ${newRole}, moving from ${collection}`);
       
       let targetCollection: string;
       if (newRole === "admin") {
@@ -180,8 +169,6 @@ export async function PUT(
         };
       }
 
-      console.log(`Preparing to insert into ${targetCollection}:`, userData);
-
       try {
         // Check if the current user is already in the target collection
         const currentUserInTarget = await db.collection(targetCollection).findOne({ 
@@ -190,7 +177,6 @@ export async function PUT(
         
         if (currentUserInTarget) {
           // User is already in target collection, just update the role
-          console.log(`User is already in target collection ${targetCollection}, updating role only`);
           const updateResult = await db.collection(targetCollection).updateOne(
             { _id: new ObjectId(id) },
             { $set: { role: newRole, updatedAt: new Date() } }
@@ -214,7 +200,6 @@ export async function PUT(
         
         if (existingUserInTarget) {
           // Another user with the same email exists in target collection
-          console.log(`Another user with email ${email} already exists in ${targetCollection}`);
           return NextResponse.json({ 
             error: `Cannot change role: Another user with email ${email} already exists in the ${newRole} role` 
           }, { status: 400 });
@@ -224,11 +209,8 @@ export async function PUT(
         const insertResult = await db.collection(targetCollection).insertOne(userData);
         
         if (insertResult.insertedId) {
-          console.log(`Successfully inserted into ${targetCollection}, now deleting from ${collection}`);
-          
           // Delete user from old collection
-          const deleteResult = await db.collection(collection).deleteOne({ _id: new ObjectId(id) });
-          console.log(`Delete result:`, deleteResult);
+          await db.collection(collection).deleteOne({ _id: new ObjectId(id) });
           
           return NextResponse.json({
             success: true,

@@ -221,8 +221,7 @@ export function StageModel({
     { base: color, surface: color, edge: color } : 
     (stageColors[Math.abs((id || 0)) % stageColors.length] || stageColors[0])
   
-  // Debug logging
-  console.log('StageModel colors:', colors, 'id:', id, 'color:', color)
+  // Debug logging removed for production
   
   // Ensure colors object has all required properties with absolute fallbacks
   const safeColors = {
@@ -230,8 +229,6 @@ export function StageModel({
     surface: (colors && colors.surface) ? colors.surface : '#1a1a1a', 
     edge: (colors && colors.edge) ? colors.edge : '#444'
   }
-  
-  console.log('StageModel safeColors:', safeColors)
   
   // Final safety check - ensure we have valid colors
   if (!safeColors || !safeColors.base) {
