@@ -29,9 +29,15 @@ export async function GET() {
       );
     }
 
-    // Get users from both collections
+    // Get users from all collections
     const adminUsers = await db
       .collection("adminUsers")
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    const managerUsers = await db
+      .collection("managerUsers")
       .find({})
       .sort({ createdAt: -1 })
       .toArray();
@@ -48,17 +54,27 @@ export async function GET() {
         id: user._id?.toString(),
         username: user.username,
         email: user.email,
-        role: "admin" as const,
+        role: user.role || "admin", // Use actual role from database
         image: user.image,
         provider: user.provider,
         createdAt: user.createdAt,
         collection: "adminUsers",
       })),
+      ...managerUsers.map((user) => ({
+        id: user._id?.toString(),
+        username: user.username,
+        email: user.email,
+        role: user.role || "manager", // Use actual role from database
+        image: user.image,
+        provider: user.provider,
+        createdAt: user.createdAt,
+        collection: "managerUsers",
+      })),
       ...regularUsers.map((user) => ({
         id: user._id?.toString(),
         username: user.username,
         email: user.email,
-        role: "user" as const,
+        role: user.role || "user", // Use actual role from database
         image: user.image,
         provider: user.provider,
         createdAt: user.createdAt,
@@ -142,24 +158,27 @@ export async function POST(request: Request) {
     }
 
     // Validate role
-    if (!["user", "admin"].includes(role)) {
+    if (!["user", "manager", "admin"].includes(role)) {
       return NextResponse.json(
         {
-          error: "Role must be either 'user' or 'admin'",
+          error: "Role must be either 'user', 'manager', or 'admin'",
         },
         { status: 400 }
       );
     }
 
-    // Check if email already exists in either collection
+    // Check if email already exists in any collection
     const existingAdminUser = await db
       .collection("adminUsers")
+      .findOne({ email });
+    const existingManagerUser = await db
+      .collection("managerUsers")
       .findOne({ email });
     const existingRegularUser = await db
       .collection("regularUsers")
       .findOne({ email });
 
-    if (existingAdminUser || existingRegularUser) {
+    if (existingAdminUser || existingManagerUser || existingRegularUser) {
       return NextResponse.json(
         {
           error: "User with this email already exists",
@@ -168,15 +187,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if username already exists in either collection
+    // Check if username already exists in any collection
     const existingAdminUsername = await db
       .collection("adminUsers")
+      .findOne({ username });
+    const existingManagerUsername = await db
+      .collection("managerUsers")
       .findOne({ username });
     const existingRegularUsername = await db
       .collection("regularUsers")
       .findOne({ username });
 
-    if (existingAdminUsername || existingRegularUsername) {
+    if (existingAdminUsername || existingManagerUsername || existingRegularUsername) {
       return NextResponse.json(
         {
           error: "Username already taken",
@@ -209,6 +231,30 @@ export async function POST(request: Request) {
         user: {
           id: result.insertedId.toString(),
           ...newAdminUser,
+        },
+      });
+    } else if (role === "manager") {
+      // Create manager user
+      const newManagerUser = {
+        username,
+        email,
+        role: "manager",
+        image: null,
+        provider: "local",
+        providerId: `local_${Date.now()}`,
+        permissions: ["read", "write", "upload"],
+        lastLogin: now,
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      const result = await db.collection("managerUsers").insertOne(newManagerUser);
+
+      return NextResponse.json({
+        success: true,
+        user: {
+          id: result.insertedId.toString(),
+          ...newManagerUser,
         },
       });
     } else {

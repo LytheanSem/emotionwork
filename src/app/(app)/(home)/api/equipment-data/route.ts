@@ -15,25 +15,53 @@ export async function GET() {
       );
     }
 
-    // Fetch equipment using MongoDB
+    // Fetch equipment using MongoDB (excluding stage-related equipment)
     const equipment = await db
       .collection("equipment")
-      .find({})
-      .sort({ name: 1 })
+      .aggregate([
+        {
+          $lookup: {
+            from: "categories",
+            localField: "categoryId",
+            foreignField: "_id",
+            as: "category"
+          }
+        },
+        {
+          $unwind: {
+            path: "$category",
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $match: {
+            $or: [
+              { categoryId: null },
+              { "category.name": { $not: { $regex: /^stage/i } } }
+            ]
+          }
+        },
+        {
+          $sort: { name: 1 }
+        }
+      ])
       .toArray();
 
-    // Fetch categories
+    // Fetch categories (excluding stage-related categories)
     const categories = await db
       .collection("categories")
-      .find({})
+      .find({
+        name: { 
+          $not: { 
+            $regex: /^stage/i 
+          } 
+        }
+      })
       .sort({ name: 1 })
       .toArray();
 
-    // Populate category information for equipment
+    // Process equipment data (category info already included from aggregation)
     const equipmentWithCategories = equipment.map((item) => {
-      const category = categories.find(
-        (cat) => cat._id?.toString() === item.categoryId?.toString()
-      );
       return {
         id: item._id?.toString(),
         name: item.name,
@@ -41,16 +69,22 @@ export async function GET() {
         status: item.status,
         quantity: item.quantity,
         categoryId: item.categoryId,
-        image: item.image,
+        // Cloudinary fields
+        imageUrl: item.imageUrl || null,
+        imagePublicId: item.imagePublicId || null,
+        imageResourceType: item.imageResourceType || null,
         description: item.description,
+        // New fields
+        length: item.length || null,
+        price: item.price || null,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
-        category: category
+        category: item.category
           ? {
-              id: category._id?.toString(),
-              name: category.name,
-              slug: category.slug,
-              description: category.description,
+              id: item.category._id?.toString(),
+              name: item.category.name,
+              slug: item.category.slug,
+              description: item.category.description,
             }
           : null,
       };

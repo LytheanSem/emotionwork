@@ -1,10 +1,8 @@
 import { authOptions } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { mkdir, writeFile } from "fs/promises";
 import { ObjectId } from "mongodb";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { join } from "path";
 
 export async function PUT(
   request: NextRequest,
@@ -14,7 +12,7 @@ export async function PUT(
     const { id } = await params;
 
     const session = await getServerSession(authOptions);
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.isAdmin && !session?.user?.isManager) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -26,14 +24,21 @@ export async function PUT(
       );
     }
 
-    const formData = await request.formData();
-    const name = formData.get("name") as string;
-    const brand = formData.get("brand") as string;
-    const status = formData.get("status") as string;
-    const quantity = parseInt(formData.get("quantity") as string);
-    const categoryId = formData.get("categoryId") as string;
-    const description = formData.get("description") as string;
-    const imageFile = formData.get("image") as File | null;
+    // Parse JSON request
+    const jsonData = await request.json();
+    const {
+      name,
+      brand = "",
+      status,
+      quantity,
+      categoryId = "",
+      description = "",
+      imageUrl = "",
+      imagePublicId = "",
+      imageResourceType = "image",
+      length,
+      price,
+    } = jsonData;
 
     if (!name || !status || !quantity) {
       return NextResponse.json(
@@ -64,63 +69,6 @@ export async function PUT(
       );
     }
 
-    let imagePath = null;
-
-    // Handle image upload if provided
-    if (imageFile && imageFile.size > 0) {
-      try {
-        // Validate file type
-        const allowedTypes = [
-          "image/jpeg",
-          "image/jpg",
-          "image/png",
-          "image/gif",
-          "image/webp",
-        ];
-        if (!allowedTypes.includes(imageFile.type)) {
-          return NextResponse.json(
-            {
-              error:
-                "Invalid file type. Only JPG, PNG, GIF, and WebP images are allowed.",
-            },
-            { status: 400 }
-          );
-        }
-
-        // Validate file size (5MB limit)
-        const maxSize = 5 * 1024 * 1024; // 5MB
-        if (imageFile.size > maxSize) {
-          return NextResponse.json(
-            { error: "File too large. Maximum size is 5MB." },
-            { status: 400 }
-          );
-        }
-
-        // Create uploads directory if it doesn't exist
-        const uploadsDir = join(process.cwd(), "public", "uploads");
-        await mkdir(uploadsDir, { recursive: true });
-
-        // Generate unique filename
-        const timestamp = Date.now();
-        const fileExtension = imageFile.name.split(".").pop();
-        const filename = `equipment_${timestamp}.${fileExtension}`;
-        const filePath = join(uploadsDir, filename);
-
-        // Convert File to Buffer and save
-        const bytes = await imageFile.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        await writeFile(filePath, buffer);
-
-        imagePath = `/uploads/${filename}`;
-      } catch (error) {
-        console.error("Error saving image:", error);
-        return NextResponse.json(
-          { error: "Failed to save image" },
-          { status: 500 }
-        );
-      }
-    }
-
     // Get current equipment to check if we should keep existing image
     const currentEquipment = await db.collection("equipment").findOne({
       _id: new ObjectId(id),
@@ -133,23 +81,54 @@ export async function PUT(
       );
     }
 
-    // Use new image if uploaded, otherwise keep existing image
-    const finalImagePath = imagePath || currentEquipment.image;
+    // Prepare update data
+    const updateData: {
+      name: string;
+      brand: string;
+      status: string;
+      quantity: number;
+      categoryId: string;
+      description: string;
+      length?: number | null;
+      price?: number | null;
+      updatedAt: Date;
+      imageUrl?: string;
+      imagePublicId?: string;
+      imageResourceType?: string;
+      imageId?: null;
+    } = {
+      name,
+      brand,
+      status,
+      quantity,
+      categoryId,
+      description,
+      length: length || null,
+      price: price || null,
+      updatedAt: new Date(),
+    };
 
+    // Handle image data
+    if (imageUrl && imagePublicId) {
+      // New Cloudinary image provided
+      updateData.imageUrl = imageUrl;
+      updateData.imagePublicId = imagePublicId;
+      updateData.imageResourceType = imageResourceType;
+      // Remove legacy GridFS fields if they exist
+      updateData.imageId = null;
+    } else {
+      // If no new image data provided, keep existing Cloudinary image data
+      if (currentEquipment.imageUrl) {
+        updateData.imageUrl = currentEquipment.imageUrl;
+        updateData.imagePublicId = currentEquipment.imagePublicId;
+        updateData.imageResourceType = currentEquipment.imageResourceType;
+      }
+    }
+
+    // Update equipment
     const result = await db.collection("equipment").updateOne(
       { _id: new ObjectId(id) },
-      {
-        $set: {
-          name,
-          brand: brand || "",
-          status,
-          quantity,
-          categoryId: categoryId || null,
-          image: finalImagePath,
-          description: description || "",
-          updatedAt: new Date(),
-        },
-      }
+      { $set: updateData }
     );
 
     if (result.matchedCount === 0) {
@@ -160,13 +139,13 @@ export async function PUT(
     }
 
     return NextResponse.json({
-      success: true,
       message: "Equipment updated successfully",
+      id,
     });
   } catch (error) {
     console.error("Error updating equipment:", error);
     return NextResponse.json(
-      { error: "Failed to update equipment" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -180,7 +159,7 @@ export async function DELETE(
     const { id } = await params;
 
     const session = await getServerSession(authOptions);
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.isAdmin && !session?.user?.isManager) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

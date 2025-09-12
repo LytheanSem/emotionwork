@@ -6,6 +6,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import Link from "next/link";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
 
 interface NavbarItem {
   href: string;
@@ -21,11 +24,11 @@ interface Props {
 export const NavbarSidebar = ({ items, open, onOpenChange }: Props) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="p-0 transition-none">
+      <SheetContent side="left" className={`p-0 transition-none ${inter.className}`}>
         <SheetHeader className="p-4 boder-b">
           <div>
             <SheetTitle>
-              <span className="text-2xl font-bold ">Menu</span>
+              <span className="text-2xl font-bold">Menu</span>
             </SheetTitle>
           </div>
         </SheetHeader>
@@ -34,7 +37,7 @@ export const NavbarSidebar = ({ items, open, onOpenChange }: Props) => {
             <Link
               key={item.href}
               href={item.href}
-              className="w-full text-left p-4 hover:bg-blue-500 hover:text-white flex items-center text-base font-medium"
+              className="w-full text-left p-4 hover:bg-primary hover:text-primary-foreground flex items-center text-base font-medium"
               onClick={() => onOpenChange(false)}
             >
               {item.children}
@@ -43,7 +46,7 @@ export const NavbarSidebar = ({ items, open, onOpenChange }: Props) => {
           <div className="border-t">
             <Link
               href="/sign-in"
-              className="w-full text-left p-4 hover:bg-blue-500 hover:text-white flex items-center text-base font-medium"
+              className="w-full text-left p-4 hover:bg-primary hover:text-primary-foreground flex items-center text-base font-medium"
             >
               {" "}
               Log in{" "}

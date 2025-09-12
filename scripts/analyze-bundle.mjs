@@ -9,21 +9,21 @@ console.log("🔍 Analyzing bundle size...\n");
 try {
   // Build the project
   console.log("📦 Building project...");
-  execSync("npm run build", { stdio: "inherit" });
+  execSync("bun run build", { stdio: "inherit" });
 
   // Install bundle analyzer if not present
   try {
-    execSync("npm list webpack-bundle-analyzer", { stdio: "ignore" });
+    execSync("bun list webpack-bundle-analyzer", { stdio: "ignore" });
   } catch {
     console.log("📦 Installing webpack-bundle-analyzer...");
-    execSync("npm install --save-dev webpack-bundle-analyzer", {
+    execSync("bun add --dev webpack-bundle-analyzer", {
       stdio: "inherit",
     });
   }
 
   // Generate bundle analysis
   console.log("📊 Generating bundle analysis...");
-  execSync("npm run build", {
+  execSync("bun run build", {
     env: { ...process.env, ANALYZE: "true" },
     stdio: "inherit",
   });
@@ -58,7 +58,7 @@ function generateOptimizationReport() {
 ### 2. Tree Shaking
 - Ensure all imports are tree-shakeable
 - Use named imports instead of default imports
-- Check for side effects in package.json
+- Check for side effects in configuration files
 
 ### 3. Bundle Optimization
 - Analyze and remove unused dependencies

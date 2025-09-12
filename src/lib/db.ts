@@ -43,7 +43,7 @@ export interface User {
   _id?: string;
   email: string;
   username: string;
-  role: "user" | "admin";
+  role: "user" | "manager" | "admin";
   image?: string;
   provider: string;
   providerId?: string;
@@ -56,6 +56,20 @@ export interface AdminUser {
   email: string;
   username: string;
   role: "admin";
+  image?: string;
+  provider: string;
+  providerId?: string;
+  permissions?: string[];
+  lastLogin?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ManagerUser {
+  _id?: string;
+  email: string;
+  username: string;
+  role: "manager";
   image?: string;
   provider: string;
   providerId?: string;
@@ -105,8 +119,16 @@ export interface Equipment {
   status: "available" | "in_use" | "maintenance";
   quantity: number;
   categoryId?: string;
+  // Legacy image field (for backward compatibility)
   image?: string | File;
+  // Cloudinary fields
+  imageUrl?: string;
+  imagePublicId?: string;
+  imageResourceType?: string;
   description?: string;
+  // New fields
+  length?: number; // Length in meters
+  price?: number; // Price in USD
   createdAt: Date;
   updatedAt: Date;
 }

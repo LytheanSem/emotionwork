@@ -21,13 +21,19 @@ export const SignUpView = () => {
   useEffect(() => {
     if (session) {
       toast.success("Account created successfully!");
-      router.push("/");
+      // Redirect admin users to admin panel, regular users to home
+      if (session.user.isAdmin) {
+        router.push("/admin");
+      } else {
+        router.push("/");
+      }
     }
   }, [session, router]);
 
   const handleGoogleSignUp = async () => {
     try {
-      await signIn("google", { callbackUrl: "/" });
+      // Remove the callbackUrl to let the useEffect handle the redirect based on user role
+      await signIn("google");
     } catch (error) {
       console.error("Google sign-up error:", error);
       toast.error("Failed to sign up with Google");

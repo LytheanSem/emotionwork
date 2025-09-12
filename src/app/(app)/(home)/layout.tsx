@@ -1,14 +1,6 @@
-import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { Navbar } from "./navbar";
-
-// Lazy load footer component
-const LazyFooter = dynamic(
-  () => import("./footer").then((mod) => ({ default: mod.Footer })),
-  {
-    loading: () => <div className="h-24 bg-gray-100 animate-pulse" />,
-  }
-);
+import FooterSimple from "./footer-simple";
 
 export default function HomeLayout({
   children,
@@ -16,9 +8,9 @@ export default function HomeLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <main className="pt-24 pb-24">
+      <main className="pt-24 flex-1">
         <Suspense
           fallback={
             <div className="container mx-auto px-4 py-8">
@@ -33,9 +25,7 @@ export default function HomeLayout({
           {children}
         </Suspense>
       </main>
-      <Suspense fallback={<div className="h-24 bg-gray-100 animate-pulse" />}>
-        <LazyFooter />
-      </Suspense>
+      <FooterSimple />
     </div>
   );
 }

@@ -8,7 +8,7 @@ console.log("🔍 Simple Bundle Analysis\n");
 try {
   // Build the project
   console.log("📦 Building project...");
-  const buildOutput = execSync("npm run build", { encoding: "utf8" });
+  const buildOutput = execSync("bun run build", { encoding: "utf8" });
 
   // Extract bundle information from build output
   const bundleInfo = extractBundleInfo(buildOutput);

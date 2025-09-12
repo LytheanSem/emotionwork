@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   experimental: {
+    // Simplified turbo config for faster builds
     turbo: {
       rules: {
         "*.svg": {
@@ -10,9 +11,8 @@ const nextConfig: NextConfig = {
         },
       },
     },
-    // Enable modern optimizations
+    // Only optimize the most critical packages
     optimizePackageImports: [
-      "@radix-ui/react-icons",
       "lucide-react",
       "@radix-ui/react-dialog",
       "@radix-ui/react-dropdown-menu",
@@ -20,84 +20,62 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-button",
       "@radix-ui/react-input",
       "@radix-ui/react-label",
-      "@radix-ui/react-textarea",
       "@radix-ui/react-select",
       "@radix-ui/react-checkbox",
-      "@radix-ui/react-radio-group",
       "@radix-ui/react-switch",
-      "@radix-ui/react-slider",
       "@radix-ui/react-progress",
       "@radix-ui/react-avatar",
-      "@radix-ui/react-badge",
       "@radix-ui/react-card",
       "@radix-ui/react-separator",
-      "@radix-ui/react-scroll-area",
       "@radix-ui/react-tooltip",
       "@radix-ui/react-popover",
-      "@radix-ui/react-hover-card",
-      "@radix-ui/react-navigation-menu",
-      "@radix-ui/react-menubar",
-      "@radix-ui/react-context-menu",
       "@radix-ui/react-accordion",
-      "@radix-ui/react-collapsible",
-      "@radix-ui/react-aspect-ratio",
-      "@radix-ui/react-resizable",
-      "@radix-ui/react-toggle",
-      "@radix-ui/react-toggle-group",
       "@radix-ui/react-slot",
-      "@radix-ui/react-drawer",
-      "@radix-ui/react-sheet",
-      "@radix-ui/react-modal",
-      "@radix-ui/react-command",
-      "@radix-ui/react-calendar",
-      "@radix-ui/react-date-picker",
-      "@radix-ui/react-time-picker",
-      "@radix-ui/react-color-picker",
       "class-variance-authority",
       "clsx",
       "tailwind-merge",
-      "cmdk",
-      "date-fns",
-      "embla-carousel-react",
-      "input-otp",
-      "react-day-picker",
       "react-hook-form",
-      "react-resizable-panels",
-      "recharts",
       "sonner",
       "superjson",
-      "vaul",
       "zod",
       "@hookform/resolvers",
       "next-themes",
-      "next-auth",
-      "@auth/core",
       "@tanstack/react-query",
       "@trpc/client",
       "@trpc/server",
       "@trpc/tanstack-react-query",
-      "nodemailer",
-      "@types/nodemailer",
-      "dotenv",
-      "client-only",
-      "server-only",
-      "tw-animate-css",
     ],
+    // Enable faster builds
+    webpackBuildWorker: true,
+    // Optimize for development
+    optimizeCss: false,
   },
   // Server external packages (moved from experimental)
   serverExternalPackages: ["mongodb"],
-  webpack: (config) => {
+  webpack: (config, { dev, isServer }) => {
     // SVG handling
     config.module.rules.push({
       test: /\.svg$/,
       use: ["@svgr/webpack"],
     });
 
-    // Tree shaking optimization (simplified to avoid conflicts)
-    config.optimization = {
-      ...config.optimization,
-      sideEffects: false,
-    };
+    // Optimize for faster builds
+    if (dev) {
+      // Faster development builds
+      config.optimization = {
+        ...config.optimization,
+        removeAvailableModules: false,
+        removeEmptyChunks: false,
+        splitChunks: false,
+      };
+    } else {
+      // Production optimizations
+      config.optimization = {
+        ...config.optimization,
+        sideEffects: false,
+        usedExports: true,
+      };
+    }
 
     return config;
   },
@@ -108,14 +86,14 @@ const nextConfig: NextConfig = {
         hostname: "**",
       },
     ],
-    // Enable modern image formats
-    formats: ["image/webp", "image/avif"],
-    // Device sizes for responsive images
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    // Image sizes for responsive images
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Minimum cache TTL
-    minimumCacheTTL: 60,
+    // Simplified for faster builds
+    formats: ["image/webp"],
+    // Reduced device sizes for faster processing
+    deviceSizes: [640, 750, 1080, 1200, 1920],
+    // Reduced image sizes
+    imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    // Faster cache
+    minimumCacheTTL: 30,
     // Enable placeholder blur
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
