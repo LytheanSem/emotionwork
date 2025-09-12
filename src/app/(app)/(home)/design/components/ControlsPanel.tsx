@@ -6,7 +6,6 @@ import { Switch } from '@/components/ui/switch'
 import { useState, useEffect } from 'react'
 import {
   RotateCw,
-  Move3d,
   ZoomIn,
   ZoomOut,
   Trash2,

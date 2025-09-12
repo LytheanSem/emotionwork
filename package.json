@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:fast": "SKIP_ENV_VALIDATION=true next build",
     "start": "next start",
     "lint": "next lint",
     "analyze": "bun scripts/simple-bundle-analysis.mjs",

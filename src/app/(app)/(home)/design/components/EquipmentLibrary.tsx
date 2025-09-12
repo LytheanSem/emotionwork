@@ -4,7 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Trash2, ChevronDown, ChevronRight, Star } from 'lucide-react'
 import { EquipmentType, SavedDesign } from '../types'
 import { useState } from 'react'
-import { stageTemplates, loadTemplate } from '../templates/stageTemplates'
+import { stageTemplates } from '../templates/stageTemplates'
 
 interface EquipmentLibraryProps {
   savedDesigns: SavedDesign[]
@@ -103,7 +103,6 @@ export function EquipmentLibrary({
   const handleLoadTemplate = (templateId: string) => {
     if (loadTemplate) {
       try {
-        const templateEquipment = loadTemplate(templateId)
         // Clear current equipment and load template
         if (confirm('This will replace your current design. Continue?')) {
           loadTemplate(templateId)

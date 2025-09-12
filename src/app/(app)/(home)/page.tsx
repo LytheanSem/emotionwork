@@ -145,7 +145,7 @@ export default function Home() {
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Testimonials Preview</h2>
               <p className="text-lg text-gray-600 mb-6">
-                "Client testimonial goes here."
+                &ldquo;Client testimonial goes here.&rdquo;
               </p>
               <Button size="lg" variant="outline" className="border-2 border-black text-black hover:bg-gray-50 px-8 py-3 text-lg rounded-lg">
                 Read More

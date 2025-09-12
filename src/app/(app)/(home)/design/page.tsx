@@ -4,7 +4,7 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import { PDFDocument, rgb } from 'pdf-lib'
 
-import { Download, Save, PanelLeft, PanelRight, Grid3x3 } from 'lucide-react'
+import { PanelLeft, PanelRight, Grid3x3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useDesignStore } from '@/app/(app)/(home)/design/hooks/useDesignStore'
