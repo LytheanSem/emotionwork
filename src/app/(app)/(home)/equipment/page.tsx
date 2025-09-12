@@ -36,19 +36,21 @@ function EquipmentPageContent() {
   // Show loading state
   if (equipmentLoading) {
     return (
-      <div className="container mx-auto px-4 lg:px-12 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Our Equipment
-          </h1>
-          <p className="text-gray-600">
-            Professional lighting, sound, and staging equipment for your events
-          </p>
-        </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading equipment...</p>
+      <div className="min-h-screen bg-gray-50 py-12 px-6 pb-32">
+        <div className="w-full">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Our Equipment
+            </h1>
+            <p className="text-gray-600">
+              Professional lighting, sound, and staging equipment for your events
+            </p>
+          </div>
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading equipment...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -58,28 +60,30 @@ function EquipmentPageContent() {
   // Show error state
   if (equipmentError) {
     return (
-      <div className="container mx-auto px-4 lg:px-12 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Our Equipment
-          </h1>
-          <p className="text-gray-600">
-            Professional lighting, sound, and staging equipment for your events
-          </p>
-        </div>
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-800 text-sm">
-            ❌ Error loading equipment data
-          </p>
-          <p className="text-red-700 text-xs mt-2">{equipmentError.message}</p>
-          <Button
-            onClick={() => window.location.reload()}
-            variant="outline"
-            size="sm"
-            className="mt-2"
-          >
-            Retry
-          </Button>
+      <div className="min-h-screen bg-gray-50 py-12 px-6 pb-32">
+        <div className="w-full">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Our Equipment
+            </h1>
+            <p className="text-gray-600">
+              Professional lighting, sound, and staging equipment for your events
+            </p>
+          </div>
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-red-800 text-sm">
+              ❌ Error loading equipment data
+            </p>
+            <p className="text-red-700 text-xs mt-2">{equipmentError.message}</p>
+            <Button
+              onClick={() => window.location.reload()}
+              variant="outline"
+              size="sm"
+              className="mt-2"
+            >
+              Retry
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -92,52 +96,56 @@ function EquipmentPageContent() {
     equipmentData.categories
   ) {
     return (
-      <div className="container mx-auto px-4 lg:px-12 py-8">
-        <div className="mb-8">
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Our Equipment
-              </h1>
-              <p className="text-gray-600">
-                Professional lighting, sound, and staging equipment for your
-                events
-              </p>
+      <div className="min-h-screen bg-gray-50 py-12 px-6 pb-32">
+        <div className="w-full">
+          <div className="mb-8">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                  Our Equipment
+                </h1>
+                <p className="text-gray-600">
+                  Professional lighting, sound, and staging equipment for your
+                  events
+                </p>
+              </div>
             </div>
           </div>
+          <EquipmentGrid
+            equipment={equipmentData.equipment}
+            categories={equipmentData.categories}
+          />
         </div>
-        <EquipmentGrid
-          equipment={equipmentData.equipment}
-          categories={equipmentData.categories}
-        />
       </div>
     );
   }
 
   // Fallback if no data
   return (
-    <div className="container mx-auto px-4 lg:px-12 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Our Equipment</h1>
-        <p className="text-gray-600">
-          Professional lighting, sound, and staging equipment for your events
-        </p>
-      </div>
-      <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <p className="text-yellow-800 text-sm">
-          ⚠️ No equipment data available
-        </p>
-        <p className="text-yellow-700 text-xs mt-2">
-          Try adding some equipment through the admin panel first.
-        </p>
-        <Button
-          onClick={() => window.open("/admin", "_blank")}
-          variant="outline"
-          size="sm"
-          className="mt-2"
-        >
-          Go to Admin Panel
-        </Button>
+    <div className="min-h-screen bg-gray-50 py-12 px-6 pb-32">
+      <div className="w-full">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Our Equipment</h1>
+          <p className="text-gray-600">
+            Professional lighting, sound, and staging equipment for your events
+          </p>
+        </div>
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-yellow-800 text-sm">
+            ⚠️ No equipment data available
+          </p>
+          <p className="text-yellow-700 text-xs mt-2">
+            Try adding some equipment through the admin panel first.
+          </p>
+          <Button
+            onClick={() => window.open("/admin", "_blank")}
+            variant="outline"
+            size="sm"
+            className="mt-2"
+          >
+            Go to Admin Panel
+          </Button>
+        </div>
       </div>
     </div>
   );

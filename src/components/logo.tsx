@@ -6,13 +6,13 @@ interface LogoProps {
   height?: number;
 }
 
-export function Logo({ className = "", width = 200, height = 120 }: LogoProps) {
+export function Logo({ className = "", width = 500, height = 500}: LogoProps) {
   const combinedClassName = className ? `flex items-center ${className}`.trim() : "flex items-center";
   
   return (
     <div className={combinedClassName}>
       <Image
-        src="/LOGO.JPG"
+        src="/Logo.png"
         alt="Visual Emotion Work"
         width={width}
         height={height}

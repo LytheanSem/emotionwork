@@ -25,7 +25,7 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
       asChild
       variant="outline"
       className={`bg-transparent hover:bg-transparent rounded-full hover:border-primary border-transparent px-3.5 text-lg font-inter ${
-        isActive ? "bg-blue-400 text-white hover:bg-blue-500 hover:text-white" : ""
+        isActive ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : ""
       }`}
     >
       <Link href={href}>{children}</Link>
@@ -100,6 +100,7 @@ export function Navbar() {
       { href: "/about", children: "About" },
       { href: "/service", children: "Services" },
       { href: "/equipment", children: "Equipment" },
+      { href: "/portfolio", children: "Portfolio" },
       { href: "/contact", children: "Contact" },
       { href: "/bookmeeting", children: "Book meeting" },
       { href: "/design", children: "Design" },
@@ -113,15 +114,15 @@ export function Navbar() {
   // Always render the same base structure to prevent hydration mismatch
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-300 ${inter.className} ${
+      className={`fixed top-0 left-0 right-0 z-50 h-24 transition-all duration-300 ${inter.className} ${
         isClient && isScrolled
-          ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200"
-          : "bg-white border-b border-gray-200"
+                  ? "bg-background/95 backdrop-blur-md shadow-lg border-b border-border"
+        : "bg-background border-b border-border"
       }`.trim()}
     >
       <div className="h-full flex items-center justify-between px-6">
-        <Link href="/">
-          <Logo width={80} height={48} />
+        <Link href="/" className="flex items-center">
+          <Logo width={150} height={90} />
         </Link>
 
         <NavbarSidebar items={navigationItems} open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
@@ -142,17 +143,22 @@ export function Navbar() {
         {isClient && status !== "loading" && isAuthenticated ? (
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-end">
-              <span className="text-sm text-gray-700 font-inter">Welcome, {displayName}</span>
+              <span className="text-sm text-muted-foreground font-inter">Welcome, {displayName}</span>
               {isAdmin && <span className="text-xs text-orange-600 font-medium font-inter">Admin User</span>}
+              {session?.user?.isManager && !isAdmin && <span className="text-xs text-blue-600 font-medium font-inter">Manager</span>}
             </div>
-            {isAdmin && (
+            {(isAdmin || session?.user?.isManager) && (
               <Button
                 onClick={() => isClient && router.push("/admin")}
                 variant="outline"
                 size="sm"
-                className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 font-inter"
+                className={`font-inter ${
+                  isAdmin 
+                    ? "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                    : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                }`}
               >
-                Admin Panel
+                {isAdmin ? "Admin Panel" : "Manager Panel"}
               </Button>
             )}
             <Button

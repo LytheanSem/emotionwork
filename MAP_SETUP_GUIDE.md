@@ -27,7 +27,7 @@ If you prefer a free alternative, you can use OpenStreetMap with Leaflet:
 
 ### Install Leaflet:
 ```bash
-npm install leaflet react-leaflet --legacy-peer-deps
+bun add leaflet react-leaflet
 ```
 
 ### Update the map component:
@@ -76,7 +76,7 @@ For a simpler approach, you can embed a Google Maps iframe:
 
 ### Install Mapbox:
 ```bash
-npm install mapbox-gl --legacy-peer-deps
+bun add mapbox-gl
 ```
 
 ### Setup:

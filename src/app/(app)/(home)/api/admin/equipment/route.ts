@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.isAdmin && !session?.user?.isManager) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -74,7 +74,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.isAdmin && !session?.user?.isManager) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -98,6 +98,8 @@ export async function POST(request: Request) {
       imageUrl = "",
       imagePublicId = "",
       imageResourceType = "image",
+      length,
+      price,
     } = jsonData;
 
     if (!name || !status || !quantity) {
@@ -140,6 +142,9 @@ export async function POST(request: Request) {
       imagePublicId: imagePublicId || null,
       imageResourceType: imageResourceType || "image",
       description,
+      // New fields
+      length: length || null,
+      price: price || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

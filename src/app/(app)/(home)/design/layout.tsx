@@ -1,16 +1,15 @@
 import { Suspense } from "react";
-import { Navbar } from "./navbar";
-import FooterSimple from "./footer-simple";
+import { Navbar } from "../navbar";
 
-export default function HomeLayout({
+export default function DesignLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="pt-24 flex-1">
+      <main className="pt-24">
         <Suspense
           fallback={
             <div className="container mx-auto px-4 py-8">
@@ -25,7 +24,10 @@ export default function HomeLayout({
           {children}
         </Suspense>
       </main>
-      <FooterSimple />
+      {/* No footer for the design page - it's a full-screen 3D application */}
     </div>
   );
 }
+
+
+

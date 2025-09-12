@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 interface EquipmentCardProps {
   equipment: Equipment;
+  onClick?: () => void;
 }
 
 function resolveImageSrc(equipment: { imageUrl?: string; image?: string | File }): string | null {
@@ -30,7 +31,7 @@ function resolveImageSrc(equipment: { imageUrl?: string; image?: string | File }
   return "/placeholder-equipment.svg";
 }
 
-export function EquipmentCard({ equipment }: EquipmentCardProps) {
+export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
   const imageSrc = resolveImageSrc(equipment);
   const [isImageVisible, setIsImageVisible] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
@@ -58,9 +59,12 @@ export function EquipmentCard({ equipment }: EquipmentCardProps) {
   }, []);
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+    <div 
+      className="bg-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer border border-border"
+      onClick={onClick}
+    >
              {imageSrc && (
-         <div ref={imageRef} className="aspect-square overflow-hidden bg-gray-50">
+         <div ref={imageRef} className="aspect-square overflow-hidden bg-muted">
            {isImageVisible ? (
              <div className="w-full h-full flex items-center justify-center p-4">
                <Image
@@ -78,8 +82,8 @@ export function EquipmentCard({ equipment }: EquipmentCardProps) {
                />
              </div>
            ) : (
-             <div className="w-full h-full bg-gray-200 animate-pulse flex items-center justify-center">
-               <div className="text-gray-400 text-sm">Loading...</div>
+             <div className="w-full h-full bg-muted animate-pulse flex items-center justify-center">
+               <div className="text-muted-foreground text-sm">Loading...</div>
              </div>
            )}
          </div>
@@ -87,7 +91,7 @@ export function EquipmentCard({ equipment }: EquipmentCardProps) {
 
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+          <h3 className="text-lg font-semibold text-card-foreground line-clamp-2">
             {equipment.name}
           </h3>
           <div className="flex flex-col items-end gap-1">
@@ -104,17 +108,34 @@ export function EquipmentCard({ equipment }: EquipmentCardProps) {
               {equipment.status}
             </Badge>
                          {equipment.brand && (
-               <span className="text-sm text-gray-500">
+               <span className="text-sm text-muted-foreground">
                  {equipment.brand}
                </span>
              )}
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">
-            Quantity: {equipment.quantity}
-          </span>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">
+              Quantity: {equipment.quantity}
+            </span>
+          </div>
+          
+          {(equipment.length || equipment.price) && (
+            <div className="flex items-center justify-between text-sm">
+              {equipment.length && (
+                <span className="text-muted-foreground">
+                  Length: {equipment.length}m
+                </span>
+              )}
+              {equipment.price && (
+                <span className="text-muted-foreground font-medium">
+                  ${equipment.price.toLocaleString()}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

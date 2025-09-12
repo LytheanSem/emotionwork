@@ -64,8 +64,9 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       if (session.user && token) {
         session.user.id = token.id as string;
-        session.user.role = token.role as "admin" | "user";
+        session.user.role = token.role as "admin" | "manager" | "user";
         session.user.isAdmin = token.isAdmin as boolean;
+        session.user.isManager = token.isManager as boolean;
       }
       return session;
     },
@@ -74,6 +75,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = "user"; // Default role for new users
         token.isAdmin = false;
+        token.isManager = false;
       }
 
       // Always fetch the latest user role from database to ensure admin changes are reflected
@@ -86,7 +88,14 @@ export const authOptions: NextAuthOptions = {
               email: token.email,
             });
 
-            // If not found in admin users, check regular users
+            // If not found in admin users, check manager users
+            if (!dbUser) {
+              dbUser = await db.collection("managerUsers").findOne({
+                email: token.email,
+              });
+            }
+
+            // If not found in manager users, check regular users
             if (!dbUser) {
               dbUser = await db.collection("regularUsers").findOne({
                 email: token.email,
@@ -97,6 +106,7 @@ export const authOptions: NextAuthOptions = {
               token.id = dbUser._id?.toString();
               token.role = dbUser.role || "user";
               token.isAdmin = dbUser.role === "admin";
+              token.isManager = dbUser.role === "manager";
             }
           }
         } catch (error) {

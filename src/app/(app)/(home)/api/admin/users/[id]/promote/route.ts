@@ -15,6 +15,17 @@ export async function PATCH(
     }
 
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const targetRole = searchParams.get('role') || 'admin'; // Default to admin if no role specified
+    
+    // Validate target role
+    if (!['manager', 'admin'].includes(targetRole)) {
+      return NextResponse.json(
+        { error: "Invalid target role. Must be 'manager' or 'admin'" },
+        { status: 400 }
+      );
+    }
+
     const db = await getDb();
 
     if (!db) {
@@ -31,31 +42,34 @@ export async function PATCH(
 
     if (!user) {
       return NextResponse.json(
-        { error: "User not found or already an admin" },
+        { error: "User not found or already has elevated privileges" },
         { status: 404 }
       );
     }
 
-    // Create admin user object
-    const adminUser = {
+    // Create elevated user object based on target role
+    const elevatedUser = {
       email: user.email,
       username: user.username,
-      role: "admin",
+      role: targetRole,
       image: user.image,
       provider: user.provider,
       providerId: user.providerId,
-      permissions: ["read", "write", "delete", "admin"],
+      permissions: targetRole === "admin" 
+        ? ["read", "write", "delete", "admin"]
+        : ["read", "write", "upload"],
       lastLogin: new Date(),
       createdAt: user.createdAt,
       updatedAt: new Date(),
     };
 
-    // Insert into adminUsers collection
-    const result = await db.collection("adminUsers").insertOne(adminUser);
+    // Insert into appropriate collection
+    const targetCollection = targetRole === "admin" ? "adminUsers" : "managerUsers";
+    const result = await db.collection(targetCollection).insertOne(elevatedUser);
 
     if (!result.insertedId) {
       return NextResponse.json(
-        { error: "Failed to promote user" },
+        { error: `Failed to promote user to ${targetRole}` },
         { status: 500 }
       );
     }
@@ -65,10 +79,10 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      message: "User promoted to admin successfully",
+      message: `User promoted to ${targetRole} successfully`,
       user: {
         id: result.insertedId.toString(),
-        ...adminUser,
+        ...elevatedUser,
       },
     });
   } catch (error) {

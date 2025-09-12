@@ -10,6 +10,8 @@ const equipmentSchema = z.object({
   categoryId: z.string().optional(),
   image: z.string().url().optional(),
   description: z.string().optional(),
+  length: z.number().min(0, "Length must be positive").optional(),
+  price: z.number().min(0, "Price must be positive").optional(),
 });
 
 export const equipmentRouter = createTRPCRouter({

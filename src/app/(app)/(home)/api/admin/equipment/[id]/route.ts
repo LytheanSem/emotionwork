@@ -12,7 +12,7 @@ export async function PUT(
     const { id } = await params;
 
     const session = await getServerSession(authOptions);
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.isAdmin && !session?.user?.isManager) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -36,6 +36,8 @@ export async function PUT(
       imageUrl = "",
       imagePublicId = "",
       imageResourceType = "image",
+      length,
+      price,
     } = jsonData;
 
     if (!name || !status || !quantity) {
@@ -87,6 +89,8 @@ export async function PUT(
       quantity: number;
       categoryId: string;
       description: string;
+      length?: number | null;
+      price?: number | null;
       updatedAt: Date;
       imageUrl?: string;
       imagePublicId?: string;
@@ -99,6 +103,8 @@ export async function PUT(
       quantity,
       categoryId,
       description,
+      length: length || null,
+      price: price || null,
       updatedAt: new Date(),
     };
 
@@ -153,7 +159,7 @@ export async function DELETE(
     const { id } = await params;
 
     const session = await getServerSession(authOptions);
-    if (!session?.user?.isAdmin) {
+    if (!session?.user?.isAdmin && !session?.user?.isManager) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

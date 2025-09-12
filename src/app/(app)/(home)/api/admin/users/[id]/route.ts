@@ -26,6 +26,8 @@ export async function PUT(
 
     const body = await request.json();
     const { username, email, role } = body;
+    console.log(`PUT request for user ID: ${id}`);
+    console.log(`Updating user with data:`, { username, email, role });
 
     if (!username || !email || !role) {
       return NextResponse.json(
@@ -35,9 +37,9 @@ export async function PUT(
     }
 
     // Validate role
-    if (!["user", "admin"].includes(role)) {
+    if (!["user", "manager", "admin"].includes(role)) {
       return NextResponse.json(
-        { error: "Role must be either 'user' or 'admin'" },
+        { error: "Role must be either 'user', 'manager', or 'admin'" },
         { status: 400 }
       );
     }
@@ -47,6 +49,14 @@ export async function PUT(
       .collection("adminUsers")
       .findOne({ _id: new ObjectId(id) });
     let collection = "adminUsers";
+
+    if (!user) {
+      // Check if user exists in managerUsers collection
+      user = await db
+        .collection("managerUsers")
+        .findOne({ _id: new ObjectId(id) });
+      collection = "managerUsers";
+    }
 
     if (!user) {
       // Check if user exists in regularUsers collection
@@ -59,58 +69,204 @@ export async function PUT(
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+    
+    console.log(`Found user in collection: ${collection}`);
+    console.log(`Current user data:`, { 
+      id: user._id, 
+      username: user.username, 
+      email: user.email, 
+      role: user.role 
+    });
 
-    // Check if email already exists in either collection (excluding current user)
+    // Check if email already exists in any collection (excluding current user)
     const existingAdminUser = await db
       .collection("adminUsers")
+      .findOne({ email, _id: { $ne: new ObjectId(id) } });
+    const existingManagerUser = await db
+      .collection("managerUsers")
       .findOne({ email, _id: { $ne: new ObjectId(id) } });
     const existingRegularUser = await db
       .collection("regularUsers")
       .findOne({ email, _id: { $ne: new ObjectId(id) } });
 
-    if (existingAdminUser || existingRegularUser) {
+    if (existingAdminUser || existingManagerUser || existingRegularUser) {
       return NextResponse.json(
         { error: "User with this email already exists" },
         { status: 400 }
       );
     }
 
-    // Check if username already exists in either collection (excluding current user)
+    // Check if username already exists in any collection (excluding current user)
     const existingAdminUsername = await db
       .collection("adminUsers")
+      .findOne({ username, _id: { $ne: new ObjectId(id) } });
+    const existingManagerUsername = await db
+      .collection("managerUsers")
       .findOne({ username, _id: { $ne: new ObjectId(id) } });
     const existingRegularUsername = await db
       .collection("regularUsers")
       .findOne({ username, _id: { $ne: new ObjectId(id) } });
 
-    if (existingAdminUsername || existingRegularUsername) {
+    if (existingAdminUsername || existingManagerUsername || existingRegularUsername) {
       return NextResponse.json(
         { error: "Username already taken" },
         { status: 400 }
       );
     }
 
-    // Update user in the appropriate collection
-    const result = await db.collection(collection).updateOne(
-      { _id: new ObjectId(id) },
-      {
-        $set: {
-          username,
-          email,
-          role,
-          updatedAt: new Date(),
-        },
+    // Check if role change requires moving user between collections
+    const currentRole = user.role;
+    const newRole = role;
+    
+    if (currentRole !== newRole) {
+      // Role changed - need to move user between collections
+      console.log(`Role change: ${currentRole} -> ${newRole}, moving from ${collection}`);
+      
+      let targetCollection: string;
+      if (newRole === "admin") {
+        targetCollection = "adminUsers";
+      } else if (newRole === "manager") {
+        targetCollection = "managerUsers";
+      } else {
+        targetCollection = "regularUsers";
       }
-    );
+      
+      // Prepare user data for the new collection
+      const userData: {
+        username: string;
+        email: string;
+        role: string;
+        image: string | null;
+        provider: string;
+        providerId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        permissions?: string[];
+        lastLogin?: Date;
+        profile?: {
+          firstName: string;
+          lastName: string;
+        };
+        preferences?: {
+          notifications: boolean;
+          theme: string;
+        };
+      } = {
+        username,
+        email,
+        role: newRole,
+        image: user.image || null,
+        provider: user.provider || "google",
+        providerId: user.providerId || `google_${Date.now()}`,
+        createdAt: user.createdAt || new Date(),
+        updatedAt: new Date(),
+      };
 
-    if (result.matchedCount === 0) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      // Add collection-specific fields
+      if (newRole === "admin") {
+        userData.permissions = ["read", "write", "delete", "admin"];
+        userData.lastLogin = user.lastLogin || new Date();
+      } else if (newRole === "manager") {
+        userData.permissions = ["read", "write", "upload"];
+        userData.lastLogin = user.lastLogin || new Date();
+      } else {
+        userData.profile = user.profile || {
+          firstName: username.split(" ")[0] || username,
+          lastName: username.split(" ").slice(1).join(" ") || "",
+        };
+        userData.preferences = user.preferences || {
+          notifications: true,
+          theme: "light",
+        };
+      }
+
+      console.log(`Preparing to insert into ${targetCollection}:`, userData);
+
+      try {
+        // Check if the current user is already in the target collection
+        const currentUserInTarget = await db.collection(targetCollection).findOne({ 
+          _id: new ObjectId(id) 
+        });
+        
+        if (currentUserInTarget) {
+          // User is already in target collection, just update the role
+          console.log(`User is already in target collection ${targetCollection}, updating role only`);
+          const updateResult = await db.collection(targetCollection).updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { role: newRole, updatedAt: new Date() } }
+          );
+          
+          if (updateResult.matchedCount > 0) {
+            return NextResponse.json({
+              success: true,
+              message: "User role updated successfully",
+            });
+          } else {
+            return NextResponse.json({ error: "Failed to update user role" }, { status: 500 });
+          }
+        }
+        
+        // Check if another user with same email exists in target collection
+        const existingUserInTarget = await db.collection(targetCollection).findOne({ 
+          email, 
+          _id: { $ne: new ObjectId(id) } 
+        });
+        
+        if (existingUserInTarget) {
+          // Another user with the same email exists in target collection
+          console.log(`Another user with email ${email} already exists in ${targetCollection}`);
+          return NextResponse.json({ 
+            error: `Cannot change role: Another user with email ${email} already exists in the ${newRole} role` 
+          }, { status: 400 });
+        }
+        
+        // No conflicts and user needs to be moved - proceed with insert
+        const insertResult = await db.collection(targetCollection).insertOne(userData);
+        
+        if (insertResult.insertedId) {
+          console.log(`Successfully inserted into ${targetCollection}, now deleting from ${collection}`);
+          
+          // Delete user from old collection
+          const deleteResult = await db.collection(collection).deleteOne({ _id: new ObjectId(id) });
+          console.log(`Delete result:`, deleteResult);
+          
+          return NextResponse.json({
+            success: true,
+            message: "User updated successfully and moved to appropriate collection",
+          });
+        } else {
+          console.error("Insert failed - no insertedId returned");
+          return NextResponse.json({ error: "Failed to insert user into new collection" }, { status: 500 });
+        }
+      } catch (insertError) {
+        console.error("Error during role change:", insertError);
+        return NextResponse.json({ 
+          error: `Failed to change role: ${insertError instanceof Error ? insertError.message : 'Unknown error'}` 
+        }, { status: 500 });
+      }
+    } else {
+      // No role change - just update in current collection
+      const result = await db.collection(collection).updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            username,
+            email,
+            role,
+            updatedAt: new Date(),
+          },
+        }
+      );
+
+      if (result.matchedCount === 0) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: "User updated successfully",
+      });
     }
-
-    return NextResponse.json({
-      success: true,
-      message: "User updated successfully",
-    });
   } catch (error) {
     console.error("Error updating user:", error);
     return NextResponse.json(
