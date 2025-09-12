@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "analyze": "node scripts/simple-bundle-analysis.mjs",
+    "analyze": "bun scripts/simple-bundle-analysis.mjs",
     "build:analyze": "ANALYZE=true next build",
     "perf": "next build && next start"
   },

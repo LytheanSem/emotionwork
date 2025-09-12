@@ -1,0 +1,39 @@
+# Development files
+.env.local
+.env.development
+.env.test
+
+# Build artifacts (Vercel handles these)
+.next/
+out/
+
+# Development tools
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# Test files
+__tests__/
+*.test.*
+*.spec.*
+
+# Documentation (optional - remove if you want docs deployed)
+*.md
+!README.md
+
+# Scripts (optional - remove if you want scripts deployed)
+scripts/
+
+# Media files in development (keep public/ folder)
+media/
