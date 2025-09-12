@@ -61,7 +61,7 @@ For a simpler approach, you can embed a Google Maps iframe:
 // Replace the map section with:
 <div className="w-full h-full rounded-lg overflow-hidden">
   <iframe
-    src="https://www.google.com/maps/embed?pb=https://maps.app.goo.gl/EoCV4CZiF6nB6eLa8"
+    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d244.31410737962918!2d104.91670124067917!3d11.55001279544635!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x310951000d110d4b%3A0xb1e179428d7255f2!2sHann!5e0!3m2!1sen!2sth!4v1756145489375!5m2!1sen!2sth"
     width="100%"
     height="100%"
     style={{ border: 0 }}
@@ -71,6 +71,20 @@ For a simpler approach, you can embed a Google Maps iframe:
   ></iframe>
 </div>
 ```
+
+**Note**: To get the correct embed URL:
+1. Go to [Google Maps](https://maps.google.com)
+2. Search for your location
+3. Click "Share" → "Embed a map"
+4. Copy the iframe src URL (it should start with `https://www.google.com/maps/embed?pb=!1m...`)
+5. Replace the URL above with your location's embed URL
+
+**Important**: Google Maps has different URL formats:
+- ❌ **Incorrect**: `https://www.google.com/maps/embed?pb=https://maps.app.goo.gl/...` (This won't work)
+- ✅ **Correct**: `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!...` (This is the proper embed format)
+- 🔗 **Share URL**: `https://maps.app.goo.gl/...` (This is for sharing, not embedding)
+
+Always use the "Embed a map" option from Google Maps to get the correct iframe src URL.
 
 ## Option 4: Mapbox (Alternative to Google Maps)
 

@@ -67,7 +67,6 @@ export function Navbar() {
     try {
       await signOut({ callbackUrl: "/" });
       toast.success("Logged out successfully");
-      // console.log("👋 See you later! You've been logged out.");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Logout failed");

@@ -67,7 +67,6 @@ export const useDesignStore = () => {
       depth: 15,
       height: 8,
     })
-    console.log('Loading venue dimensions from localStorage:', savedVenueDimensions)
     setVenueDimensions(savedVenueDimensions)
     setVenueBoundaryVisible(getStorageItem(STORAGE_KEYS.VENUE_BOUNDARY_VISIBLE, true))
     setLightingColor(getStorageItem(STORAGE_KEYS.LIGHTING_COLOR, '#ff0000'))
@@ -101,7 +100,6 @@ export const useDesignStore = () => {
 
   useEffect(() => {
     if (isHydrated) {
-      console.log('Saving venue dimensions to localStorage:', venueDimensions)
       setStorageItem(STORAGE_KEYS.VENUE_DIMENSIONS, venueDimensions)
     }
   }, [venueDimensions, isHydrated])

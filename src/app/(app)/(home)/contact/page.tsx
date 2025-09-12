@@ -33,7 +33,6 @@ const ContactPage = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
   };
 
   // Show loading state during hydration to prevent mismatch

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { CloudinaryService } from "@/lib/cloudinary";
+import { logger } from "@/lib/logger";
 
 const cloudinaryService = new CloudinaryService();
 
@@ -37,13 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file
-    console.log("File validation:", { 
-      fileName: file.name, 
-      fileType: file.type, 
-      fileSize: file.size 
-    });
     const validationResult = cloudinaryService.validateFile(file);
-    console.log("Validation result:", validationResult);
     if (!validationResult.valid) {
       return NextResponse.json(
         { error: validationResult.error },
@@ -78,8 +73,8 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error("Cloudinary upload error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    logger.error("Cloudinary upload error", "cloudinary-upload", { error: errorMessage });
     return NextResponse.json(
       { error: `Failed to upload file: ${errorMessage}` },
       { status: 500 }

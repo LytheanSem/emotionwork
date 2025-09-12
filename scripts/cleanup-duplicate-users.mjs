@@ -13,6 +13,18 @@ if (!DATABASE_URI) {
 }
 
 async function cleanupDuplicateUsers() {
+  console.log('⚠️  WARNING: This script has been deprecated due to safety concerns.');
+  console.log('   It may delete legitimate users that aren\'t actually duplicates.');
+  console.log('');
+  console.log('✅ Please use the safer alternative:');
+  console.log('   bun scripts/safe-duplicate-cleanup.mjs scan    - Scan for duplicates');
+  console.log('   bun scripts/safe-duplicate-cleanup.mjs cleanup - Remove only tracked duplicates');
+  console.log('');
+  console.log('📖 See DUPLICATE_CLEANUP_GUIDE.md for detailed instructions');
+  console.log('');
+  console.log('❌ This script will NOT run to prevent accidental data loss.');
+  process.exit(1);
+  
   const client = new MongoClient(DATABASE_URI);
   
   try {

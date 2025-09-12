@@ -13,6 +13,7 @@ import { FullGrid } from '@/app/(app)/(home)/design/components/FullGrid'
 import { EquipmentLibrary } from '@/app/(app)/(home)/design/components/EquipmentLibrary'
 import ControlsPanel from '@/app/(app)/(home)/design/components/ControlsPanel'
 import { loadTemplate } from '@/app/(app)/(home)/design/templates/stageTemplates'
+import { shouldHandleGlobalShortcut } from '@/lib/keyboard-utils'
 
 export default function StageDesigner() {
   const {
@@ -65,6 +66,9 @@ export default function StageDesigner() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!selectedEquipmentId) return
+      
+      // Early-return when typing in inputs, textareas, or contenteditable
+      if (!shouldHandleGlobalShortcut()) return
 
       switch (e.key) {
         case 'ArrowUp':
@@ -382,7 +386,6 @@ export default function StageDesigner() {
               cameraRef.current = camera
               // Ensure the renderer preserves the drawing buffer for export
               gl.domElement.style.display = 'block'
-              console.log('Three.js objects created:', { gl, scene, camera })
             }}
           >
             <ambientLight intensity={0.6} />

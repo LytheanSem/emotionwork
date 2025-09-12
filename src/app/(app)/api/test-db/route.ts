@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    // console.log("Testing database connection...");
 
     const db = await getDb();
 
@@ -17,8 +16,6 @@ export async function GET() {
       );
     }
 
-    // console.log("MongoDB connection:", typeof db);
-    // console.log("Database name:", db.databaseName);
 
     // Try to use MongoDB API to find equipment
     try {
