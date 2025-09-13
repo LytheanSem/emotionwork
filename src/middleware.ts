@@ -13,10 +13,10 @@ export function middleware(request: NextRequest) {
   response.headers.set("X-XSS-Protection", "1; mode=block");
 
   // Content Security Policy
-  const isDev = process.env.NODE_ENV !== "production";
   const csp = [
     "default-src 'self'",
-    `script-src 'self'${isDev ? " 'unsafe-inline' 'unsafe-eval'" : ""}`,
+    // Allow unsafe-inline for Next.js scripts in production (required for Next.js)
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https:",
     "font-src 'self' data:",

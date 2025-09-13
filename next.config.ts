@@ -47,13 +47,13 @@ const nextConfig: NextConfig = {
     webpackBuildWorker: true,
 
     // Optimize for development
-    optimizeCss: false
+    optimizeCss: false,
   },
 
   // Server external packages
   serverExternalPackages: ["mongodb"],
 
-  webpack: (config, { dev, isServer }) => {
+  webpack: (config, { dev }) => {
     // SVG handling
     config.module.rules.push({
       test: /\.svg$/,
@@ -99,7 +99,7 @@ const nextConfig: NextConfig = {
     // Enable placeholder blur
     dangerouslyAllowSVG: true,
     contentSecurityPolicy:
-      "default-src 'self'; script-src 'none'; sandbox; frame-src 'self' https://www.google.com https://maps.google.com;",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; sandbox; frame-src 'self' https://www.google.com https://maps.google.com;",
   },
 
   // Compression and caching
@@ -201,8 +201,8 @@ const nextConfig: NextConfig = {
         loaders: ["@svgr/webpack"],
         as: "*.js",
       },
-    }
-  }
+    },
+  },
 };
 
 export default nextConfig;
