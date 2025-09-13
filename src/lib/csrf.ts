@@ -1,7 +1,9 @@
 import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 // Stateless CSRF tokens signed with server secret
-const CSRF_SECRET = process.env.CSRF_SECRET || "dev_csrf_secret"; // set a strong secret in prod
+// 🚨 CRITICAL: Set CSRF_SECRET environment variable in production!
+// Default secret is only for development - using it in production makes your app vulnerable to CSRF attacks
+const CSRF_SECRET = process.env.CSRF_SECRET || "dev_csrf_secret";
 
 // Token expiration time (1 hour)
 const TOKEN_EXPIRY = 60 * 60 * 1000;

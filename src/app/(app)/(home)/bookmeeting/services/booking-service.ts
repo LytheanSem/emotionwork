@@ -2,6 +2,7 @@
  * Service for managing booking operations
  */
 
+import { generateCSRFToken } from "@/lib/csrf";
 import { generateTimeSlots } from "../utils/time-slots";
 
 export interface BookingData {
@@ -35,14 +36,25 @@ class BookingService {
   }
 
   /**
+   * Get CSRF token for requests
+   */
+  private async getCSRFToken(): Promise<string> {
+    // Generate a session ID (simplified for client-side)
+    const sessionId = `client-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return generateCSRFToken(sessionId);
+  }
+
+  /**
    * Submit a booking request
    */
   async submitBooking(bookingData: BookingData): Promise<BookingResponse> {
     try {
+      const csrfToken = await this.getCSRFToken();
       const response = await fetch(this.baseUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
         },
         credentials: "same-origin",
         body: JSON.stringify(bookingData),
@@ -149,10 +161,12 @@ class BookingService {
     email: string
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
+      const csrfToken = await this.getCSRFToken();
       const response = await fetch("/api/booking-management", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
         },
         credentials: "same-origin",
         body: JSON.stringify({
@@ -187,10 +201,12 @@ class BookingService {
     updatedData: BookingData
   ): Promise<{ success: boolean; message?: string; error?: string }> {
     try {
+      const csrfToken = await this.getCSRFToken();
       const response = await fetch("/api/booking-management", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
         },
         credentials: "same-origin",
         body: JSON.stringify({

@@ -1,6 +1,31 @@
 import { randomBytes } from "crypto";
 import { google } from "googleapis";
 
+// Simple in-memory mutex for atomic operations
+class Mutex {
+  private locks = new Map<string, Promise<void>>();
+
+  async lock(key: string): Promise<() => void> {
+    // Wait for any existing lock to be released
+    while (this.locks.has(key)) {
+      await this.locks.get(key);
+    }
+
+    // Create a new lock
+    let release: () => void;
+    const lockPromise = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    this.locks.set(key, lockPromise);
+
+    return () => {
+      this.locks.delete(key);
+      release();
+    };
+  }
+}
+
 interface BookingData {
   firstName: string;
   middleName?: string;
@@ -17,6 +42,7 @@ class GoogleSheetsService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private sheets: any; // Google Sheets API client - complex typing from googleapis
   private spreadsheetId: string;
+  private mutex = new Mutex();
 
   constructor() {
     // Initialize Google Sheets API
@@ -169,61 +195,69 @@ class GoogleSheetsService {
         : normalizedTime.replace(/(AM|PM)$/, ":00 $1");
       const slotId = `${bookingData.selectedDate}-${timeWithMinutes}`;
 
-      // Check for conflicts one more time before adding (atomic check)
-      const bookedSlots = await this.getBookedSlots();
-      if (bookedSlots.includes(slotId)) {
-        return { success: false, conflict: true };
+      // Acquire exclusive lock for this slot to prevent race conditions
+      const release = await this.mutex.lock(`booking-${slotId}`);
+
+      try {
+        // Check for conflicts one more time before adding (atomic check)
+        const bookedSlots = await this.getBookedSlots();
+        if (bookedSlots.includes(slotId)) {
+          return { success: false, conflict: true };
+        }
+
+        // Format the date and time for display
+        const dateTime = this.formatDateTime(bookingData.selectedDate, bookingData.selectedTime);
+
+        // Prepare the row data according to your sheet structure
+        const values = [
+          [
+            bookingId, // A: Booking ID (new first column)
+            this.sanitizeForSheet(bookingData.firstName), // B: First name
+            this.sanitizeForSheet(bookingData.middleName || ""), // C: Middle name
+            this.sanitizeForSheet(bookingData.lastName), // D: Last name
+            this.sanitizeForSheet(bookingData.phoneNumber), // E: Phone number
+            this.sanitizeForSheet(bookingData.email), // F: Email
+            dateTime, // G: Date & Time
+            this.sanitizeForSheet(bookingData.description || ""), // H: description
+            "no", // I: Confirm (yes or no) - default to 'no'
+            "no", // J: Meeting complete (yes or no) - default to 'no'
+          ],
+        ];
+
+        // First, find the first empty row
+        const firstEmptyRow = await this.findFirstEmptyRow();
+
+        if (firstEmptyRow === -1) {
+          // If no empty row found, append to the end
+          const response = await this.sheets.spreadsheets.values.append({
+            spreadsheetId: this.spreadsheetId,
+            range: "booking list!A:J", // Append to columns A through J (added booking ID column)
+            valueInputOption: "RAW",
+            insertDataOption: "INSERT_ROWS",
+            requestBody: {
+              values: values,
+            },
+          });
+          console.log("Booking appended to Google Sheets:", response.data);
+        } else {
+          // Insert at the first empty row
+          const range = `booking list!A${firstEmptyRow}:J${firstEmptyRow}`;
+          const response = await this.sheets.spreadsheets.values.update({
+            spreadsheetId: this.spreadsheetId,
+            range: range,
+            valueInputOption: "RAW",
+            requestBody: {
+              values: values,
+            },
+          });
+          console.log(`Booking inserted at row ${firstEmptyRow}:`, response.data);
+        }
+
+        return { success: true, bookingId };
+      } finally {
+        // Always release the lock
+        release();
       }
-
-      // Format the date and time for display
-      const dateTime = this.formatDateTime(bookingData.selectedDate, bookingData.selectedTime);
-
-      // Prepare the row data according to your sheet structure
-      const values = [
-        [
-          bookingId, // A: Booking ID (new first column)
-          this.sanitizeForSheet(bookingData.firstName), // B: First name
-          this.sanitizeForSheet(bookingData.middleName || ""), // C: Middle name
-          this.sanitizeForSheet(bookingData.lastName), // D: Last name
-          this.sanitizeForSheet(bookingData.phoneNumber), // E: Phone number
-          this.sanitizeForSheet(bookingData.email), // F: Email
-          dateTime, // G: Date & Time
-          this.sanitizeForSheet(bookingData.description || ""), // H: description
-          "no", // I: Confirm (yes or no) - default to 'no'
-          "no", // J: Meeting complete (yes or no) - default to 'no'
-        ],
-      ];
-
-      // First, find the first empty row
-      const firstEmptyRow = await this.findFirstEmptyRow();
-
-      if (firstEmptyRow === -1) {
-        // If no empty row found, append to the end
-        const response = await this.sheets.spreadsheets.values.append({
-          spreadsheetId: this.spreadsheetId,
-          range: "booking list!A:J", // Append to columns A through J (added booking ID column)
-          valueInputOption: "RAW",
-          insertDataOption: "INSERT_ROWS",
-          requestBody: {
-            values: values,
-          },
-        });
-        console.log("Booking appended to Google Sheets:", response.data);
-      } else {
-        // Insert at the first empty row
-        const range = `booking list!A${firstEmptyRow}:J${firstEmptyRow}`;
-        const response = await this.sheets.spreadsheets.values.update({
-          spreadsheetId: this.spreadsheetId,
-          range: range,
-          valueInputOption: "RAW",
-          requestBody: {
-            values: values,
-          },
-        });
-        console.log(`Booking inserted at row ${firstEmptyRow}:`, response.data);
-      }
-
-      return { success: true, bookingId };
     } catch (error) {
       console.error("Error adding booking to Google Sheets:", error);
       return { success: false };

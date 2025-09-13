@@ -16,12 +16,21 @@ class EmailService {
   private transporter: nodemailer.Transporter;
 
   constructor() {
+    const user = process.env.EMAIL_USER;
+    const pass = process.env.EMAIL_PASS;
+
+    if (!user || !pass) {
+      const msg = "EMAIL_USER/EMAIL_PASS not configured";
+      if (process.env.NODE_ENV === "production") throw new Error(msg);
+      console.warn(msg);
+    }
+
     // Create transporter using environment variables
     this.transporter = nodemailer.createTransport({
       service: "gmail", // You can change this to other services
       auth: {
-        user: process.env.EMAIL_USER, // Your dedicated email
-        pass: process.env.EMAIL_PASS, // App password (not regular password)
+        user,
+        pass, // App password (not regular password)
       },
     });
   }

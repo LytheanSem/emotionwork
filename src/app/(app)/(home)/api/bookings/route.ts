@@ -1,3 +1,4 @@
+import { getCSRFTokenFromRequest, getSessionIdFromRequest, verifyCSRFToken } from "@/lib/csrf";
 import { emailService } from "@/lib/email-service";
 import { googleSheetsService } from "@/lib/google-sheets";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -23,13 +24,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: sizeValidation.error }, { status: 413 });
     }
 
+    // Verify CSRF token
+    const token = getCSRFTokenFromRequest(request);
+    const sid = getSessionIdFromRequest(request as unknown as Request);
+    if (!token || !verifyCSRFToken(sid, token)) {
+      return NextResponse.json({ error: "Invalid CSRF token" }, { status: 403 });
+    }
+
     // Basic rate limiting (10 requests per 15 minutes per IP)
     const ip = getClientIp(request);
     if (!checkRateLimit(ip, { windowMs: 15 * 60 * 1000, max: 10 })) {
       return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 });
     }
 
-    const bookingData: BookingData = await request.json();
+    let bookingData: BookingData;
+    try {
+      bookingData = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
 
     // Validate required fields
     if (
@@ -50,8 +63,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate phone format
-    const phone = bookingData.phoneNumber?.replace(/[\s\-\(\)]/g, "");
-    if (!/^\+?[1-9]\d{0,15}$/.test(phone)) {
+    const phone = bookingData.phoneNumber?.replace(/[^\d+]/g, "");
+    if (!/^\+?[1-9]\d{1,14}$/.test(phone)) {
       return NextResponse.json({ error: "Invalid phone number" }, { status: 400 });
     }
 

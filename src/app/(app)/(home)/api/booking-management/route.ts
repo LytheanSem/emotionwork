@@ -1,8 +1,25 @@
+import { getCSRFTokenFromRequest, getSessionIdFromRequest, verifyCSRFToken } from "@/lib/csrf";
 import { emailService } from "@/lib/email-service";
 import { googleSheetsService } from "@/lib/google-sheets";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { validateRequestSize } from "@/lib/request-limiter";
 import { NextRequest, NextResponse } from "next/server";
+
+interface BookingManagementRequest {
+  bookingId: string;
+  email: string;
+  action: string;
+  updatedData?: {
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
+    email: string;
+    selectedDate: string;
+    selectedTime: string;
+    middleName?: string;
+    description?: string;
+  };
+}
 
 // Rate limiting is now handled by the shared utility
 
@@ -63,7 +80,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: sizeValidation.error }, { status: 413 });
     }
 
-    const body = await request.json();
+    // Verify CSRF token
+    const token = getCSRFTokenFromRequest(request);
+    const sid = getSessionIdFromRequest(request as unknown as Request);
+    if (!token || !verifyCSRFToken(sid, token)) {
+      return NextResponse.json({ success: false, error: "Invalid CSRF token" }, { status: 403 });
+    }
+
+    let body: BookingManagementRequest;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ success: false, error: "Invalid JSON payload" }, { status: 400 });
+    }
+
     const { bookingId, email, action } = body;
 
     if (!bookingId || !email || !action) {
@@ -143,10 +173,44 @@ export async function POST(request: NextRequest) {
       }
 
       // Validate phone
-      const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, "");
-      const phoneRegex = /^\+?[1-9]\d{0,15}$/;
+      const normalizedPhone = phoneNumber.replace(/[^\d+]/g, "");
+      const phoneRegex = /^\+?[1-9]\d{1,14}$/;
       if (!phoneRegex.test(normalizedPhone)) {
         return NextResponse.json({ success: false, error: "Invalid phone number" }, { status: 400 });
+      }
+
+      // Apply creation-time business rules on update (past-day/weekend/blocked dates)
+      const dayDate = new Date(updatedData.selectedDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      dayDate.setHours(0, 0, 0, 0);
+
+      // Past-day/same-day booking check
+      if (dayDate <= today) {
+        return NextResponse.json(
+          { success: false, error: "Same-day or past-date bookings are not allowed" },
+          { status: 400 }
+        );
+      }
+
+      // Weekend booking check
+      const dow = dayDate.getDay();
+      if (dow === 0 || dow === 6) {
+        return NextResponse.json({ success: false, error: "Weekend bookings are not allowed" }, { status: 400 });
+      }
+
+      // Blocked dates check
+      try {
+        const res = await fetch(`${process.env.NEXTAUTH_URL}/api/blocked-dates`);
+        if (res.ok) {
+          const data = await res.json();
+          const blocked = Array.isArray(data) ? data : data.blockedDates;
+          if (blocked?.includes(updatedData.selectedDate)) {
+            return NextResponse.json({ success: false, error: "Selected date is blocked" }, { status: 400 });
+          }
+        }
+      } catch {
+        /* non-fatal */
       }
 
       // Enforce availability server-side (allow same slot)
