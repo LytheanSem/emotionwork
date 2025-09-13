@@ -13,26 +13,43 @@ interface BookingData {
 }
 
 class EmailService {
-  private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter | null = null;
 
   constructor() {
-    const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_PASS;
+    // Don't initialize transporter in constructor to avoid build-time errors
+    // It will be initialized lazily when first needed
+  }
 
-    if (!user || !pass) {
-      const msg = "EMAIL_USER/EMAIL_PASS not configured";
-      if (process.env.NODE_ENV === "production") throw new Error(msg);
-      console.warn(msg);
+  private getTransporter(): nodemailer.Transporter {
+    if (!this.transporter) {
+      const user = process.env.EMAIL_USER;
+      const pass = process.env.EMAIL_PASS;
+
+      if (!user || !pass) {
+        const msg = "EMAIL_USER/EMAIL_PASS not configured";
+        if (process.env.NODE_ENV === "production") throw new Error(msg);
+        console.warn(msg);
+        // Create a dummy transporter for development
+        this.transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: "dummy@example.com",
+            pass: "dummy",
+          },
+        });
+        return this.transporter;
+      }
+
+      // Create transporter using environment variables
+      this.transporter = nodemailer.createTransport({
+        service: "gmail", // You can change this to other services
+        auth: {
+          user,
+          pass, // App password (not regular password)
+        },
+      });
     }
-
-    // Create transporter using environment variables
-    this.transporter = nodemailer.createTransport({
-      service: "gmail", // You can change this to other services
-      auth: {
-        user,
-        pass, // App password (not regular password)
-      },
-    });
+    return this.transporter;
   }
 
   /**
@@ -73,7 +90,7 @@ class EmailService {
         text: this.generateConfirmationEmailText(bookingData, fullName, formattedDate),
       };
 
-      const result = await this.transporter.sendMail(mailOptions);
+      const result = await this.getTransporter().sendMail(mailOptions);
       console.log("Booking confirmation email sent:", result.messageId);
       return true;
     } catch (error) {
@@ -265,7 +282,7 @@ This is an automated confirmation email. Please do not reply to this email.
    */
   async testConnection(): Promise<boolean> {
     try {
-      await this.transporter.verify();
+      await this.getTransporter().verify();
       console.log("Email service connection successful");
       return true;
     } catch (error) {
