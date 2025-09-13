@@ -198,7 +198,7 @@ class EmailService {
           <h3>🔧 Manage Your Booking</h3>
           <p>Need to cancel or modify your booking? Visit our booking management page:</p>
           <div style="text-align: center; margin: 15px 0;">
-            <a href="${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/manage-booking"
+            <a href="${process.env.NEXTAUTH_URL || "https://emotionwork.vercel.app"}/manage-booking"
                class="button"
                style="background: #0ea5e9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0; display: inline-block;">
               Manage Booking

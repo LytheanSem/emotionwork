@@ -31,8 +31,8 @@ export default function BookMeetingPage() {
     setCurrentStep("confirmation");
   };
 
-  const handleBookingSuccess = (bookingId: string) => {
-    console.log("Booking successful:", bookingId);
+  const handleBookingSuccess = (_bookingId: string) => {
+    // Booking successful - no need to log sensitive data
     // You can add additional success handling here
   };
 
