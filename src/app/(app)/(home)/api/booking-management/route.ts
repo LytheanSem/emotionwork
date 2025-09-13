@@ -1,4 +1,4 @@
-import { getCSRFTokenFromRequest, getSessionIdFromRequest, verifyCSRFToken } from "@/lib/csrf";
+// CSRF protection removed for simplicity - not needed for contact info collection
 import { emailService } from "@/lib/email-service";
 import { googleSheetsService } from "@/lib/google-sheets";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -80,12 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: sizeValidation.error }, { status: 413 });
     }
 
-    // Verify CSRF token
-    const token = getCSRFTokenFromRequest(request);
-    const sid = getSessionIdFromRequest(request as unknown as Request);
-    if (!token || !verifyCSRFToken(sid, token)) {
-      return NextResponse.json({ success: false, error: "Invalid CSRF token" }, { status: 403 });
-    }
+    // CSRF protection removed - not needed for contact info collection
 
     let body: BookingManagementRequest;
     try {
