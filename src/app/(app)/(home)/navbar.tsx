@@ -4,12 +4,12 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { useRoutePrefetch } from "@/hooks/use-route-prefetch";
 import { signOut, useSession } from "next-auth/react";
+import { Inter } from "next/font/google";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { NavbarSidebar } from "./navbar-sidebar";
-import { Inter } from "next/font/google";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -33,8 +33,6 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
   );
 };
 
-
-
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const { data: session, status } = useSession();
@@ -51,14 +49,14 @@ export function Navbar() {
 
   useEffect(() => {
     if (!isClient) return;
-    
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0);
     };
 
     // Set initial scroll state
     handleScroll();
-    
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isClient]);
@@ -102,10 +100,9 @@ export function Navbar() {
       { href: "/portfolio", children: "Portfolio" },
       { href: "/contact", children: "Contact" },
       { href: "/bookmeeting", children: "Book meeting" },
+      { href: "/manage-booking", children: "Manage Booking" },
       { href: "/design", children: "Design" },
     ];
-
-
 
     return baseItems;
   }, []);
@@ -115,8 +112,8 @@ export function Navbar() {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 h-24 transition-all duration-300 ${inter.className} ${
         isClient && isScrolled
-                  ? "bg-background/95 backdrop-blur-md shadow-lg border-b border-border"
-        : "bg-background border-b border-border"
+          ? "bg-background/95 backdrop-blur-md shadow-lg border-b border-border"
+          : "bg-background border-b border-border"
       }`.trim()}
     >
       <div className="h-full flex items-center justify-between px-6">
@@ -144,7 +141,9 @@ export function Navbar() {
             <div className="flex flex-col items-end">
               <span className="text-sm text-muted-foreground font-inter">Welcome, {displayName}</span>
               {isAdmin && <span className="text-xs text-orange-600 font-medium font-inter">Admin User</span>}
-              {session?.user?.isManager && !isAdmin && <span className="text-xs text-blue-600 font-medium font-inter">Manager</span>}
+              {session?.user?.isManager && !isAdmin && (
+                <span className="text-xs text-blue-600 font-medium font-inter">Manager</span>
+              )}
             </div>
             {(isAdmin || session?.user?.isManager) && (
               <Button
@@ -152,7 +151,7 @@ export function Navbar() {
                 variant="outline"
                 size="sm"
                 className={`font-inter ${
-                  isAdmin 
+                  isAdmin
                     ? "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
                     : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                 }`}
@@ -171,17 +170,17 @@ export function Navbar() {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Button 
-              onClick={() => isClient && router.push("/sign-in")} 
-              variant="outline" 
-              size="sm" 
+            <Button
+              onClick={() => isClient && router.push("/sign-in")}
+              variant="outline"
+              size="sm"
               className="font-inter"
             >
               Log in
             </Button>
-            <Button 
-              onClick={() => isClient && router.push("/sign-up")} 
-              size="sm" 
+            <Button
+              onClick={() => isClient && router.push("/sign-up")}
+              size="sm"
               className="bg-black text-white hover:bg-gray-800 font-inter"
             >
               Sign up

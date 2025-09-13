@@ -196,17 +196,15 @@ class EmailService {
             ? `
         <div class="highlight" style="background: #f0f9ff; padding: 20px; border-left: 4px solid #0ea5e9; margin: 20px 0;">
           <h3>🔧 Manage Your Booking</h3>
-          <p>Need to cancel or modify your booking? Visit our booking management page:</p>
-          <div style="text-align: center; margin: 15px 0;">
-            <a href="${process.env.NEXT_PUBLIC_BASE_URL || "https://emotionwork.vercel.app"}/manage-booking"
-               class="button"
-               style="background: #0ea5e9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 10px 0; display: inline-block;">
-              Manage Booking
-            </a>
-          </div>
+          <p>Need to cancel or modify your booking? Follow these steps:</p>
+          <ol style="margin: 15px 0; padding-left: 20px;">
+            <li>Visit our website: <strong>${process.env.NEXT_PUBLIC_BASE_URL || "https://emotionwork.vercel.app"}</strong></li>
+            <li>Click on <strong>"Manage Booking"</strong> in the navigation menu</li>
+            <li>Enter your Booking ID and email address</li>
+          </ol>
           <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107;">
             <p style="margin: 0; font-size: 14px; color: #856404;">
-              <strong>To manage your booking, you'll need:</strong><br>
+              <strong>You'll need these details:</strong><br>
               • Booking ID: <strong>${this.escape(bookingData.bookingId || "")}</strong><br>
               • Email: <strong>${this.escape(bookingData.email)}</strong>
             </p>
@@ -258,10 +256,12 @@ ${
   bookingData.bookingId
     ? `
 MANAGE YOUR BOOKING:
-- Management Link: ${process.env.NEXT_PUBLIC_BASE_URL || "https://emotionwork.vercel.app"}/manage-booking
+1. Visit our website: ${process.env.NEXT_PUBLIC_BASE_URL || "https://emotionwork.vercel.app"}
+2. Click on "Manage Booking" in the navigation menu
+3. Enter your Booking ID and email address below:
+
 - Booking ID: ${bookingData.bookingId}
 - Email: ${bookingData.email}
-- Use the above details to access your booking management page
 
 `
     : ""
