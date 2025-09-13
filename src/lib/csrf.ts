@@ -9,13 +9,30 @@ const CSRF_SECRET = process.env.CSRF_SECRET || "dev_csrf_secret";
 const TOKEN_EXPIRY = 60 * 60 * 1000;
 
 /**
+ * Convert buffer to base64url encoding (browser compatible)
+ */
+function toBase64Url(buffer: Buffer): string {
+  return buffer.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+}
+
+/**
+ * Convert base64url string to buffer (browser compatible)
+ */
+function fromBase64Url(str: string): Buffer {
+  // Add padding back
+  const padding = "=".repeat((4 - (str.length % 4)) % 4);
+  const base64 = str.replace(/-/g, "+").replace(/_/g, "/") + padding;
+  return Buffer.from(base64, "base64");
+}
+
+/**
  * Generate a CSRF token for a session
  */
 export function generateCSRFToken(sessionId: string): string {
   const expires = Date.now() + TOKEN_EXPIRY;
   const nonce = randomBytes(16).toString("hex");
   const payload = `${sessionId}.${expires}.${nonce}`;
-  const sig = createHmac("sha256", CSRF_SECRET).update(payload).digest("base64url");
+  const sig = toBase64Url(createHmac("sha256", CSRF_SECRET).update(payload).digest());
   return `${payload}.${sig}`;
 }
 
@@ -34,9 +51,9 @@ export function verifyCSRFToken(sessionId: string, token: string): boolean {
   if (Date.now() > expires) return false;
 
   const payload = `${sid}.${expiresStr}.${nonce}`;
-  const expected = createHmac("sha256", CSRF_SECRET).update(payload).digest("base64url");
-  const a = Buffer.from(sig, "base64url");
-  const b = Buffer.from(expected, "base64url");
+  const expected = toBase64Url(createHmac("sha256", CSRF_SECRET).update(payload).digest());
+  const a = fromBase64Url(sig);
+  const b = fromBase64Url(expected);
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
 }
@@ -76,6 +93,6 @@ export function getSessionIdFromRequest(request: Request): string {
 
   // Create a secure hash-like identifier using HMAC
   const input = `${ip}-${userAgent}`;
-  const digest = createHmac("sha256", CSRF_SECRET).update(input).digest("base64url");
+  const digest = toBase64Url(createHmac("sha256", CSRF_SECRET).update(input).digest());
   return digest.slice(0, 32);
 }
