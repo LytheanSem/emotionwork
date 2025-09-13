@@ -16,12 +16,12 @@ interface EditBookingFormProps {
   booking: {
     bookingId: string;
     firstName: string;
-    middleName: string;
+    middleName?: string;
     lastName: string;
     phoneNumber: string;
     email: string;
     dateTime: string;
-    description: string;
+    description?: string;
   };
   onSuccess: () => void;
   onCancel: () => void;

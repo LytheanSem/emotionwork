@@ -68,6 +68,15 @@ export function validateRequestSize(request: NextRequest): { valid: boolean; err
   const pathname = request.nextUrl.pathname;
   const limit = getSizeLimitForPath(pathname);
 
+  // For JSON API endpoints, require Content-Length to prevent chunked bypass
+  const contentLength = request.headers.get("content-length");
+  if (!contentLength && limit === REQUEST_LIMITS.JSON_PAYLOAD && ["POST", "PUT", "PATCH"].includes(request.method)) {
+    return {
+      valid: false,
+      error: "Missing Content-Length header",
+    };
+  }
+
   if (!checkRequestSize(request, limit)) {
     const sizeMB = (limit / (1024 * 1024)).toFixed(1);
     return {

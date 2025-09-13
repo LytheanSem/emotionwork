@@ -130,7 +130,10 @@ class GoogleSheetsService {
         spreadsheetId: this.spreadsheetId,
       });
 
-      const sheetNames = response.data.sheets.map((sheet: { properties: { title: string } }) => sheet.properties.title);
+      const sheetNames =
+        (response.data.sheets
+          ?.map((sheet: { properties?: { title?: string } }) => sheet.properties?.title)
+          .filter(Boolean) as string[]) || [];
 
       console.log("Google Sheets connection successful!");
       console.log("Sheet names:", sheetNames);
@@ -144,12 +147,33 @@ class GoogleSheetsService {
   }
 
   /**
+   * Sanitize user input to prevent formula injection in Google Sheets
+   */
+  private sanitizeForSheet(value: string): string {
+    const v = String(value ?? "");
+    return /^[=+\-@]/.test(v) ? `'${v}` : v;
+  }
+
+  /**
    * Add a new booking to the Google Sheet
    */
-  async addBooking(bookingData: BookingData): Promise<{ success: boolean; bookingId?: string }> {
+  async addBooking(bookingData: BookingData): Promise<{ success: boolean; bookingId?: string; conflict?: boolean }> {
     try {
       // Generate unique booking ID
       const bookingId = this.generateBookingId();
+
+      // Create slot ID for conflict checking
+      const normalizedTime = bookingData.selectedTime.trim().replace(/\s+/g, " ").toUpperCase();
+      const timeWithMinutes = /:\d{2}/.test(normalizedTime)
+        ? normalizedTime
+        : normalizedTime.replace(/(AM|PM)$/, ":00 $1");
+      const slotId = `${bookingData.selectedDate}-${timeWithMinutes}`;
+
+      // Check for conflicts one more time before adding (atomic check)
+      const bookedSlots = await this.getBookedSlots();
+      if (bookedSlots.includes(slotId)) {
+        return { success: false, conflict: true };
+      }
 
       // Format the date and time for display
       const dateTime = this.formatDateTime(bookingData.selectedDate, bookingData.selectedTime);
@@ -158,13 +182,13 @@ class GoogleSheetsService {
       const values = [
         [
           bookingId, // A: Booking ID (new first column)
-          bookingData.firstName, // B: First name
-          bookingData.middleName || "", // C: Middle name
-          bookingData.lastName, // D: Last name
-          bookingData.phoneNumber, // E: Phone number
-          bookingData.email, // F: Email
+          this.sanitizeForSheet(bookingData.firstName), // B: First name
+          this.sanitizeForSheet(bookingData.middleName || ""), // C: Middle name
+          this.sanitizeForSheet(bookingData.lastName), // D: Last name
+          this.sanitizeForSheet(bookingData.phoneNumber), // E: Phone number
+          this.sanitizeForSheet(bookingData.email), // F: Email
           dateTime, // G: Date & Time
-          bookingData.description || "", // H: description
+          this.sanitizeForSheet(bookingData.description || ""), // H: description
           "no", // I: Confirm (yes or no) - default to 'no'
           "no", // J: Meeting complete (yes or no) - default to 'no'
         ],
@@ -379,13 +403,13 @@ class GoogleSheetsService {
           const values = [
             [
               bookingId, // A: Booking ID (keep original)
-              updatedData.firstName, // B: First name
-              updatedData.middleName || "", // C: Middle name
-              updatedData.lastName, // D: Last name
-              updatedData.phoneNumber, // E: Phone number
-              updatedData.email, // F: Email
+              this.sanitizeForSheet(updatedData.firstName), // B: First name
+              this.sanitizeForSheet(updatedData.middleName || ""), // C: Middle name
+              this.sanitizeForSheet(updatedData.lastName), // D: Last name
+              this.sanitizeForSheet(updatedData.phoneNumber), // E: Phone number
+              this.sanitizeForSheet(updatedData.email), // F: Email
               dateTime, // G: Date & Time
-              updatedData.description || "", // H: description
+              this.sanitizeForSheet(updatedData.description || ""), // H: description
               "no", // I: Confirm (yes or no) - reset to 'no' for updated booking
               "no", // J: Meeting complete (yes or no) - reset to 'no' for updated booking
             ],

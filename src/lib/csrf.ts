@@ -1,7 +1,7 @@
-import { randomBytes } from "crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
-// CSRF token storage (in production, use Redis or database)
-const csrfTokens = new Map<string, { token: string; expires: number }>();
+// Stateless CSRF tokens signed with server secret
+const CSRF_SECRET = process.env.CSRF_SECRET || "dev_csrf_secret"; // set a strong secret in prod
 
 // Token expiration time (1 hour)
 const TOKEN_EXPIRY = 60 * 60 * 1000;
@@ -10,45 +10,33 @@ const TOKEN_EXPIRY = 60 * 60 * 1000;
  * Generate a CSRF token for a session
  */
 export function generateCSRFToken(sessionId: string): string {
-  const token = randomBytes(32).toString("hex");
   const expires = Date.now() + TOKEN_EXPIRY;
-
-  csrfTokens.set(sessionId, { token, expires });
-
-  return token;
+  const nonce = randomBytes(16).toString("hex");
+  const payload = `${sessionId}.${expires}.${nonce}`;
+  const sig = createHmac("sha256", CSRF_SECRET).update(payload).digest("base64url");
+  return `${payload}.${sig}`;
 }
 
 /**
  * Verify a CSRF token
  */
 export function verifyCSRFToken(sessionId: string, token: string): boolean {
-  const stored = csrfTokens.get(sessionId);
+  const parts = token.split(".");
+  if (parts.length !== 4) return false;
 
-  if (!stored) {
-    return false;
-  }
+  const [sid, expiresStr, nonce, sig] = parts;
+  const expires = parseInt(expiresStr, 10);
 
-  // Check if token has expired
-  if (Date.now() > stored.expires) {
-    csrfTokens.delete(sessionId);
-    return false;
-  }
+  if (!sid || !expiresStr || !nonce || !sig || isNaN(expires)) return false;
+  if (sid !== sessionId) return false;
+  if (Date.now() > expires) return false;
 
-  // Verify token matches
-  return stored.token === token;
-}
-
-/**
- * Clean up expired tokens (call this periodically)
- */
-export function cleanupExpiredTokens(): void {
-  const now = Date.now();
-
-  for (const [sessionId, data] of csrfTokens.entries()) {
-    if (now > data.expires) {
-      csrfTokens.delete(sessionId);
-    }
-  }
+  const payload = `${sid}.${expiresStr}.${nonce}`;
+  const expected = createHmac("sha256", CSRF_SECRET).update(payload).digest("base64url");
+  const a = Buffer.from(sig, "base64url");
+  const b = Buffer.from(expected, "base64url");
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
 }
 
 /**
@@ -84,6 +72,8 @@ export function getSessionIdFromRequest(request: Request): string {
   const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
   const userAgent = request.headers.get("user-agent") || "unknown";
 
-  // Create a simple hash-like identifier
-  return Buffer.from(`${ip}-${userAgent}`).toString("base64").slice(0, 16);
+  // Create a secure hash-like identifier using HMAC
+  const input = `${ip}-${userAgent}`;
+  const digest = createHmac("sha256", CSRF_SECRET).update(input).digest("base64url");
+  return digest.slice(0, 32);
 }

@@ -95,9 +95,7 @@ export default function BookMeetingPage() {
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto">
-          {currentStep === "form" && (
-            <BookingForm onSubmit={handleFormSubmit} onBookingSuccess={handleBookingSuccess} />
-          )}
+          {currentStep === "form" && <BookingForm onSubmit={handleFormSubmit} />}
 
           {currentStep === "confirmation" && bookingData && (
             <BookingConfirmation

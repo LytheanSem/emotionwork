@@ -1,30 +1,10 @@
 import { emailService } from "@/lib/email-service";
 import { googleSheetsService } from "@/lib/google-sheets";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { validateRequestSize } from "@/lib/request-limiter";
 import { NextRequest, NextResponse } from "next/server";
 
-// Rate limiting store (in production, use Redis or similar)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minutes
-  const maxRequests = 10; // Max 10 requests per 15 minutes
-
-  const record = rateLimitStore.get(ip);
-
-  if (!record || now > record.resetTime) {
-    rateLimitStore.set(ip, { count: 1, resetTime: now + windowMs });
-    return true;
-  }
-
-  if (record.count >= maxRequests) {
-    return false;
-  }
-
-  record.count++;
-  return true;
-}
+// Rate limiting is now handled by the shared utility
 
 // GET - Look up booking by ID and email
 export async function GET(request: NextRequest) {
@@ -42,9 +22,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid input" }, { status: 400 });
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ success: false, error: "Invalid email format" }, { status: 400 });
+    }
+
     // Rate limiting
-    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
-    if (!checkRateLimit(ip)) {
+    const ip = getClientIp(request);
+    if (!checkRateLimit(ip, { windowMs: 15 * 60 * 1000, max: 10 })) {
       return NextResponse.json(
         { success: false, error: "Too many requests. Please try again later." },
         { status: 429 }
@@ -92,9 +78,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Invalid input" }, { status: 400 });
     }
 
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json({ success: false, error: "Invalid email format" }, { status: 400 });
+    }
+
     // Rate limiting
-    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
-    if (!checkRateLimit(ip)) {
+    const ip = getClientIp(request);
+    if (!checkRateLimit(ip, { windowMs: 15 * 60 * 1000, max: 10 })) {
       return NextResponse.json(
         { success: false, error: "Too many requests. Please try again later." },
         { status: 429 }
@@ -148,6 +140,40 @@ export async function POST(request: NextRequest) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(newEmail)) {
         return NextResponse.json({ success: false, error: "Invalid email format" }, { status: 400 });
+      }
+
+      // Validate phone
+      const normalizedPhone = phoneNumber.replace(/[\s\-\(\)]/g, "");
+      const phoneRegex = /^\+?[1-9]\d{0,15}$/;
+      if (!phoneRegex.test(normalizedPhone)) {
+        return NextResponse.json({ success: false, error: "Invalid phone number" }, { status: 400 });
+      }
+
+      // Enforce availability server-side (allow same slot)
+      const normalizedTime = selectedTime.replace(/\s/g, "");
+      const newSlotId = `${selectedDate}-${normalizedTime}`;
+
+      try {
+        const currentBooking = await googleSheetsService.findBookingByIdAndEmail(bookingId, email);
+        if (currentBooking.success && currentBooking.booking) {
+          // Extract current slot ID from the dateTime field
+          const currentDateTime = currentBooking.booking.dateTime;
+          const currentSlotId = currentDateTime.split(" ")[0] + "-" + currentDateTime.split(" ")[1].replace(/\s/g, "");
+
+          // Only check availability if changing to a different slot
+          if (newSlotId !== currentSlotId) {
+            const bookedSlots = await googleSheetsService.getBookedSlots();
+            if (bookedSlots.includes(newSlotId)) {
+              return NextResponse.json(
+                { success: false, error: "This time slot is no longer available" },
+                { status: 409 }
+              );
+            }
+          }
+        }
+      } catch (error) {
+        console.warn("Could not verify slot availability:", error);
+        // Continue with update - don't fail the request for this
       }
 
       // Update the booking

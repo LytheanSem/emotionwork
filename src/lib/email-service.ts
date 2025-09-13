@@ -27,6 +27,28 @@ class EmailService {
   }
 
   /**
+   * Escape HTML special characters to prevent injection
+   */
+  private escape(value: string): string {
+    return String(value).replace(/[&<>"']/g, (c) => {
+      switch (c) {
+        case "&":
+          return "&amp;";
+        case "<":
+          return "&lt;";
+        case ">":
+          return "&gt;";
+        case '"':
+          return "&quot;";
+        case "'":
+          return "&#39;";
+        default:
+          return c;
+      }
+    });
+  }
+
+  /**
    * Send booking confirmation email
    */
   async sendBookingConfirmation(bookingData: BookingData): Promise<boolean> {
@@ -38,7 +60,7 @@ class EmailService {
         from: `"Emotionwork Bookings" <${process.env.EMAIL_USER}>`,
         to: bookingData.email,
         subject: "Booking Confirmation - Your Meeting is Scheduled",
-        html: this.generateConfirmationEmailHTML(bookingData, fullName, formattedDate),
+        html: this.generateConfirmationEmailHTML(bookingData, this.escape(fullName), formattedDate),
         text: this.generateConfirmationEmailText(bookingData, fullName, formattedDate),
       };
 
@@ -55,7 +77,8 @@ class EmailService {
    * Format date for email display
    */
   private formatDateForEmail(dateString: string): string {
-    const date = new Date(dateString);
+    const [y, m, d] = dateString.split("-").map(Number);
+    const date = new Date(y, (m || 1) - 1, d || 1);
     return date.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -95,7 +118,7 @@ class EmailService {
       </div>
 
       <div class="content">
-        <h2>Hello ${fullName},</h2>
+        <h2>Hello ${this.escape(fullName)},</h2>
         <p>Thank you for booking a meeting with us! We're excited to discuss your project needs.</p>
 
         <div class="booking-details">
@@ -106,7 +129,7 @@ class EmailService {
           </div>
           <div class="detail-row">
             <span class="detail-label">Time:</span>
-            <span class="detail-value">${bookingData.selectedTime}</span>
+            <span class="detail-value">${this.escape(bookingData.selectedTime)}</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">Duration:</span>
@@ -114,14 +137,14 @@ class EmailService {
           </div>
           <div class="detail-row">
             <span class="detail-label">Phone:</span>
-            <span class="detail-value">${bookingData.phoneNumber}</span>
+            <span class="detail-value">${this.escape(bookingData.phoneNumber)}</span>
           </div>
           ${
             bookingData.description
               ? `
           <div class="detail-row">
             <span class="detail-label">Discussion Topic:</span>
-            <span class="detail-value">${bookingData.description}</span>
+            <span class="detail-value">${this.escape(bookingData.description || "")}</span>
           </div>
           `
               : ""
@@ -158,8 +181,8 @@ class EmailService {
           <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 15px 0; border-left: 4px solid #ffc107;">
             <p style="margin: 0; font-size: 14px; color: #856404;">
               <strong>To manage your booking, you'll need:</strong><br>
-              • Booking ID: <strong>${bookingData.bookingId}</strong><br>
-              • Email: <strong>${bookingData.email}</strong>
+              • Booking ID: <strong>${this.escape(bookingData.bookingId || "")}</strong><br>
+              • Email: <strong>${this.escape(bookingData.email)}</strong>
             </p>
           </div>
           <p style="font-size: 12px; color: #666; margin-top: 10px;">

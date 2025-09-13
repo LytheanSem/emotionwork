@@ -2,6 +2,8 @@
  * Service for managing booking operations
  */
 
+import { generateTimeSlots } from "../utils/time-slots";
+
 export interface BookingData {
   firstName: string;
   middleName?: string;
@@ -42,6 +44,7 @@ class BookingService {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "same-origin",
         body: JSON.stringify(bookingData),
       });
 
@@ -67,15 +70,17 @@ class BookingService {
    */
   async getAvailableSlots(): Promise<AvailableSlotsResponse> {
     try {
-      const response = await fetch(this.baseUrl);
+      const response = await fetch(this.baseUrl, {
+        credentials: "same-origin",
+      });
       const result = await response.json();
 
       if (!response.ok) {
         throw new Error(result.error || "Failed to fetch available slots");
       }
 
-      // Generate available slots from the bookings data
-      const availableSlots = this.generateAvailableSlots();
+      // Generate available slots using shared utility (filters out booked slots)
+      const availableSlots = generateTimeSlots(result.bookedSlots || []);
 
       return {
         availableSlots,
@@ -88,54 +93,6 @@ class BookingService {
         bookedSlots: [],
       };
     }
-  }
-
-  /**
-   * Generate available time slots for the next 7 weekdays
-   */
-  private generateAvailableSlots(): { date: string; timeSlots: string[] }[] {
-    const availableSlots: { date: string; timeSlots: string[] }[] = [];
-    const today = new Date();
-
-    // Start from tomorrow
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() + 1);
-
-    // Generate next 7 weekdays
-    const currentDate = new Date(startDate);
-    let daysAdded = 0;
-
-    while (daysAdded < 7) {
-      const dayOfWeek = currentDate.getDay();
-
-      // Skip weekends (0 = Sunday, 6 = Saturday)
-      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-        const dateString = currentDate.toISOString().split("T")[0];
-
-        // Generate time slots for this date (7 AM to 7 PM, excluding 12 PM - 1 PM)
-        const timeSlots: string[] = [];
-        for (let hour = 7; hour < 19; hour++) {
-          // Skip lunch break (12 PM - 1 PM)
-          if (hour === 12) continue;
-
-          const timeString =
-            hour === 0 ? "12:00 AM" : hour < 12 ? `${hour}:00 AM` : hour === 12 ? "12:00 PM" : `${hour - 12}:00 PM`;
-
-          timeSlots.push(timeString);
-        }
-
-        availableSlots.push({
-          date: dateString,
-          timeSlots,
-        });
-
-        daysAdded++;
-      }
-
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return availableSlots;
   }
 
   /**
@@ -163,7 +120,10 @@ class BookingService {
   ): Promise<{ success: boolean; booking?: BookingData; error?: string }> {
     try {
       const response = await fetch(
-        `/api/booking-management?bookingId=${encodeURIComponent(bookingId)}&email=${encodeURIComponent(email)}`
+        `/api/booking-management?bookingId=${encodeURIComponent(bookingId)}&email=${encodeURIComponent(email)}`,
+        {
+          credentials: "same-origin",
+        }
       );
       const result = await response.json();
 
@@ -194,6 +154,7 @@ class BookingService {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "same-origin",
         body: JSON.stringify({
           bookingId,
           email,
@@ -231,6 +192,7 @@ class BookingService {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "same-origin",
         body: JSON.stringify({
           bookingId,
           email,

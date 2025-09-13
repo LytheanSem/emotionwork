@@ -96,7 +96,6 @@ interface BookingFormData {
 
 interface BookingFormProps {
   onSubmit: (data: BookingFormData) => void;
-  onBookingSuccess?: (bookingId: string) => void;
 }
 
 export function BookingForm({ onSubmit }: BookingFormProps) {

@@ -11,17 +11,17 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import EditBookingForm from "./components/edit-booking-form";
 
-interface BookingData {
+interface BookingRecord {
   bookingId: string;
   firstName: string;
-  middleName: string;
+  middleName?: string;
   lastName: string;
   phoneNumber: string;
   email: string;
   dateTime: string;
-  description: string;
-  confirmed: string;
-  completed: string;
+  description?: string;
+  confirmed?: boolean | string;
+  completed?: boolean | string;
 }
 
 export default function ManageBookingPage() {
@@ -29,7 +29,7 @@ export default function ManageBookingPage() {
   const searchParams = useSearchParams();
   const [bookingId, setBookingId] = useState("");
   const [email, setEmail] = useState("");
-  const [booking, setBooking] = useState<BookingData | null>(null);
+  const [booking, setBooking] = useState<BookingRecord | null>(null);
   const [loading, setLoading] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [editing, setEditing] = useState(false);

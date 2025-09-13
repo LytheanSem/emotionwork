@@ -8,6 +8,26 @@ export interface TimeSlot {
 }
 
 /**
+ * Parse YYYY-MM-DD string as local date to avoid timezone issues
+ * @param dateString - Date in YYYY-MM-DD format
+ */
+function parseYMD(dateString: string): Date {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+/**
+ * Format date to YYYY-MM-DD string using local date methods
+ * @param date - Date object
+ */
+function formatDateToYMD(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * Generates time slots for the next 7 weekdays (Monday-Friday)
  * Operational hours: 7am to 7pm with 12pm-1pm lunch break
  * Each slot is 1 hour in length
@@ -35,7 +55,7 @@ export function generateTimeSlots(bookedSlots: string[] = []): TimeSlot[] {
 
       if (timeSlots.length > 0) {
         slots.push({
-          date: currentDate.toISOString().split("T")[0], // YYYY-MM-DD format
+          date: formatDateToYMD(currentDate), // YYYY-MM-DD format using local date
           timeSlots,
         });
       }
@@ -59,7 +79,7 @@ function generateTimeSlotsForDate(date: Date, isToday: boolean, bookedSlots: str
   const timeSlots: string[] = [];
   const now = new Date();
 
-  const dateString = date.toISOString().split("T")[0];
+  const dateString = formatDateToYMD(date);
 
   // Morning slots: 7am to 12pm
   for (let hour = 7; hour < 12; hour++) {
@@ -126,7 +146,7 @@ function formatTime(hour: number): string {
  * @param time - Time in 12-hour format (e.g., "9:00 AM")
  */
 export function isTimeSlotAvailable(date: string, time: string): boolean {
-  const slotDate = new Date(date);
+  const slotDate = parseYMD(date);
   const now = new Date();
 
   // Check if the date is in the past
@@ -135,7 +155,11 @@ export function isTimeSlotAvailable(date: string, time: string): boolean {
   }
 
   // If it's today, check if the time has passed
-  if (slotDate.toDateString() === now.toDateString()) {
+  if (
+    slotDate.getFullYear() === now.getFullYear() &&
+    slotDate.getMonth() === now.getMonth() &&
+    slotDate.getDate() === now.getDate()
+  ) {
     const slotHour = parseTimeToHour(time);
     const currentHour = now.getHours();
 
@@ -187,7 +211,7 @@ export function getNextAvailableSlot(): { date: string; time: string } | null {
  * @param dateString - Date in YYYY-MM-DD format
  */
 export function formatDateForDisplay(dateString: string): string {
-  const date = new Date(dateString);
+  const date = parseYMD(dateString);
   return date.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -216,28 +240,42 @@ export function getOperationalStatus(): {
     };
   }
 
-  // Check if we're closed (before 7am or after 7pm)
-  if (currentHour < 7 || currentHour >= 19) {
+  // Closed before 7am, after 7pm, or weekends
+  const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+  if (currentHour < 7 || currentHour >= 19 || isWeekend) {
     const nextOpen = new Date(now);
-    if (currentHour < 7) {
+
+    // Compute next open day at 7:00 AM local, skipping weekends
+    if (currentHour < 7 && !isWeekend) {
       nextOpen.setHours(7, 0, 0, 0);
     } else {
-      nextOpen.setDate(now.getDate() + 1);
+      // move to next day
+      nextOpen.setDate(nextOpen.getDate() + 1);
       nextOpen.setHours(7, 0, 0, 0);
+
+      // skip weekends
+      while (nextOpen.getDay() === 0 || nextOpen.getDay() === 6) {
+        nextOpen.setDate(nextOpen.getDate() + 1);
+      }
     }
+
+    const timeStr = nextOpen.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    const isSameDay =
+      nextOpen.getFullYear() === now.getFullYear() &&
+      nextOpen.getMonth() === now.getMonth() &&
+      nextOpen.getDate() === now.getDate();
+
+    const dayPart = isSameDay ? "today" : nextOpen.toLocaleDateString("en-US", { weekday: "long" });
 
     return {
       isOpen: false,
-      nextOpenTime: nextOpen.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }),
-      message: `We are currently closed. We will be open tomorrow at ${nextOpen.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      })}.`,
+      nextOpenTime: timeStr,
+      message: `We are currently closed. We will be open ${dayPart} at ${timeStr}.`,
     };
   }
 

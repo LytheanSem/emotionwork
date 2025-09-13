@@ -6,6 +6,15 @@ import { AlertCircle, Calendar, CheckCircle, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { formatDateForDisplay, generateTimeSlots, getOperationalStatus, TimeSlot } from "../utils/time-slots";
 
+/**
+ * Parse YYYY-MM-DD string as local date to avoid timezone issues
+ * @param dateString - Date in YYYY-MM-DD format
+ */
+function parseYMD(dateString: string): Date {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 interface BookingScheduleProps {
   onSlotSelect?: (date: string, time: string) => void;
   selectedDate?: string;
@@ -102,7 +111,7 @@ export function BookingSchedule({ onSlotSelect, selectedDate, selectedTime }: Bo
                 >
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base font-semibold">
-                      {new Date(slot.date).toLocaleDateString("en-US", {
+                      {parseYMD(slot.date).toLocaleDateString("en-US", {
                         weekday: "short",
                         month: "short",
                         day: "numeric",
