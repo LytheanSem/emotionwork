@@ -1,16 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Request size limits
   experimental: {
-    // Simplified turbo config for faster builds
-    turbo: {
-      rules: {
-        "*.svg": {
-          loaders: ["@svgr/webpack"],
-          as: "*.js",
-        },
-      },
+    // Request body size limit (1MB)
+    serverActions: {
+      bodySizeLimit: "1mb",
     },
+
     // Only optimize the most critical packages
     optimizePackageImports: [
       "lucide-react",
@@ -45,13 +42,17 @@ const nextConfig: NextConfig = {
       "@trpc/server",
       "@trpc/tanstack-react-query",
     ],
+
     // Enable faster builds
     webpackBuildWorker: true,
+
     // Optimize for development
-    optimizeCss: false,
+    optimizeCss: false
   },
-  // Server external packages (moved from experimental)
+
+  // Server external packages
   serverExternalPackages: ["mongodb"],
+
   webpack: (config, { dev, isServer }) => {
     // SVG handling
     config.module.rules.push({
@@ -79,6 +80,7 @@ const nextConfig: NextConfig = {
 
     return config;
   },
+
   images: {
     remotePatterns: [
       {
@@ -96,14 +98,19 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 30,
     // Enable placeholder blur
     dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    contentSecurityPolicy:
+      "default-src 'self'; script-src 'none'; sandbox; frame-src 'self' https://www.google.com https://maps.google.com;",
   },
+
   // Compression and caching
   compress: true,
+
   poweredByHeader: false,
   generateEtags: false,
+
   // Enable static optimization
   trailingSlash: false,
+
   async headers() {
     return [
       {
@@ -187,6 +194,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  turbopack: {
+    rules: {
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js",
+      },
+    }
+  }
 };
 
 export default nextConfig;
