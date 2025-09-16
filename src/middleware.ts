@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://sheets.googleapis.com https://gmail.googleapis.com",
+    "connect-src 'self' https://sheets.googleapis.com https://gmail.googleapis.com https://n8n.srv986339.hstgr.cloud",
     "frame-ancestors 'none'",
     "frame-src 'self' https://www.google.com https://maps.google.com",
   ].join("; ");
