@@ -12,19 +12,7 @@ export function middleware(request: NextRequest) {
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("X-XSS-Protection", "1; mode=block");
 
-  // Content Security Policy
-  const csp = [
-    "default-src 'self'",
-    // Allow unsafe-inline for Next.js scripts in production (required for Next.js)
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https:",
-    "font-src 'self' data:",
-    "connect-src 'self' https://sheets.googleapis.com https://gmail.googleapis.com https://n8n.srv986339.hstgr.cloud",
-    "frame-ancestors 'none'",
-    "frame-src 'self' https://www.google.com https://maps.google.com",
-  ].join("; ");
-  response.headers.set("Content-Security-Policy", csp);
+  // CSP is set in next.config.ts headers()
 
   // Protect admin routes
   if (pathname.startsWith("/admin")) {

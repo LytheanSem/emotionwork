@@ -7,13 +7,15 @@ import { useEffect } from "react";
 
 const App = () => {
   useEffect(() => {
-    createChat({
+    if (typeof window === "undefined") return;
+    if ((window as unknown as { _n8nChat?: unknown })._n8nChat) return; // dev strict-mode guard
+
+    const instance = createChat({
       webhookUrl: "https://n8n.srv986339.hstgr.cloud/webhook/810fe12a-3096-4dc2-a9ae-f0590ba878f5/chat",
       webhookConfig: {
         method: "POST",
         headers: {},
       },
-      target: "#n8n-chat",
       mode: "window",
       chatInputKey: "chatInput",
       chatSessionKey: "sessionId",
@@ -37,9 +39,15 @@ const App = () => {
       },
       enableStreaming: false,
     });
+
+    (window as unknown as { _n8nChat?: unknown })._n8nChat = instance;
+
+    return () => {
+      (window as unknown as { _n8nChat?: unknown })._n8nChat = undefined;
+    };
   }, []);
 
-  return <div></div>;
+  return <div id="n8n-chat" className="n8n-chat" />;
 };
 
 export default App;
