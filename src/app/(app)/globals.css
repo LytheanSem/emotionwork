@@ -9,6 +9,52 @@
   overflow: hidden;
 }
 
+/* Force n8n chat styling with more specific selectors */
+.n8n-chat {
+  --chat--color-primary: #2563eb !important;
+  --chat--color-secondary: #1e40af !important;
+  --chat--color-white: #ffffff !important;
+  --chat--color-light: #f8fafc !important;
+  --chat--color-dark: #1e293b !important;
+  --chat--header--background: #2563eb !important;
+  --chat--header--color: #ffffff !important;
+  --chat--message--user--background: #2563eb !important;
+  --chat--message--user--color: #ffffff !important;
+  --chat--message--bot--background: #f8fafc !important;
+  --chat--message--bot--color: #1e293b !important;
+}
+
+/* Target specific n8n chat elements */
+.n8n-chat .chat-header {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.n8n-chat .chat-message--user {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.n8n-chat .chat-message--bot {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+}
+
+.n8n-chat .chat-input {
+  border-color: #e2e8f0 !important;
+  border-radius: 0.5rem !important;
+}
+
+.n8n-chat .chat-button {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.n8n-chat .chat-toggle {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -75,7 +121,7 @@
   --chart-2: oklch(0.65 0.12 200);
   --chart-3: oklch(0.45 0.08 220);
   --chart-4: oklch(0.75 0.15 180);
-  --chart-5: oklch(0.70 0.12 160);
+  --chart-5: oklch(0.7 0.12 160);
   --sidebar: oklch(0.98 0.01 240);
   --sidebar-foreground: oklch(0.15 0.02 240);
   --sidebar-primary: oklch(0.55 0.15 240);
@@ -101,14 +147,14 @@
   --muted-foreground: oklch(0.65 0.02 240);
   --accent: oklch(0.25 0.02 240);
   --accent-foreground: oklch(0.95 0.01 240);
-  --destructive: oklch(0.70 0.20 25);
+  --destructive: oklch(0.7 0.2 25);
   --border: oklch(0.25 0.02 240);
   --input: oklch(0.25 0.02 240);
   --ring: oklch(0.65 0.15 240);
   --chart-1: oklch(0.65 0.15 240);
-  --chart-2: oklch(0.70 0.12 200);
+  --chart-2: oklch(0.7 0.12 200);
   --chart-3: oklch(0.55 0.08 220);
-  --chart-4: oklch(0.80 0.15 180);
+  --chart-4: oklch(0.8 0.15 180);
   --chart-5: oklch(0.75 0.12 160);
   --sidebar: oklch(0.18 0.02 240);
   --sidebar-foreground: oklch(0.95 0.01 240);

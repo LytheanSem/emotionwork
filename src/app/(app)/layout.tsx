@@ -1,3 +1,4 @@
+import Chatbot from "@/components/chatbot";
 import { Providers } from "@/components/providers/session-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TRPCReactProvider } from "@/trpc/client";
@@ -27,6 +28,7 @@ export default function RootLayout({
           <TRPCReactProvider>
             {children}
             <Toaster />
+            <Chatbot />
           </TRPCReactProvider>
         </Providers>
       </body>

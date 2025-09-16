@@ -99,7 +99,7 @@ const nextConfig: NextConfig = {
     // Enable placeholder blur
     dangerouslyAllowSVG: true,
     contentSecurityPolicy:
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; sandbox; frame-src 'self' https://www.google.com https://maps.google.com;",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://sheets.googleapis.com https://gmail.googleapis.com https://n8n.srv986339.hstgr.cloud; sandbox; frame-src 'self' https://www.google.com https://maps.google.com;",
   },
 
   // Compression and caching
@@ -140,6 +140,15 @@ const nextConfig: NextConfig = {
           {
             key: "Strict-Transport-Security",
             value: "max-age=63072000; includeSubDomains; preload",
+          },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://www.gstatic.com; " +
+              "style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; " +
+              "connect-src 'self' https://sheets.googleapis.com https://gmail.googleapis.com https://n8n.srv986339.hstgr.cloud; " +
+              "frame-src 'self' https://www.google.com https://maps.google.com;",
           },
         ],
       },
