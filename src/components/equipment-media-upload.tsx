@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +37,15 @@ export default function EquipmentMediaUpload({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cleanup blob URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -186,11 +195,9 @@ export default function EquipmentMediaUpload({
       {previewUrl && (
         <div className="border rounded-lg overflow-hidden">
           {selectedFile?.type.startsWith("image/") ? (
-            <Image
+            <img
               src={previewUrl}
               alt="File preview"
-              width={400}
-              height={128}
               className="w-full h-32 object-cover"
               loading="lazy"
             />
