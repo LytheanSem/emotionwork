@@ -96,7 +96,7 @@ export function calculateTotalCost(equipment: Array<{ type: EquipmentType; quant
   // Count equipment by type
   const equipmentCount: Record<EquipmentType, number> = {} as Record<EquipmentType, number>
   equipment.forEach(item => {
-    const quantity = item.quantity || 1
+    const quantity = item.quantity ?? 1
     equipmentCount[item.type] = (equipmentCount[item.type] || 0) + quantity
   })
 

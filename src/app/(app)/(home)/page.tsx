@@ -429,15 +429,14 @@ export default function Home() {
                 Schedule Consultation
               </Button>
             </Link>
-            <Link href="/contact">
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-2 border-cyan-500 text-cyan-600 hover:bg-cyan-500 hover:text-white px-8 py-4 text-lg rounded-full transition-all duration-300"
-              >
-                Contact Us
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="border-2 border-cyan-500 text-cyan-600 hover:bg-cyan-500 hover:text-white px-8 py-4 text-lg rounded-full transition-all duration-300"
+              asChild
+            >
+              <Link href="/contact">Contact Us</Link>
+            </Button>
           </div>
         </div>
       </section>

@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Source_Sans_3 } from "next/font/google";
+import Link from "next/link";
 
 const sourceSans3 = Source_Sans_3({ 
   subsets: ["latin"],
@@ -150,8 +151,9 @@ export default function About() {
             <Button 
               size="lg" 
               className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-3 text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg"
+              asChild
             >
-              Contact Us
+              <Link href="/contact">Contact Us</Link>
             </Button>
           </div>
         </div>
