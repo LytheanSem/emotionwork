@@ -9,10 +9,7 @@ import { useEffect } from "react";
 function EquipmentPageContent() {
   const queryClient = useQueryClient();
 
-  // Clear cache on component mount to ensure fresh data
-  useEffect(() => {
-    queryClient.removeQueries({ queryKey: ["equipment", "direct"] });
-  }, [queryClient]);
+  // Cache is now properly managed with staleTime and cacheTime
 
   // Use direct API instead of tRPC for now
   const {
@@ -30,7 +27,8 @@ function EquipmentPageContent() {
     },
     retry: 3,
     refetchOnWindowFocus: false,
-    staleTime: 0, // Always consider data stale
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
   // Show loading state

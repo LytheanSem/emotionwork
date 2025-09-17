@@ -31,7 +31,7 @@ export default function BookMeetingPage() {
     setCurrentStep("confirmation");
   };
 
-  const handleBookingSuccess = (_bookingId: string) => {
+  const handleBookingSuccess = () => {
     // Booking successful - no need to log sensitive data
     // You can add additional success handling here
   };
@@ -58,7 +58,7 @@ export default function BookMeetingPage() {
 
         // Call success callback if provided
         if (result.bookingId) {
-          handleBookingSuccess(result.bookingId);
+          handleBookingSuccess();
         }
 
         // Reset to form

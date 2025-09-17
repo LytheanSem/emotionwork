@@ -17,11 +17,17 @@ import {
   Ruler,
   Maximize,
   Download,
+  DollarSign,
+  Calculator,
 } from 'lucide-react'
 import { Equipment } from '../types'
+import { calculateTotalCost } from '../config/equipmentPricing'
+import PricingModal from './PricingModal'
 
 interface ControlsPanelProps {
   selectedEquipment: Equipment | undefined
+  equipment: Equipment[]
+  designName: string
   rotateSelected: () => void
   scaleSelected: (axis: 'x' | 'y' | 'z' | 'all', delta: number) => void
   setScaleValue: (axis: 'x' | 'y' | 'z' | 'all', value: number) => void
@@ -44,6 +50,8 @@ interface ControlsPanelProps {
 
 export default function ControlsPanel({
   selectedEquipment,
+  equipment,
+  designName,
   rotateSelected,
   scaleSelected,
   setScaleValue,
@@ -67,6 +75,9 @@ export default function ControlsPanel({
   const [widthInput, setWidthInput] = useState(venueDimensions.width.toString())
   const [depthInput, setDepthInput] = useState(venueDimensions.depth.toString())
   const [heightInput, setHeightInput] = useState(venueDimensions.height.toString())
+  
+  // Modal state
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
 
   // Update local state when venueDimensions change
   useEffect(() => {
@@ -631,6 +642,90 @@ export default function ControlsPanel({
           </div>
         </div>
 
+        {/* Pricing Section */}
+        <div className="border-t border-gray-200 pt-6">
+          <h3 className="text-sm font-medium text-gray-900 mb-4 flex items-center">
+            <DollarSign className="h-4 w-4 mr-2" />
+            Design Pricing
+          </h3>
+          
+          {equipment.length > 0 ? (
+            <div className="space-y-4">
+              {/* Quick Price Summary */}
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-200">
+                <div className="text-center">
+                  <div className="text-sm text-gray-600 mb-1">Total Equipment: {equipment.length} items</div>
+                  <div className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                    {(() => {
+                      const dailyPricing = calculateTotalCost(equipment.map(item => ({ type: item.type })), 'daily')
+                      return `${dailyPricing.currency} ${dailyPricing.total.toFixed(2)}/day`
+                    })()}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">Starting from daily rate</div>
+                </div>
+              </div>
+
+              {/* Pricing Options */}
+              <div className="grid grid-cols-3 gap-2">
+                {(() => {
+                  const dailyPricing = calculateTotalCost(equipment.map(item => ({ type: item.type })), 'daily')
+                  const weeklyPricing = calculateTotalCost(equipment.map(item => ({ type: item.type })), 'weekly')
+                  const monthlyPricing = calculateTotalCost(equipment.map(item => ({ type: item.type })), 'monthly')
+                  
+                  return (
+                    <>
+                      <div className="bg-blue-50 p-2 rounded-lg text-center">
+                        <div className="text-xs text-blue-600 font-medium">Daily</div>
+                        <div className="text-sm font-bold text-blue-800">
+                          {dailyPricing.currency} {dailyPricing.total.toFixed(0)}
+                        </div>
+                      </div>
+                      <div className="bg-green-50 p-2 rounded-lg text-center">
+                        <div className="text-xs text-green-600 font-medium">Weekly</div>
+                        <div className="text-sm font-bold text-green-800">
+                          {weeklyPricing.currency} {weeklyPricing.total.toFixed(0)}
+                        </div>
+                      </div>
+                      <div className="bg-purple-50 p-2 rounded-lg text-center">
+                        <div className="text-xs text-purple-600 font-medium">Monthly</div>
+                        <div className="text-sm font-bold text-purple-800">
+                          {monthlyPricing.currency} {monthlyPricing.total.toFixed(0)}
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()}
+              </div>
+
+              {/* Calculate Total Price Button */}
+              <Button
+                onClick={() => setIsPricingModalOpen(true)}
+                className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300"
+                size="lg"
+              >
+                <Calculator className="h-5 w-5 mr-2" />
+                Calculate Total Price
+              </Button>
+              
+              <div className="text-xs text-gray-500 text-center">
+                *Prices based on components used in your design
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-gray-400 mb-4">
+                <Calculator className="h-12 w-12 mx-auto" />
+              </div>
+              <div className="text-sm text-gray-500 mb-4">
+                Add equipment to your design to see pricing
+              </div>
+              <div className="text-xs text-gray-400">
+                Each component has different rental rates
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Export Section */}
         <div className="border-t border-gray-200 pt-6">
           <h3 className="text-sm font-medium text-gray-900 mb-4">Export Design</h3>
@@ -654,8 +749,19 @@ export default function ControlsPanel({
               PDF
             </Button>
           </div>
+          <div className="text-xs text-gray-500 mt-2">
+            PDF includes detailed pricing breakdown
+          </div>
         </div>
       </div>
+      
+      {/* Pricing Modal */}
+      <PricingModal
+        isOpen={isPricingModalOpen}
+        onClose={() => setIsPricingModalOpen(false)}
+        equipment={equipment}
+        designName={designName}
+      />
     </div>
   )
 }
