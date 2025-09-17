@@ -3,11 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Inter } from "next/font/google";
+import { Source_Sans_3 } from "next/font/google";
 import { useState, useEffect } from "react";
 
 
-const inter = Inter({ subsets: ["latin"] });
+const sourceSans3 = Source_Sans_3({ 
+  subsets: ["latin"],
+  weight: ["300", "400", "600", "700"]
+});
 
 const ContactPage = () => {
 
@@ -38,7 +41,7 @@ const ContactPage = () => {
   // Show loading state during hydration to prevent mismatch
   if (!isClient) {
     return (
-      <div className={`${inter.className} min-h-screen bg-white`}>
+      <div className={`${sourceSans3.className} min-h-screen bg-white`}>
         <div className="bg-white py-16 px-6 border-b border-gray-200">
           <div className="max-w-6xl mx-auto text-center">
             <div className="h-12 bg-gray-200 rounded animate-pulse mb-4"></div>
@@ -74,7 +77,7 @@ const ContactPage = () => {
   }
 
   return (
-    <div className={`${inter.className} min-h-screen bg-white`}>
+    <div className={`${sourceSans3.className} min-h-screen bg-white`}>
       {/* Top Banner */}
       <div className="bg-white py-16 px-6 border-b border-gray-200">
         <div className="max-w-6xl mx-auto text-center">

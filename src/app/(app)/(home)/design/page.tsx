@@ -13,6 +13,7 @@ import { FullGrid } from '@/app/(app)/(home)/design/components/FullGrid'
 import { EquipmentLibrary } from '@/app/(app)/(home)/design/components/EquipmentLibrary'
 import ControlsPanel from '@/app/(app)/(home)/design/components/ControlsPanel'
 import { loadTemplate } from '@/app/(app)/(home)/design/templates/stageTemplates'
+import { calculateTotalCost } from '@/app/(app)/(home)/design/config/equipmentPricing'
 import { shouldHandleGlobalShortcut } from '@/lib/keyboard-utils'
 
 export default function StageDesigner() {
@@ -178,44 +179,175 @@ export default function StageDesigner() {
         let dataUrl: string
 
         if (format === 'pdf') {
-          // Create PDF with design information
+          // Create PDF with design information and pricing
           const pdfDoc = await PDFDocument.create()
-          const page = pdfDoc.addPage([600, 400])
-          const { height } = page.getSize()
+          const page = pdfDoc.addPage([800, 1000]) // Larger page for more content
+          const { height, width } = page.getSize()
           
-          page.drawText(`Stage Design: ${designName}`, {
+          // Header
+          page.drawText(`Visual Emotionwork Co., Ltd`, {
             x: 50,
-            y: height - 50,
+            y: height - 40,
+            size: 16,
+            color: rgb(0.2, 0.4, 0.8),
+          })
+          
+          page.drawText(`Stage Design Quote: ${designName}`, {
+            x: 50,
+            y: height - 70,
             size: 20,
+            color: rgb(0, 0, 0),
+          })
+          
+          // Design Information
+          page.drawText(`Design Information:`, {
+            x: 50,
+            y: height - 110,
+            size: 14,
             color: rgb(0, 0, 0),
           })
           
           page.drawText(`Equipment Count: ${equipment.length}`, {
             x: 50,
-            y: height - 80,
+            y: height - 130,
             size: 12,
             color: rgb(0, 0, 0),
           })
           
           page.drawText(`Venue Dimensions: ${venueDimensions.width}m x ${venueDimensions.depth}m x ${venueDimensions.height}m`, {
             x: 50,
-            y: height - 100,
+            y: height - 150,
             size: 12,
             color: rgb(0, 0, 0),
           })
           
-          // Add equipment list
-          let yPos = height - 130
-          equipment.forEach((item, index) => {
-            if (yPos > 50 && index < 20) {
-              page.drawText(`${index + 1}. ${item.type} at (${item.position[0].toFixed(1)}, ${item.position[1].toFixed(1)}, ${item.position[2].toFixed(1)})`, {
-                x: 50,
-                y: yPos,
-                size: 10,
-                color: rgb(0, 0, 0),
-              })
-              yPos -= 15
-            }
+          // Calculate pricing
+          const pricing = calculateTotalCost(equipment.map(item => ({ type: item.type })))
+          
+          // Pricing Section
+          page.drawText(`Equipment Pricing (${pricing.currency}):`, {
+            x: 50,
+            y: height - 190,
+            size: 14,
+            color: rgb(0, 0, 0),
+          })
+          
+          // Group by category
+          const categories = pricing.breakdown.reduce((acc, item) => {
+            if (!acc[item.category]) acc[item.category] = []
+            acc[item.category].push(item)
+            return acc
+          }, {} as Record<string, typeof pricing.breakdown>)
+          
+          let yPos = height - 220
+          
+          Object.entries(categories).forEach(([category, items]) => {
+            // Category header
+            page.drawText(`${category}:`, {
+              x: 50,
+              y: yPos,
+              size: 12,
+              color: rgb(0.2, 0.4, 0.8),
+            })
+            yPos -= 20
+            
+            // Items in category
+            items.forEach(item => {
+              if (yPos > 100) {
+                const itemText = `${item.name} (${item.quantity}x)`
+                const priceText = `${pricing.currency} ${item.totalPrice.toFixed(2)}`
+                
+                page.drawText(itemText, {
+                  x: 70,
+                  y: yPos,
+                  size: 10,
+                  color: rgb(0, 0, 0),
+                })
+                
+                page.drawText(priceText, {
+                  x: width - 120,
+                  y: yPos,
+                  size: 10,
+                  color: rgb(0, 0, 0),
+                })
+                
+                yPos -= 15
+              }
+            })
+            
+            yPos -= 10
+          })
+          
+          // Total
+          page.drawText(`Total Cost: ${pricing.currency} ${pricing.total.toFixed(2)}`, {
+            x: 50,
+            y: yPos - 20,
+            size: 16,
+            color: rgb(0.8, 0.2, 0.2),
+          })
+          
+          // Pricing options
+          const dailyPricing = calculateTotalCost(equipment.map(item => ({ type: item.type })), 'daily')
+          const weeklyPricing = calculateTotalCost(equipment.map(item => ({ type: item.type })), 'weekly')
+          const monthlyPricing = calculateTotalCost(equipment.map(item => ({ type: item.type })), 'monthly')
+          
+          yPos -= 60
+          page.drawText(`Pricing Options:`, {
+            x: 50,
+            y: yPos,
+            size: 14,
+            color: rgb(0, 0, 0),
+          })
+          
+          page.drawText(`Daily Rate: ${dailyPricing.currency} ${dailyPricing.total.toFixed(2)}`, {
+            x: 50,
+            y: yPos - 20,
+            size: 12,
+            color: rgb(0, 0, 0),
+          })
+          
+          page.drawText(`Weekly Rate: ${weeklyPricing.currency} ${weeklyPricing.total.toFixed(2)}`, {
+            x: 50,
+            y: yPos - 40,
+            size: 12,
+            color: rgb(0, 0, 0),
+          })
+          
+          page.drawText(`Monthly Rate: ${monthlyPricing.currency} ${monthlyPricing.total.toFixed(2)}`, {
+            x: 50,
+            y: yPos - 60,
+            size: 12,
+            color: rgb(0, 0, 0),
+          })
+          
+          // Contact Information
+          yPos -= 100
+          page.drawText(`Contact Information:`, {
+            x: 50,
+            y: yPos,
+            size: 14,
+            color: rgb(0, 0, 0),
+          })
+          
+          page.drawText(`Phone: (+855) 98 505079`, {
+            x: 50,
+            y: yPos - 20,
+            size: 12,
+            color: rgb(0, 0, 0),
+          })
+          
+          page.drawText(`Email: visualemotion@gmail.com`, {
+            x: 50,
+            y: yPos - 40,
+            size: 12,
+            color: rgb(0, 0, 0),
+          })
+          
+          page.drawText(`Address: #633, St 75K, S/K Kakap, Khan Posenchey, Phnom Penh City`, {
+            x: 50,
+            y: yPos - 60,
+            size: 12,
+            color: rgb(0, 0, 0),
           })
           
           const pdfBytes = await pdfDoc.save()
@@ -452,27 +584,29 @@ export default function StageDesigner() {
             bottom: '4rem'
           }}
         >
-          <ControlsPanel
-            selectedEquipment={selectedEquipment}
-            rotateSelected={rotateSelected}
-            scaleSelected={scaleSelected}
-            setScaleValue={setScaleValue}
-            resetScale={resetScale}
-            deleteSelected={deleteSelected}
-            moveUpSelected={moveUpSelected}
-            moveDownSelected={moveDownSelected}
-            moveLeftSelected={moveLeftSelected}
-            moveRightSelected={moveRightSelected}
-            updateEquipmentColor={updateEquipmentColor}
-            venueDimensions={venueDimensions}
-            setVenueDimensions={setVenueDimensions}
-            scaleDesignToVenue={scaleDesignToVenue}
-            venueBoundaryVisible={venueBoundaryVisible}
-            setVenueBoundaryVisible={setVenueBoundaryVisible}
-            lightingColor={lightingColor}
-            setLightingColor={setLightingColor}
-            exportDesign={exportDesign}
-          />
+            <ControlsPanel
+              selectedEquipment={selectedEquipment}
+              equipment={equipment}
+              designName={designName}
+              rotateSelected={rotateSelected}
+              scaleSelected={scaleSelected}
+              setScaleValue={setScaleValue}
+              resetScale={resetScale}
+              deleteSelected={deleteSelected}
+              moveUpSelected={moveUpSelected}
+              moveDownSelected={moveDownSelected}
+              moveLeftSelected={moveLeftSelected}
+              moveRightSelected={moveRightSelected}
+              updateEquipmentColor={updateEquipmentColor}
+              venueDimensions={venueDimensions}
+              setVenueDimensions={setVenueDimensions}
+              scaleDesignToVenue={scaleDesignToVenue}
+              venueBoundaryVisible={venueBoundaryVisible}
+              setVenueBoundaryVisible={setVenueBoundaryVisible}
+              lightingColor={lightingColor}
+              setLightingColor={setLightingColor}
+              exportDesign={exportDesign}
+            />
         </aside>
       </main>
     </div>
