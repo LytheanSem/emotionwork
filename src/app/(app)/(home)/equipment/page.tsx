@@ -3,12 +3,9 @@
 import { EquipmentGrid } from "@/components/equipment-grid";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Button } from "@/components/ui/button";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 function EquipmentPageContent() {
-  const queryClient = useQueryClient();
-
   // Cache is now properly managed with staleTime and cacheTime
 
   // Use direct API instead of tRPC for now
@@ -28,7 +25,7 @@ function EquipmentPageContent() {
     retry: 3,
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
-    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
 
   // Show loading state

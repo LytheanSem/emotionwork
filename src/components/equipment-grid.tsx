@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import React, { Suspense, useState } from "react";
 import { EquipmentFallback } from "./equipment-fallback";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 const LazyEquipmentCard = dynamic(
   () =>
@@ -140,16 +141,22 @@ export function EquipmentGrid({ equipment, categories }: EquipmentGridProps) {
               {/* Equipment Image */}
               <div className="relative w-full h-80 bg-gray-200 rounded-lg overflow-hidden mb-6 flex items-center justify-center">
                 {selectedEquipment.imageUrl ? (
-                  <img
+                  <Image
                     src={selectedEquipment.imageUrl}
                     alt={selectedEquipment.name}
+                    width={400}
+                    height={320}
                     className="max-w-full max-h-full object-contain"
+                    loading="lazy"
                   />
                 ) : selectedEquipment.image && typeof selectedEquipment.image === "string" ? (
-                  <img
+                  <Image
                     src={selectedEquipment.image}
                     alt={selectedEquipment.name}
+                    width={400}
+                    height={320}
                     className="max-w-full max-h-full object-contain"
+                    loading="lazy"
                   />
                 ) : (
                   <div className="w-20 h-20 border-2 border-gray-400 flex items-center justify-center">

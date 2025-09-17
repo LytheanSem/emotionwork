@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Upload, X, Play } from "lucide-react";
+import Image from "next/image";
 
 interface CloudinaryUploadResult {
   secure_url: string;
@@ -141,10 +142,13 @@ export default function EquipmentMediaUpload({
           </div>
           <div className="border rounded-lg overflow-hidden">
             {currentMedia.resource_type === "image" ? (
-              <img
+              <Image
                 src={currentMedia.url}
                 alt="Current equipment media"
+                width={400}
+                height={128}
                 className="w-full h-32 object-cover"
+                loading="lazy"
               />
             ) : (
               <div className="relative">
@@ -182,10 +186,13 @@ export default function EquipmentMediaUpload({
       {previewUrl && (
         <div className="border rounded-lg overflow-hidden">
           {selectedFile?.type.startsWith("image/") ? (
-            <img
+            <Image
               src={previewUrl}
               alt="File preview"
+              width={400}
+              height={128}
               className="w-full h-32 object-cover"
+              loading="lazy"
             />
           ) : selectedFile?.type.startsWith("video/") ? (
             <div className="relative">
