@@ -148,7 +148,7 @@ export default function MyStageBookingsPage() {
 
 
   const handleDownloadFile = (file: StageBooking["designFiles"][0]) => {
-    window.open(file.url, "_blank");
+    window.open(file.url, "_blank", "noopener,noreferrer");
   };
 
   if (status === "loading" || loading) {
@@ -305,8 +305,8 @@ export default function MyStageBookingsPage() {
           </Card>
         ) : (
           <div className="space-y-6">
-            {bookings.map((booking) => (
-              <Card key={booking._id} className="hover:shadow-lg transition-shadow">
+            {bookings.map((booking, index) => (
+              <Card key={booking._id || `booking-${index}`} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>

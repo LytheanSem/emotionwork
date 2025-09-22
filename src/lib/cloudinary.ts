@@ -24,7 +24,7 @@ if (typeof window === 'undefined') {
       cloudName: process.env.CLOUDINARY_CLOUD_NAME,
       apiKey: process.env.CLOUDINARY_API_KEY,
       apiSecret: process.env.CLOUDINARY_API_SECRET,
-      folder: process.env.CLOUDINARY_STAGE_FOLDER || 'stage-designs'
+      folder: process.env.CLOUDINARY_PRIMARY_FOLDER || 'stage-designs'
     };
 
     // Secondary configuration (if exists) - Used for stage bookings
@@ -32,7 +32,7 @@ if (typeof window === 'undefined') {
       cloudName: process.env.CLOUDINARY_SECONDARY_CLOUD_NAME,
       apiKey: process.env.CLOUDINARY_SECONDARY_API_KEY,
       apiSecret: process.env.CLOUDINARY_SECONDARY_API_SECRET,
-      folder: process.env.CLOUDINARY_STAGE_FOLDER || 'stage-designs'
+      folder: process.env.CLOUDINARY_SECONDARY_FOLDER || 'stage-bookings'
     };
 
     // Development configuration (if exists)
@@ -88,6 +88,13 @@ if (typeof window === 'undefined') {
     }
   } catch (error) {
     console.warn('Failed to initialize Cloudinary:', error);
+  }
+}
+
+// Helper function to check if Cloudinary is available
+function ensureCloudinaryAvailable(): void {
+  if (!cloudinary) {
+    throw new Error('Cloudinary SDK is not available. Make sure cloudinary package is installed and properly configured.');
   }
 }
 
@@ -198,6 +205,9 @@ export class CloudinaryService {
     };
 
     try {
+      // Check if Cloudinary is available
+      ensureCloudinaryAvailable();
+
       // Validate file before upload
       if (file instanceof File) {
         const validation = this.validateFile(file, options);

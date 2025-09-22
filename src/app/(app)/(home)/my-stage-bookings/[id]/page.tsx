@@ -169,7 +169,7 @@ export default function StageBookingDetailsPage() {
   };
 
   const handleDownloadFile = (file: StageBooking["designFiles"][0]) => {
-    window.open(file.url, "_blank");
+    window.open(file.url, "_blank", "noopener,noreferrer");
   };
 
   if (status === "loading" || loading) {

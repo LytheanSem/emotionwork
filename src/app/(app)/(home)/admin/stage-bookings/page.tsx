@@ -26,7 +26,7 @@ import { StageBooking } from "@/lib/db";
 import { toast } from "sonner";
 
 export default function AdminStageBookingsPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [bookings, setBookings] = useState<StageBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -117,6 +117,7 @@ export default function AdminStageBookingsPage() {
 
       if (response.ok) {
         toast.success("Booking deleted successfully");
+        setSelectedBooking(null); // Clear the selected booking
         await fetchBookings(); // Refresh the list
       } else {
         const error = await response.json();
@@ -185,6 +186,21 @@ export default function AdminStageBookingsPage() {
     });
   };
 
+  // Show loading while session is being fetched
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-6 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Check access only after session is loaded
   if (!session?.user?.role || (session.user.role !== "admin" && !session.user.isAdmin)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
@@ -264,8 +280,8 @@ export default function AdminStageBookingsPage() {
               </CardContent>
             </Card>
           ) : (
-            filteredBookings.map((booking) => (
-              <Card key={booking._id} className="hover:shadow-md transition-shadow">
+            filteredBookings.map((booking, index) => (
+              <Card key={booking._id || `booking-${index}`} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="flex-1">
@@ -307,7 +323,11 @@ export default function AdminStageBookingsPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2">
-                      <Dialog>
+                      <Dialog onOpenChange={(open) => {
+                        if (!open) {
+                          setSelectedBooking(null);
+                        }
+                      }}>
                         <DialogTrigger asChild>
                           <Button
                             variant="outline"
@@ -365,7 +385,11 @@ function BookingDetailsModal({
   };
 
   const handleUpdate = () => {
-    onUpdate(booking._id!, {
+    if (!booking._id) {
+      console.error('Cannot update booking: missing _id');
+      return;
+    }
+    onUpdate(booking._id, {
       status,
       adminNotes,
       estimatedCost: estimatedCost ? parseFloat(estimatedCost) : undefined,
@@ -481,7 +505,7 @@ function BookingDetailsModal({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(file.url, "_blank")}
+                  onClick={() => window.open(file.url, "_blank", "noopener,noreferrer")}
                 >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   View
@@ -547,7 +571,13 @@ function BookingDetailsModal({
             </Button>
             <Button
               variant="destructive"
-              onClick={() => onDelete(booking._id!)}
+              onClick={() => {
+                if (!booking._id) {
+                  console.error('Cannot delete booking: missing _id');
+                  return;
+                }
+                onDelete(booking._id);
+              }}
               disabled={isUpdating}
             >
               <Trash2 className="h-4 w-4 mr-2" />

@@ -65,7 +65,7 @@ CLOUDINARY_API_SECRET=your-main-api-secret
 CLOUDINARY_SECONDARY_CLOUD_NAME=your-actual-secondary-cloud-name
 CLOUDINARY_SECONDARY_API_KEY=your-actual-secondary-api-key
 CLOUDINARY_SECONDARY_API_SECRET=your-actual-secondary-api-secret
-CLOUDINARY_STAGE_FOLDER=stage-designs
+CLOUDINARY_SECONDARY_FOLDER=stage-bookings
 ```
 
 ## 🚀 **After Fixing:**

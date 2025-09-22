@@ -29,7 +29,7 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 CLOUDINARY_CLOUD_NAME=your-main-cloud-name
 CLOUDINARY_API_KEY=your-main-api-key
 CLOUDINARY_API_SECRET=your-main-api-secret
-CLOUDINARY_STAGE_FOLDER=stage-designs
+CLOUDINARY_PRIMARY_FOLDER=stage-designs
 
 # ===========================================
 # SECONDARY CLOUDINARY CONFIGURATION
@@ -38,7 +38,7 @@ CLOUDINARY_STAGE_FOLDER=stage-designs
 CLOUDINARY_SECONDARY_CLOUD_NAME=your-secondary-cloud-name
 CLOUDINARY_SECONDARY_API_KEY=your-secondary-api-key
 CLOUDINARY_SECONDARY_API_SECRET=your-secondary-api-secret
-CLOUDINARY_STAGE_FOLDER=stage-designs
+CLOUDINARY_SECONDARY_FOLDER=stage-bookings
 
 # ===========================================
 # DEVELOPMENT CLOUDINARY CONFIGURATION
@@ -125,7 +125,8 @@ CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 
 # Different folders
-CLOUDINARY_STAGE_FOLDER=stage-designs
+CLOUDINARY_PRIMARY_FOLDER=stage-designs
+CLOUDINARY_SECONDARY_FOLDER=stage-bookings
 CLOUDINARY_EQUIPMENT_FOLDER=equipment-images
 CLOUDINARY_PORTFOLIO_FOLDER=portfolio-images
 ```
@@ -247,7 +248,7 @@ CLOUDINARY_API_SECRET=your-main-api-secret
 CLOUDINARY_SECONDARY_CLOUD_NAME=your-secondary-cloud-name
 CLOUDINARY_SECONDARY_API_KEY=your-secondary-api-key
 CLOUDINARY_SECONDARY_API_SECRET=your-secondary-api-secret
-CLOUDINARY_STAGE_FOLDER=stage-designs
+CLOUDINARY_SECONDARY_FOLDER=stage-bookings
 ```
 
 **How it works:**
