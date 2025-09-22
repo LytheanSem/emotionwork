@@ -187,7 +187,7 @@ export default function AdminStageBookingsPage() {
   };
 
   // Show loading while session is being fetched
-  if (status === "loading") {
+  if (!session) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <Card className="max-w-md mx-auto">

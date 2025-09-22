@@ -563,7 +563,7 @@ export default function AdminPanel() {
   }
 
   // Show loading while session is being fetched
-  if (status === "loading" || !session) {
+  if (!session) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
