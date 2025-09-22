@@ -356,9 +356,13 @@ function BookingDetailsModal({
   onDelete: (id: string) => void;
   isUpdating: boolean;
 }) {
-  const [status, setStatus] = useState(booking.status);
+  const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "in_progress" | "completed">(booking.status);
   const [adminNotes, setAdminNotes] = useState(booking.adminNotes || "");
   const [estimatedCost, setEstimatedCost] = useState(booking.estimatedCost?.toString() || "");
+
+  const handleStatusChange = (value: string) => {
+    setStatus(value as "pending" | "approved" | "rejected" | "in_progress" | "completed");
+  };
 
   const handleUpdate = () => {
     onUpdate(booking._id!, {
@@ -497,7 +501,7 @@ function BookingDetailsModal({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="status">Status</Label>
-              <Select value={status} onValueChange={setStatus}>
+              <Select value={status} onValueChange={handleStatusChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
