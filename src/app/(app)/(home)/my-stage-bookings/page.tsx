@@ -83,7 +83,7 @@ const statusConfig = {
 };
 
 export default function MyStageBookingsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [bookings, setBookings] = useState<StageBooking[]>([]);
   const [loading, setLoading] = useState(true);

@@ -358,7 +358,7 @@ function BookingDetailsModal({
 }) {
   const [status, setStatus] = useState(booking.status);
   const [adminNotes, setAdminNotes] = useState(booking.adminNotes || "");
-  const [estimatedCost, setEstimatedCost] = useState(booking.estimatedCost || "");
+  const [estimatedCost, setEstimatedCost] = useState(booking.estimatedCost?.toString() || "");
 
   const handleUpdate = () => {
     onUpdate(booking._id!, {

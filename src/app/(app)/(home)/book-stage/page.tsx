@@ -33,7 +33,7 @@ interface StageBookingFormData {
 type BookingStep = "auth" | "form" | "confirmation";
 
 export default function BookStagePage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [currentStep, setCurrentStep] = useState<BookingStep>("auth");
   const [bookingData, setBookingData] = useState<StageBookingFormData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);

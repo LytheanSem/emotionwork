@@ -96,7 +96,7 @@ const statusConfig = {
 };
 
 export default function StageBookingDetailsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const params = useParams();
   const [booking, setBooking] = useState<StageBooking | null>(null);
