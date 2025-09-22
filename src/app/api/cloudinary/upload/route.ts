@@ -35,6 +35,24 @@ export async function POST(request: NextRequest) {
 
     for (const file of files) {
       try {
+        // Guard against undefined files
+        if (typeof file === 'undefined' || file === null) {
+          console.error('File is undefined or null');
+          return NextResponse.json(
+            { error: "Invalid file provided" },
+            { status: 400 }
+          );
+        }
+
+        // Guard against invalid file objects
+        if (typeof file !== 'object' || !file.name || typeof file.name !== 'string') {
+          console.error('Invalid file object:', file);
+          return NextResponse.json(
+            { error: "Invalid file object" },
+            { status: 400 }
+          );
+        }
+
         const service = actualConfig === 'secondary' ? stageBookingCloudinaryService : cloudinaryService;
         
         const result = await service.uploadFileWithConfig(file, actualConfig, {
@@ -53,9 +71,9 @@ export async function POST(request: NextRequest) {
           config: actualConfig,
         });
       } catch (error) {
-        console.error(`Failed to upload file ${file.name}:`, error);
+        console.error(`Failed to upload file ${file?.name || 'unknown'}:`, error);
         return NextResponse.json(
-          { error: `Failed to upload file: ${file.name}` },
+          { error: `Failed to upload file: ${file?.name || 'unknown'}` },
           { status: 500 }
         );
       }

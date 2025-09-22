@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getDb, StageBooking } from "@/lib/db";
-import { sanitizeInput } from "@/lib/utils";
+import { sanitizeInput, parseLocalDate } from "@/lib/utils";
 import { validateRequestSize } from "@/lib/request-limiter";
 
 export async function POST(request: NextRequest) {
@@ -91,17 +91,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate date format and future date
-    const eventDate = new Date(stageDetails.eventDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    if (isNaN(eventDate.getTime())) {
+    // Validate date format and future date using local date parsing
+    let eventDate: Date;
+    try {
+      eventDate = parseLocalDate(stageDetails.eventDate);
+    } catch (error) {
       return NextResponse.json(
-        { error: "Invalid event date format" },
+        { error: `Invalid event date format: ${error instanceof Error ? error.message : 'Unknown error'}` },
         { status: 400 }
       );
     }
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     if (eventDate < today) {
       return NextResponse.json(

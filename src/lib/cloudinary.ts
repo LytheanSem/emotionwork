@@ -208,6 +208,11 @@ export class CloudinaryService {
       // Check if Cloudinary is available
       ensureCloudinaryAvailable();
 
+      // Guard against undefined files
+      if (typeof file === 'undefined' || file === null) {
+        throw new Error('File is undefined or null');
+      }
+
       // Validate file before upload
       if (file instanceof File) {
         const validation = this.validateFile(file, options);
@@ -271,6 +276,11 @@ export class CloudinaryService {
     }
 
     try {
+      // Guard against undefined files
+      if (typeof file === 'undefined' || file === null) {
+        throw new Error('File is undefined or null');
+      }
+
       // Validate file before upload
       if (file instanceof File) {
         const validation = this.validateFile(file, options);
