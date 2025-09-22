@@ -45,16 +45,31 @@ if (typeof window === 'undefined') {
 
     // Store configurations
     if (primaryConfig.cloudName && primaryConfig.apiKey && primaryConfig.apiSecret) {
-      cloudinaryConfigs.primary = primaryConfig;
+      cloudinaryConfigs.primary = {
+        cloudName: primaryConfig.cloudName,
+        apiKey: primaryConfig.apiKey,
+        apiSecret: primaryConfig.apiSecret,
+        folder: primaryConfig.folder
+      };
       isCloudinaryConfigured = true;
     }
 
     if (secondaryConfig.cloudName && secondaryConfig.apiKey && secondaryConfig.apiSecret) {
-      cloudinaryConfigs.secondary = secondaryConfig;
+      cloudinaryConfigs.secondary = {
+        cloudName: secondaryConfig.cloudName,
+        apiKey: secondaryConfig.apiKey,
+        apiSecret: secondaryConfig.apiSecret,
+        folder: secondaryConfig.folder
+      };
     }
 
     if (devConfig.cloudName && devConfig.apiKey && devConfig.apiSecret) {
-      cloudinaryConfigs.dev = devConfig;
+      cloudinaryConfigs.dev = {
+        cloudName: devConfig.cloudName,
+        apiKey: devConfig.apiKey,
+        apiSecret: devConfig.apiSecret,
+        folder: devConfig.folder
+      };
     }
 
     if (!isCloudinaryConfigured) {
