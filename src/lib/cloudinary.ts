@@ -146,14 +146,17 @@ export class CloudinaryService {
     }
 
     const config = cloudinaryConfigs[configName];
-    cloudinary.config({
-      cloud_name: config.cloudName,
-      api_key: config.apiKey,
-      api_secret: config.apiSecret,
-    });
-    
-    console.log(`Switched to Cloudinary configuration: ${configName}`);
-    return true;
+    if (cloudinary) {
+      cloudinary.config({
+        cloud_name: config.cloudName,
+        api_key: config.apiKey,
+        api_secret: config.apiSecret,
+      });
+      
+      console.log(`Switched to Cloudinary configuration: ${configName}`);
+      return true;
+    }
+    return false;
   }
 
   /**
