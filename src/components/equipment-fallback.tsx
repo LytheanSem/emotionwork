@@ -42,7 +42,7 @@ export function EquipmentFallback({
 
         {showAddEquipment && (
           <Button
-            onClick={() => window.open("/admin", "_blank")}
+            onClick={() => window.open("/admin", "_blank", "noopener,noreferrer")}
             className="bg-blue-600 hover:bg-blue-700"
           >
             Add Equipment

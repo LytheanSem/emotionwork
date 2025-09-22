@@ -95,8 +95,8 @@ export default function EditBookingForm({ booking, onSuccess, onCancel }: EditBo
             selectedTime: time,
           }));
 
-          // Also set the calendar selected date
-          setSelectedDate(new Date(`${year}-${monthNum}-${dayNum}`));
+          // Also set the calendar selected date using local date parsing
+          setSelectedDate(new Date(parseInt(year), parseInt(monthNum) - 1, parseInt(dayNum)));
         } else {
           console.warn("Could not parse booking date:", booking.dateTime);
         }

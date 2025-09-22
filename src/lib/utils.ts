@@ -90,3 +90,56 @@ export function getClientIP(headers: Headers): string {
 export function getUserAgent(headers: Headers): string {
   return headers.get("user-agent") || "Unknown";
 }
+
+/**
+ * Parse a date string in YYYY-MM-DD format as a local date to avoid off-by-one errors
+ * new Date("YYYY-MM-DD") is parsed as UTC in some browsers, causing timezone issues
+ */
+export function parseLocalDate(dateString: string): Date {
+  if (!dateString || typeof dateString !== 'string') {
+    throw new Error('Invalid date string provided');
+  }
+
+  // Match YYYY-MM-DD format
+  const dateMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!dateMatch) {
+    throw new Error('Date string must be in YYYY-MM-DD format');
+  }
+
+  const [, year, month, day] = dateMatch;
+  const yearNum = parseInt(year, 10);
+  const monthNum = parseInt(month, 10);
+  const dayNum = parseInt(day, 10);
+
+  // Validate date components
+  if (yearNum < 1900 || yearNum > 2100) {
+    throw new Error('Year must be between 1900 and 2100');
+  }
+  if (monthNum < 1 || monthNum > 12) {
+    throw new Error('Month must be between 1 and 12');
+  }
+  if (dayNum < 1 || dayNum > 31) {
+    throw new Error('Day must be between 1 and 31');
+  }
+
+  // Create local date (month is 0-indexed in Date constructor)
+  const localDate = new Date(yearNum, monthNum - 1, dayNum);
+  
+  // Validate the date is valid (handles cases like Feb 30)
+  if (localDate.getFullYear() !== yearNum || 
+      localDate.getMonth() !== monthNum - 1 || 
+      localDate.getDate() !== dayNum) {
+    throw new Error('Invalid date');
+  }
+
+  return localDate;
+}
+
+/**
+ * Parse a date string in YYYY-MM-DD format and return as ISO string for storage
+ * This ensures consistent date handling across different timezones
+ */
+export function parseLocalDateAsISO(dateString: string): string {
+  const localDate = parseLocalDate(dateString);
+  return localDate.toISOString();
+}
