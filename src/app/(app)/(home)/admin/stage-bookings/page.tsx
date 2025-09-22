@@ -1,28 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { 
-  Calendar, 
-  Clock,
-  MapPin, 
-  Users, 
-  FileText, 
-  Image, 
-  Search,
-  Eye,
-  Trash2,
-  ExternalLink
-} from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { StageBooking } from "@/lib/db";
+import { Calendar, Clock, ExternalLink, Eye, FileText, Image, MapPin, Search, Trash2, Users } from "lucide-react";
+import { useSession } from "next-auth/react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export default function AdminStageBookingsPage() {
@@ -53,19 +42,19 @@ export default function AdminStageBookingsPage() {
       const response = await fetch("/api/stage-bookings");
       if (response.ok) {
         const data = await response.json();
-        console.log("Fetched data:", data);
-        
+        console.log("Fetched data successfully");
+
         if (data && Array.isArray(data.bookings)) {
           setBookings(data.bookings);
         } else if (Array.isArray(data)) {
           // Fallback for direct array response
           setBookings(data);
         } else {
-          console.warn("Unexpected data format:", data);
+          console.warn("Unexpected data format");
           setBookings([]);
         }
       } else {
-        console.error("Failed to fetch bookings:", response.status, response.statusText);
+        console.error("Failed to fetch bookings");
         toast.error("Failed to fetch bookings");
         setBookings([]);
       }
@@ -134,22 +123,22 @@ export default function AdminStageBookingsPage() {
     try {
       // Ensure bookings is always an array
       const safeBookings = Array.isArray(bookings) ? bookings : [];
-      
+
       if (safeBookings.length === 0) {
         return [];
       }
-      
-      return safeBookings.filter(booking => {
+
+      return safeBookings.filter((booking) => {
         try {
-          if (!booking || typeof booking !== 'object') {
+          if (!booking || typeof booking !== "object") {
             return false;
           }
-          
-          const matchesSearch = 
-            (booking.userName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (booking.userEmail || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (booking.stageDetails?.location || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (booking.stageDetails?.eventType || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+          const matchesSearch =
+            (booking.userName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (booking.userEmail || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (booking.stageDetails?.location || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (booking.stageDetails?.eventType || "").toLowerCase().includes(searchTerm.toLowerCase());
 
           const matchesStatus = statusFilter === "all" || booking.status === statusFilter;
 
@@ -167,12 +156,18 @@ export default function AdminStageBookingsPage() {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "pending": return "secondary";
-      case "approved": return "default";
-      case "rejected": return "destructive";
-      case "in_progress": return "outline";
-      case "completed": return "default";
-      default: return "secondary";
+      case "pending":
+        return "secondary";
+      case "approved":
+        return "default";
+      case "rejected":
+        return "destructive";
+      case "in_progress":
+        return "outline";
+      case "completed":
+        return "default";
+      default:
+        return "secondary";
     }
   };
 
@@ -286,14 +281,12 @@ export default function AdminStageBookingsPage() {
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          {booking.userName}
-                        </h3>
+                        <h3 className="text-lg font-semibold text-gray-900">{booking.userName}</h3>
                         <Badge variant={getStatusBadgeVariant(booking.status)}>
                           {booking.status.replace("_", " ").toUpperCase()}
                         </Badge>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm text-gray-600">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4" />
@@ -323,17 +316,15 @@ export default function AdminStageBookingsPage() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-2">
-                      <Dialog onOpenChange={(open) => {
-                        if (!open) {
-                          setSelectedBooking(null);
-                        }
-                      }}>
+                      <Dialog
+                        onOpenChange={(open) => {
+                          if (!open) {
+                            setSelectedBooking(null);
+                          }
+                        }}
+                      >
                         <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedBooking(booking)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => setSelectedBooking(booking)}>
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </Button>
@@ -365,18 +356,20 @@ export default function AdminStageBookingsPage() {
 }
 
 // Booking Details Modal Component
-function BookingDetailsModal({ 
-  booking, 
-  onUpdate, 
-  onDelete, 
-  isUpdating 
-}: { 
-  booking: StageBooking; 
+function BookingDetailsModal({
+  booking,
+  onUpdate,
+  onDelete,
+  isUpdating,
+}: {
+  booking: StageBooking;
   onUpdate: (id: string, updates: Partial<StageBooking>) => void;
   onDelete: (id: string) => void;
   isUpdating: boolean;
 }) {
-  const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "in_progress" | "completed">(booking.status);
+  const [status, setStatus] = useState<"pending" | "approved" | "rejected" | "in_progress" | "completed">(
+    booking.status
+  );
   const [adminNotes, setAdminNotes] = useState(booking.adminNotes || "");
   const [estimatedCost, setEstimatedCost] = useState(booking.estimatedCost?.toString() || "");
 
@@ -386,7 +379,7 @@ function BookingDetailsModal({
 
   const handleUpdate = () => {
     if (!booking._id) {
-      console.error('Cannot update booking: missing _id');
+      console.error("Cannot update booking: missing _id");
       return;
     }
     onUpdate(booking._id, {
@@ -550,7 +543,7 @@ function BookingDetailsModal({
               />
             </div>
           </div>
-          
+
           <div>
             <Label htmlFor="adminNotes">Admin Notes</Label>
             <Textarea
@@ -563,18 +556,14 @@ function BookingDetailsModal({
           </div>
 
           <div className="flex gap-2">
-            <Button
-              onClick={handleUpdate}
-              disabled={isUpdating}
-              className="flex-1"
-            >
+            <Button onClick={handleUpdate} disabled={isUpdating} className="flex-1">
               {isUpdating ? "Updating..." : "Update Booking"}
             </Button>
             <Button
               variant="destructive"
               onClick={() => {
                 if (!booking._id) {
-                  console.error('Cannot delete booking: missing _id');
+                  console.error("Cannot delete booking: missing _id");
                   return;
                 }
                 onDelete(booking._id);
@@ -590,4 +579,3 @@ function BookingDetailsModal({
     </div>
   );
 }
-

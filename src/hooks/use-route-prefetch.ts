@@ -82,14 +82,7 @@ export function useRoutePrefetch() {
 
   const prefetchCriticalRoutes = useCallback(() => {
     // Prefetch critical routes immediately
-    const criticalRoutes = [
-      "/about",
-      "/service",
-      "/equipment",
-      "/contact",
-      "/bookmeeting",
-      "/design",
-    ];
+    const criticalRoutes = ["/about", "/service", "/equipment", "/contact", "/bookmeeting", "/design"];
 
     criticalRoutes.forEach((route) => {
       prefetchRoute(route);

@@ -1,13 +1,13 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Lock, Upload, MapPin, Calendar, Users } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, CheckCircle, Lock, MapPin, Upload, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { StageBookingForm } from "./components/stage-booking-form";
 import { StageBookingConfirmation } from "./components/stage-booking-confirmation";
+import { StageBookingForm } from "./components/stage-booking-form";
 import { stageBookingService } from "./services/stage-booking-service";
 
 interface StageBookingFormData {
@@ -65,7 +65,8 @@ export default function BookStagePage() {
 
       if (result.success) {
         toast.success("Stage Booking Submitted!", {
-          description: "Your stage booking request has been submitted. We&apos;ll review it and get back to you within 24 hours.",
+          description:
+            "Your stage booking request has been submitted. We&apos;ll review it and get back to you within 24 hours.",
           duration: 5000,
         });
 
@@ -107,8 +108,8 @@ export default function BookStagePage() {
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Book a Stage</h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Design and book your custom stage for events, concerts, and special occasions. 
-            Upload your design files and let us bring your vision to life.
+            Design and book your custom stage for events, concerts, and special occasions. Upload your design files and
+            let us bring your vision to life.
           </p>
         </div>
 
@@ -126,19 +127,14 @@ export default function BookStagePage() {
                 <p className="text-sm text-gray-600 text-center">
                   Please sign in to book a stage. This helps us keep track of your bookings and provide better service.
                 </p>
-                <Button 
-                  onClick={() => window.location.href = "/sign-in"} 
-                  className="w-full"
-                >
+                <Button onClick={() => (window.location.href = "/sign-in")} className="w-full">
                   Sign In to Continue
                 </Button>
               </CardContent>
             </Card>
           )}
 
-          {currentStep === "form" && (
-            <StageBookingForm onSubmit={handleFormSubmit} />
-          )}
+          {currentStep === "form" && <StageBookingForm onSubmit={handleFormSubmit} />}
 
           {currentStep === "confirmation" && bookingData && (
             <StageBookingConfirmation
@@ -158,9 +154,7 @@ export default function BookStagePage() {
                 <Upload className="h-5 w-5 text-blue-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Design Upload</h3>
-              <p className="text-sm text-gray-600">
-                Upload your stage design files, blueprints, or inspiration images
-              </p>
+              <p className="text-sm text-gray-600">Upload your stage design files, blueprints, or inspiration images</p>
             </CardContent>
           </Card>
 
@@ -170,9 +164,7 @@ export default function BookStagePage() {
                 <MapPin className="h-5 w-5 text-green-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Location Planning</h3>
-              <p className="text-sm text-gray-600">
-                Specify your event location and we&apos;ll handle the logistics
-              </p>
+              <p className="text-sm text-gray-600">Specify your event location and we&apos;ll handle the logistics</p>
             </CardContent>
           </Card>
 
@@ -182,9 +174,7 @@ export default function BookStagePage() {
                 <Calendar className="h-5 w-5 text-purple-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Flexible Scheduling</h3>
-              <p className="text-sm text-gray-600">
-                Choose your event date and time that works best for you
-              </p>
+              <p className="text-sm text-gray-600">Choose your event date and time that works best for you</p>
             </CardContent>
           </Card>
 
@@ -211,15 +201,18 @@ export default function BookStagePage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
                 <div>
-                  <strong>1. Submit Request</strong><br />
+                  <strong>1. Submit Request</strong>
+                  <br />
                   Fill out the form with your event details and upload design files
                 </div>
                 <div>
-                  <strong>2. Review Process</strong><br />
+                  <strong>2. Review Process</strong>
+                  <br />
                   Our team reviews your request within 24 hours
                 </div>
                 <div>
-                  <strong>3. Confirmation</strong><br />
+                  <strong>3. Confirmation</strong>
+                  <br />
                   We&apos;ll contact you with pricing and next steps
                 </div>
               </div>
@@ -230,4 +223,3 @@ export default function BookStagePage() {
     </div>
   );
 }
-

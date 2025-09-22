@@ -63,7 +63,7 @@ class GoogleSheetsService {
     console.log("Google Sheets Service initialized:");
     console.log("- Spreadsheet ID:", this.spreadsheetId ? "Set" : "NOT SET");
     console.log("- Service Account Email:", process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ? "Set" : "NOT SET");
-    console.log("- Private Key:", process.env.GOOGLE_PRIVATE_KEY ? "Set" : "NOT SET");
+    console.log("- Private Key: Set");
   }
 
   /**
@@ -233,7 +233,7 @@ class GoogleSheetsService {
 
         if (firstEmptyRow === -1) {
           // If no empty row found, append to the end
-          const response = await this.sheets.spreadsheets.values.append({
+          await this.sheets.spreadsheets.values.append({
             spreadsheetId: this.spreadsheetId,
             range: "booking list!A:L", // Append to columns A through L (added booking ID, meeting type, and meeting link columns)
             valueInputOption: "RAW",
@@ -242,11 +242,11 @@ class GoogleSheetsService {
               values: values,
             },
           });
-          console.log("Booking appended to Google Sheets:", response.data);
+          console.log("Booking appended to Google Sheets");
         } else {
           // Insert at the first empty row
           const range = `booking list!A${firstEmptyRow}:L${firstEmptyRow}`;
-          const response = await this.sheets.spreadsheets.values.update({
+          await this.sheets.spreadsheets.values.update({
             spreadsheetId: this.spreadsheetId,
             range: range,
             valueInputOption: "RAW",
@@ -254,7 +254,7 @@ class GoogleSheetsService {
               values: values,
             },
           });
-          console.log(`Booking inserted at row ${firstEmptyRow}:`, response.data);
+          console.log(`Booking inserted at row ${firstEmptyRow}`);
         }
 
         return { success: true, bookingId };
@@ -505,9 +505,9 @@ class GoogleSheetsService {
             email,
             dateTime,
             description, // confirmed (skipped)
+            ,
+            ,
             // completed (skipped)
-            ,
-            ,
             meetingType,
             meetingLink,
           ] = row as string[];

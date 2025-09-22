@@ -161,8 +161,8 @@ class ZoomService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Failed to get access token:", errorData);
+        await response.json();
+        console.error("Failed to get access token");
         return null;
       }
 

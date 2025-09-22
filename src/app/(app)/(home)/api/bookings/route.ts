@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
         if (zoomResult.success && zoomResult.meetingData) {
           bookingData.meetingLink = zoomResult.meetingData.joinUrl;
         } else {
-          console.error("Failed to create Zoom meeting:", zoomResult.error);
+          console.error("Failed to create Zoom meeting");
           // Continue with booking but without meeting link
           bookingData.meetingLink = "";
         }
@@ -154,8 +154,8 @@ export async function POST(request: NextRequest) {
         console.log("Failed to send confirmation email");
         // Don't fail the booking if email fails
       }
-    } catch (error) {
-      console.error("Error sending confirmation email:", error, { bookingId: result.bookingId });
+    } catch {
+      console.error("Error sending confirmation email");
       // Don't fail the booking if email fails
     }
 

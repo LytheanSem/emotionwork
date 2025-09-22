@@ -101,8 +101,8 @@ class EmailService {
           : this.generateInPersonMeetingEmailText(bookingData, fullName, formattedDate),
       };
 
-      const result = await this.getTransporter().sendMail(mailOptions);
-      console.log("Booking confirmation email sent:", result.messageId);
+      await this.getTransporter().sendMail(mailOptions);
+      console.log("Booking confirmation email sent");
       return true;
     } catch (error) {
       console.error("Error sending booking confirmation email:", error);

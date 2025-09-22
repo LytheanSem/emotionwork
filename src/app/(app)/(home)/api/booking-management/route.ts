@@ -260,7 +260,7 @@ export async function POST(request: NextRequest) {
                 const deleteResult = await zoomService.deleteMeeting(oldMeetingId);
 
                 if (!deleteResult.success) {
-                  console.warn(`Failed to delete old Zoom meeting: ${deleteResult.error}`);
+                  console.warn("Failed to delete old Zoom meeting");
                   // Continue with update - don't fail the entire process
                 }
               }
@@ -274,7 +274,7 @@ export async function POST(request: NextRequest) {
               updatedData.meetingLink = zoomResult.meetingData.joinUrl;
               console.log("New Zoom meeting created successfully");
             } else {
-              console.error("Failed to create new Zoom meeting:", zoomResult.error);
+              console.error("Failed to create new Zoom meeting");
               // Continue with update but without meeting link
               updatedData.meetingLink = "";
             }
@@ -304,7 +304,7 @@ export async function POST(request: NextRequest) {
                 const deleteResult = await zoomService.deleteMeeting(oldMeetingId);
 
                 if (!deleteResult.success) {
-                  console.warn(`Failed to delete old Zoom meeting: ${deleteResult.error}`);
+                  console.warn("Failed to delete old Zoom meeting");
                   // Continue with update - don't fail the entire process
                 }
               }

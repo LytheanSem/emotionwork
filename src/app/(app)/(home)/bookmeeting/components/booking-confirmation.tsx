@@ -236,7 +236,7 @@ export function BookingConfirmation({ bookingData, onEdit, onConfirm, isLoading 
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-amber-600 mt-1">•</span>
-                  <span>Bring any relevant documents or materials you'd like to discuss.</span>
+                  <span>Bring any relevant documents or materials you&apos;d like to discuss.</span>
                 </li>
               </>
             )}

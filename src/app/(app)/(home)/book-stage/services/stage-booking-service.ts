@@ -70,39 +70,41 @@ class StageBookingService {
     }
   }
 
-  private async uploadDesignFiles(files: File[]): Promise<Array<{
-    filename: string;
-    originalName: string;
-    url: string;
-    publicId: string;
-    mimeType: string;
-    size: number;
-    config: string;
-  }>> {
+  private async uploadDesignFiles(files: File[]): Promise<
+    Array<{
+      filename: string;
+      originalName: string;
+      url: string;
+      publicId: string;
+      mimeType: string;
+      size: number;
+      config: string;
+    }>
+  > {
     try {
       const formData = new FormData();
-      files.forEach(file => {
-        formData.append('files', file);
+      files.forEach((file) => {
+        formData.append("files", file);
       });
-      formData.append('folder', 'stage-designs');
-      formData.append('config', 'primary'); // Use primary Cloudinary configuration
-      formData.append('tags', 'stage-booking,design');
+      formData.append("folder", "stage-designs");
+      formData.append("config", "primary"); // Use primary Cloudinary configuration
+      formData.append("tags", "stage-booking,design");
 
-      const response = await fetch('/api/cloudinary/upload', {
-        method: 'POST',
+      const response = await fetch("/api/cloudinary/upload", {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to upload files');
+        throw new Error(errorData.error || "Failed to upload files");
       }
 
       const result = await response.json();
       return result.files;
     } catch (error) {
-      console.error('Failed to upload design files:', error);
-      throw new Error(`Failed to upload files: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Failed to upload design files:", error);
+      throw new Error(`Failed to upload files: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
 
@@ -147,12 +149,12 @@ class StageBookingService {
   }> {
     try {
       const response = await fetch(`${this.baseUrl}/${bookingId}`);
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch booking status");
       }
 
-      return await response.json() as {
+      return (await response.json()) as {
         status: string;
         message?: string;
         booking?: {
@@ -197,44 +199,46 @@ class StageBookingService {
     }
   }
 
-  async getUserBookings(): Promise<Array<{
-    _id: string;
-    userId: string;
-    userEmail: string;
-    userName: string;
-    userProfile: {
-      firstName: string;
-      lastName: string;
-      phone: string;
-      company?: string;
-      address?: string;
-    };
-    stageDetails: {
-      location: string;
-      eventType: string;
-      eventDate: string;
-      eventTime: string;
-      duration?: number;
-      expectedGuests?: number;
-      specialRequirements?: string;
-    };
-    designFiles: Array<{
-      filename: string;
-      originalName: string;
-      url: string;
-      publicId: string;
-      mimeType: string;
-      size: number;
-    }>;
-    status: string;
-    adminNotes?: string;
-    estimatedCost?: number;
-    createdAt: string;
-    updatedAt: string;
-  }>> {
+  async getUserBookings(): Promise<
+    Array<{
+      _id: string;
+      userId: string;
+      userEmail: string;
+      userName: string;
+      userProfile: {
+        firstName: string;
+        lastName: string;
+        phone: string;
+        company?: string;
+        address?: string;
+      };
+      stageDetails: {
+        location: string;
+        eventType: string;
+        eventDate: string;
+        eventTime: string;
+        duration?: number;
+        expectedGuests?: number;
+        specialRequirements?: string;
+      };
+      designFiles: Array<{
+        filename: string;
+        originalName: string;
+        url: string;
+        publicId: string;
+        mimeType: string;
+        size: number;
+      }>;
+      status: string;
+      adminNotes?: string;
+      estimatedCost?: number;
+      createdAt: string;
+      updatedAt: string;
+    }>
+  > {
     try {
       const response = await fetch(`${this.baseUrl}/user`);
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch user bookings");
       }
