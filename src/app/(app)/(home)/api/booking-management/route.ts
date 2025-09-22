@@ -159,9 +159,29 @@ export async function POST(request: NextRequest) {
       }
 
       // Validate required fields
-      const { firstName, lastName, phoneNumber, email: newEmail, selectedDate, selectedTime } = updatedData;
-      if (!firstName || !lastName || !phoneNumber || !newEmail || !selectedDate || !selectedTime) {
+      const {
+        firstName,
+        lastName,
+        phoneNumber,
+        email: newEmail,
+        selectedDate,
+        selectedTime,
+        meetingType,
+      } = updatedData;
+      if (!firstName || !lastName || !phoneNumber || !newEmail || !selectedDate || !selectedTime || !meetingType) {
         return NextResponse.json({ success: false, error: "All required fields must be provided" }, { status: 400 });
+      }
+
+      // Enforce allowed meeting types and ignore any client-supplied meetingLink
+      const allowedMeetingTypes = new Set<"in-person" | "online">(["in-person", "online"]);
+      if (!allowedMeetingTypes.has(meetingType)) {
+        return NextResponse.json({ success: false, error: "Invalid meetingType" }, { status: 400 });
+      }
+
+      // Only the server sets meetingLink for online meetings
+      if (meetingType !== "online" && "meetingLink" in updatedData) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (updatedData as any).meetingLink;
       }
 
       // Validate email format
@@ -268,13 +288,31 @@ export async function POST(request: NextRequest) {
 
             // Create new Zoom meeting for the updated time
             console.log("Creating new Zoom meeting for updated booking");
-            const zoomResult = await zoomService.createInstantMeeting(updatedData);
 
-            if (zoomResult.success && zoomResult.meetingData) {
-              updatedData.meetingLink = zoomResult.meetingData.joinUrl;
-              console.log("New Zoom meeting created successfully");
-            } else {
-              console.error("Failed to create new Zoom meeting");
+            try {
+              // Add timeout to prevent hanging requests
+              const zoomPromise = zoomService.createInstantMeeting(updatedData);
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Zoom API timeout")), 10000)
+              );
+
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const zoomResult = (await Promise.race([zoomPromise, timeoutPromise])) as any;
+
+              if (
+                zoomResult.success &&
+                zoomResult.meetingData &&
+                /^https:\/\/.*/.test(zoomResult.meetingData.joinUrl)
+              ) {
+                updatedData.meetingLink = zoomResult.meetingData.joinUrl;
+                console.log("New Zoom meeting created successfully");
+              } else {
+                console.error("Failed to create new Zoom meeting or invalid URL");
+                // Continue with update but without meeting link
+                updatedData.meetingLink = "";
+              }
+            } catch (error) {
+              console.error("Error creating new Zoom meeting:", error);
               // Continue with update but without meeting link
               updatedData.meetingLink = "";
             }

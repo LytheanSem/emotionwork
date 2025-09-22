@@ -69,8 +69,12 @@ class ZoomService {
     try {
       // Check if credentials are available
       if (!this.validateCredentials()) {
-        console.warn("Zoom API credentials not configured, using mock data");
-        return this.createMockMeeting(bookingData);
+        console.warn("Zoom API credentials not configured");
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("Using mock Zoom meeting (non-production)");
+          return this.createMockMeeting(bookingData);
+        }
+        return { success: false, error: "Zoom API credentials not configured" };
       }
 
       // For Server-to-Server OAuth, we need to get an access token first
@@ -86,19 +90,18 @@ class ZoomService {
       const meetingPayload = {
         topic: `Meeting with ${bookingData.firstName} ${bookingData.lastName}`,
         type: 2, // Scheduled meeting
-        start_time: meetingTime,
+        start_time: meetingTime, // format: YYYY-MM-DDTHH:mm:ss (no Z)
         duration: 60, // 1 hour
-        timezone: "Asia/Phnom_Penh",
+        timezone: process.env.ZOOM_TIMEZONE || "Asia/Phnom_Penh",
         settings: {
           host_video: true,
           participant_video: true,
-          join_before_host: true,
+          join_before_host: false, // Disable to prevent meeting hijacking
           mute_upon_entry: false,
-          waiting_room: false,
+          waiting_room: true, // Enable waiting room for security
           auto_recording: "none",
           enforce_login: false, // Allow guest access
-          auto_end_meeting: true, // Automatically end meeting after duration
-          close_registration: true, // Close registration after meeting starts
+          // Removed: auto_end_meeting and close_registration (not supported by Zoom API)
         },
         agenda: bookingData.description || "Business consultation meeting",
       };
@@ -134,9 +137,11 @@ class ZoomService {
       };
     } catch (error) {
       console.error("Error creating Zoom meeting:", error);
-      // Fallback to mock data if API fails
-      console.warn("Falling back to mock meeting data");
-      return this.createMockMeeting(bookingData);
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("Falling back to mock meeting data (non-production)");
+        return this.createMockMeeting(bookingData);
+      }
+      return { success: false, error: error instanceof Error ? error.message : "Failed to create Zoom meeting" };
     }
   }
 
@@ -216,7 +221,7 @@ class ZoomService {
    * Format meeting time for Zoom API
    */
   private formatMeetingTime(dateString: string, timeString: string): string {
-    // Convert date and time to ISO format
+    // Convert date and time to local format (no UTC conversion)
     const [year, month, day] = dateString.split("-").map(Number);
 
     // Parse time (e.g., "2:00 PM" -> 14:00)
@@ -225,8 +230,8 @@ class ZoomService {
       throw new Error("Invalid time format");
     }
 
-    let hour = parseInt(timeMatch[1]);
-    const minute = parseInt(timeMatch[2]);
+    let hour = parseInt(timeMatch[1], 10);
+    const minute = parseInt(timeMatch[2], 10);
     const period = timeMatch[3].toUpperCase();
 
     if (period === "PM" && hour !== 12) {
@@ -235,8 +240,9 @@ class ZoomService {
       hour = 0;
     }
 
-    const date = new Date(year, month - 1, day, hour, minute);
-    return date.toISOString();
+    // Format as YYYY-MM-DDTHH:mm:ss (no Z suffix for local time)
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00`;
   }
 
   /**

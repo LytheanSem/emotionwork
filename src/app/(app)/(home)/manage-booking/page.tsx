@@ -350,15 +350,22 @@ export default function ManageBookingPage() {
                       <p className="text-sm text-green-800 mb-2">
                         <strong>Join your meeting using the link below:</strong>
                       </p>
-                      <a
-                        href={booking.meetingLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 text-green-700 hover:text-green-800 underline"
-                      >
-                        <Video className="h-4 w-4" />
-                        Join Zoom Meeting
-                      </a>
+                      {/^https:\/\/[\w.-]*zoom\.us\/j\/\d+/.test(booking.meetingLink || "") ? (
+                        <a
+                          href={booking.meetingLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 text-green-700 hover:text-green-800 underline"
+                        >
+                          <Video className="h-4 w-4" />
+                          Join Zoom Meeting
+                        </a>
+                      ) : (
+                        <div className="inline-flex items-center gap-2 text-gray-600">
+                          <Video className="h-4 w-4" />
+                          <span>Meeting link is not available or invalid</span>
+                        </div>
+                      )}
                       <p className="text-xs text-green-600 mt-1">No Zoom account required - you can join as a guest</p>
                     </div>
                   </div>

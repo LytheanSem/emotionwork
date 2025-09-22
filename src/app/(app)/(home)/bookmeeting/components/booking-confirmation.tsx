@@ -129,18 +129,25 @@ export function BookingConfirmation({ bookingData, onEdit, onConfirm, isLoading 
                   <p className="text-sm text-green-800 mb-3">
                     <strong>Join your meeting using the link below:</strong>
                   </p>
-                  <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
-                    <a
-                      href={bookingData.meetingLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2"
-                    >
-                      <Video className="h-4 w-4" />
-                      Join Zoom Meeting
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </Button>
+                  {/^https:\/\/[\w.-]*zoom\.us\/j\/\d+/.test(bookingData.meetingLink || "") ? (
+                    <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
+                      <a
+                        href={bookingData.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <Video className="h-4 w-4" />
+                        Join Zoom Meeting
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  ) : (
+                    <div className="w-full bg-gray-100 text-gray-600 px-4 py-2 rounded-md text-center">
+                      <Video className="h-4 w-4 inline mr-2" />
+                      Meeting link is not available or invalid
+                    </div>
+                  )}
                   <p className="text-xs text-green-600 mt-2">No Zoom account required - you can join as a guest</p>
                 </div>
               ) : (

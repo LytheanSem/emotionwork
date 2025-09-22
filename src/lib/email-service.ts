@@ -77,6 +77,15 @@ class EmailService {
   }
 
   /**
+   * Sanitize header values to prevent header injection
+   */
+  private sanitizeHeader(value: string): string {
+    return String(value)
+      .replace(/[\r\n]+/g, " ")
+      .trim();
+  }
+
+  /**
    * Send booking confirmation email
    */
   async sendBookingConfirmation(bookingData: BookingData): Promise<boolean> {
@@ -85,17 +94,19 @@ class EmailService {
       const formattedDate = this.formatDateForEmail(bookingData.selectedDate);
       const isOnlineMeeting = bookingData.meetingType === "online";
 
-      const subject = isOnlineMeeting
-        ? `Online Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime}`
-        : `In-Person Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime}`;
+      const subject = this.sanitizeHeader(
+        isOnlineMeeting
+          ? `Online Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime}`
+          : `In-Person Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime}`
+      );
 
       const mailOptions = {
         from: `"Emotionwork Bookings" <${process.env.EMAIL_USER}>`,
         to: bookingData.email,
         subject,
         html: isOnlineMeeting
-          ? this.generateOnlineMeetingEmailHTML(bookingData, this.escape(fullName), formattedDate)
-          : this.generateInPersonMeetingEmailHTML(bookingData, this.escape(fullName), formattedDate),
+          ? this.generateOnlineMeetingEmailHTML(bookingData, fullName, formattedDate)
+          : this.generateInPersonMeetingEmailHTML(bookingData, fullName, formattedDate),
         text: isOnlineMeeting
           ? this.generateOnlineMeetingEmailText(bookingData, fullName, formattedDate)
           : this.generateInPersonMeetingEmailText(bookingData, fullName, formattedDate),
@@ -486,7 +497,7 @@ This is an automated confirmation email. Please do not reply to this email.
           <h3>🔗 Join Your Meeting</h3>
           <p><strong>Click the button below to join your Zoom meeting:</strong></p>
           ${
-            bookingData.meetingLink
+            bookingData.meetingLink && /^https:\/\/[\w.-]*zoom\.us\/j\/\d+/.test(bookingData.meetingLink)
               ? `
           <a href="${this.escape(bookingData.meetingLink)}" class="join-button">🎯 Join Meeting Now</a>
           <p style="margin: 10px 0; font-size: 14px; color: #666;">
