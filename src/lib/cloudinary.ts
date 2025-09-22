@@ -1,5 +1,5 @@
 // Server-side only Cloudinary configuration
-let cloudinary: any = null;
+let cloudinary: typeof import('cloudinary').v2 | null = null;
 let isCloudinaryConfigured = false;
 
 // Multiple Cloudinary configurations
@@ -15,6 +15,7 @@ const cloudinaryConfigs: Record<string, CloudinaryConfig> = {};
 // Only import and configure Cloudinary on the server side
 if (typeof window === 'undefined') {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { v2 } = require('cloudinary');
     cloudinary = v2;
     

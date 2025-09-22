@@ -296,7 +296,7 @@ export default function MyStageBookingsPage() {
                 No Stage Bookings Yet
               </h3>
               <p className="text-gray-500 mb-4">
-                You haven't submitted any stage booking requests yet.
+                You haven&apos;t submitted any stage booking requests yet.
               </p>
               <Button onClick={() => router.push("/book-stage")}>
                 Book a Stage

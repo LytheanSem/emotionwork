@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,6 @@ import {
   ArrowLeft,
   Download,
   Phone,
-  Mail,
   Building,
   Home,
   DollarSign,
@@ -113,9 +112,9 @@ export default function StageBookingDetailsPage() {
     if (status === "authenticated" && params.id) {
       fetchBooking();
     }
-  }, [status, router, params.id]);
+  }, [status, router, params.id, fetchBooking]);
 
-  const fetchBooking = async () => {
+  const fetchBooking = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/stage-bookings/${params.id}`);
@@ -131,7 +130,7 @@ export default function StageBookingDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

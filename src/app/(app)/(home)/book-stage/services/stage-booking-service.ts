@@ -70,7 +70,15 @@ class StageBookingService {
     }
   }
 
-  private async uploadDesignFiles(files: File[]): Promise<any[]> {
+  private async uploadDesignFiles(files: File[]): Promise<Array<{
+    filename: string;
+    originalName: string;
+    url: string;
+    publicId: string;
+    mimeType: string;
+    size: number;
+    config: string;
+  }>> {
     try {
       const formData = new FormData();
       files.forEach(file => {
@@ -98,7 +106,11 @@ class StageBookingService {
     }
   }
 
-  async getBookingStatus(bookingId: string): Promise<any> {
+  async getBookingStatus(bookingId: string): Promise<{
+    status: string;
+    message?: string;
+    booking?: any;
+  }> {
     try {
       const response = await fetch(`${this.baseUrl}/${bookingId}`);
       
@@ -106,7 +118,11 @@ class StageBookingService {
         throw new Error("Failed to fetch booking status");
       }
 
-      return await response.json();
+      return await response.json() as {
+        status: string;
+        message?: string;
+        booking?: any;
+      };
     } catch (error) {
       console.error("Error fetching booking status:", error);
       throw error;
