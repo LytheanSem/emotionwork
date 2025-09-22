@@ -26,7 +26,7 @@ import { StageBooking } from "@/lib/db";
 import { toast } from "sonner";
 
 export default function AdminStageBookingsPage() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [bookings, setBookings] = useState<StageBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -493,6 +493,7 @@ function BookingDetailsModal({
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   {file.mimeType.startsWith("image/") ? (
+                    // eslint-disable-next-line jsx-a11y/alt-text
                     <Image className="h-4 w-4" />
                   ) : (
                     <FileText className="h-4 w-4" />

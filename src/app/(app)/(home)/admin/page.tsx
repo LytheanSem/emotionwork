@@ -70,7 +70,7 @@ interface Stage {
 }
 
 export default function AdminPanel() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const router = useRouter();
   
   // Role-based access control
