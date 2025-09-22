@@ -529,8 +529,6 @@ export default function AdminPanel() {
   };
 
   useEffect(() => {
-    if (status === "loading") return;
-
     if (!session || (!session.user.isAdmin && !session.user.isManager)) {
       toast.error("Access denied. Admin or Manager privileges required.");
       router.push("/");
@@ -538,7 +536,7 @@ export default function AdminPanel() {
     }
 
     loadAdminData();
-  }, [session, status, router, loadAdminData]);
+  }, [session, router, loadAdminData]);
 
   // Update currentTab when session changes
   useEffect(() => {
