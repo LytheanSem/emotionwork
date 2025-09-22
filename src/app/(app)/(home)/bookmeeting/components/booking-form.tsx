@@ -5,8 +5,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar as CalendarIcon, Clock, Mail, MessageSquare, Phone, User } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Mail, MapPin, MessageSquare, Phone, User, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { bookingService } from "../services/booking-service";
 
@@ -92,6 +93,8 @@ interface BookingFormData {
   description: string;
   selectedDate: string;
   selectedTime: string;
+  meetingType: "in-person" | "online";
+  meetingLink?: string;
 }
 
 interface BookingFormProps {
@@ -108,6 +111,8 @@ export function BookingForm({ onSubmit }: BookingFormProps) {
     description: "",
     selectedDate: "",
     selectedTime: "",
+    meetingType: "in-person",
+    meetingLink: "",
   });
 
   const [errors, setErrors] = useState<Partial<BookingFormData>>({});
@@ -225,6 +230,46 @@ export function BookingForm({ onSubmit }: BookingFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Meeting Type Selection */}
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold flex items-center gap-2 text-primary">
+              <CalendarIcon className="h-5 w-5" />
+              Select Meeting Type
+            </h3>
+
+            <RadioGroup
+              value={formData.meetingType}
+              onValueChange={(value: "in-person" | "online") => handleInputChange("meetingType", value)}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <RadioGroupItem value="in-person" id="in-person" />
+                <Label htmlFor="in-person" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <div className="font-medium">In-Person Meeting</div>
+                      <div className="text-sm text-muted-foreground">Meet at our physical location</div>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <RadioGroupItem value="online" id="online" />
+                <Label htmlFor="online" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <Video className="h-5 w-5 text-green-600" />
+                    <div>
+                      <div className="font-medium">Online Meeting</div>
+                      <div className="text-sm text-muted-foreground">Join via Zoom (no account required)</div>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           {/* Personal Information Section */}
           <div className="space-y-4">
             <h3 className="text-xl font-semibold flex items-center gap-2 text-primary">
@@ -401,7 +446,7 @@ export function BookingForm({ onSubmit }: BookingFormProps) {
               className="w-full h-12 text-lg font-semibold"
               disabled={!formData.selectedDate || !formData.selectedTime}
             >
-              Book Meeting
+              {formData.meetingType === "online" ? "Book Online Meeting" : "Book In-Person Meeting"}
             </Button>
           </div>
         </form>

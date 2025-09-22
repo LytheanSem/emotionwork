@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, Edit, Loader2, Mail, MessageSquare, Phone, User, X } from "lucide-react";
+import { Calendar, Clock, Edit, Loader2, Mail, MapPin, MessageSquare, Phone, User, Video, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -20,6 +20,8 @@ interface BookingRecord {
   email: string;
   dateTime: string;
   description?: string;
+  meetingType?: string;
+  meetingLink?: string;
   confirmed?: boolean | string;
   completed?: boolean | string;
 }
@@ -313,13 +315,52 @@ export default function ManageBookingPage() {
                   </div>
                 </div>
 
-                {booking.description && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {booking.description && (
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-500">Description</Label>
+                      <p className="text-lg flex items-start gap-2">
+                        <MessageSquare className="h-4 w-4 mt-1" />
+                        {booking.description}
+                      </p>
+                    </div>
+                  )}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-500">Description</Label>
-                    <p className="text-lg flex items-start gap-2">
-                      <MessageSquare className="h-4 w-4 mt-1" />
-                      {booking.description}
-                    </p>
+                    <Label className="text-sm font-medium text-gray-500">Meeting Type</Label>
+                    <div className="flex items-center gap-2">
+                      {booking.meetingType === "online" ? (
+                        <>
+                          <Video className="h-4 w-4 text-green-600" />
+                          <span className="text-lg font-medium text-green-800">Online (Zoom)</span>
+                        </>
+                      ) : (
+                        <>
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                          <span className="text-lg font-medium text-blue-800">In-Person</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {booking.meetingType === "online" && booking.meetingLink && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-500">Zoom Meeting Link</Label>
+                    <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                      <p className="text-sm text-green-800 mb-2">
+                        <strong>Join your meeting using the link below:</strong>
+                      </p>
+                      <a
+                        href={booking.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-green-700 hover:text-green-800 underline"
+                      >
+                        <Video className="h-4 w-4" />
+                        Join Zoom Meeting
+                      </a>
+                      <p className="text-xs text-green-600 mt-1">No Zoom account required - you can join as a guest</p>
+                    </div>
                   </div>
                 )}
 

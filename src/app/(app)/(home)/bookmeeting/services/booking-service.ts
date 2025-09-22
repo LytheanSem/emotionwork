@@ -14,6 +14,8 @@ export interface BookingData {
   description?: string;
   selectedDate: string;
   selectedTime: string;
+  meetingType: "in-person" | "online";
+  meetingLink?: string;
 }
 
 export interface BookingResponse {

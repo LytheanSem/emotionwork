@@ -3,6 +3,7 @@ import { emailService } from "@/lib/email-service";
 import { googleSheetsService } from "@/lib/google-sheets";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { validateRequestSize } from "@/lib/request-limiter";
+import { zoomService } from "@/lib/zoom-service";
 import { NextRequest, NextResponse } from "next/server";
 
 interface BookingManagementRequest {
@@ -18,6 +19,8 @@ interface BookingManagementRequest {
     selectedTime: string;
     middleName?: string;
     description?: string;
+    meetingType: "in-person" | "online";
+    meetingLink?: string;
   };
 }
 
@@ -133,8 +136,8 @@ export async function POST(request: NextRequest) {
       try {
         const booking = await googleSheetsService.findBookingByIdAndEmail(bookingId, email);
         if (booking.success && booking.booking) {
+          console.log("Booking cancelled by user");
           // Note: We'll need to create a cancellation email template
-          console.log(`Booking ${bookingId} cancelled by user`);
         }
       } catch (error) {
         console.error("Error sending cancellation email:", error);
@@ -235,6 +238,87 @@ export async function POST(request: NextRequest) {
         // Continue with update - don't fail the request for this
       }
 
+      // Handle Zoom meeting updates for online meetings
+      if (updatedData.meetingType === "online") {
+        try {
+          // Get current booking to check if it was an online meeting
+          const currentBooking = await googleSheetsService.findBookingByIdAndEmail(bookingId, email);
+
+          if (currentBooking.success && currentBooking.booking) {
+            // Check if the current booking was also an online meeting
+            const currentMeetingType = currentBooking.booking.meetingType;
+            const currentMeetingLink = currentBooking.booking.meetingLink;
+
+            if (currentMeetingType === "online" && currentMeetingLink) {
+              // Extract meeting ID from the current meeting link
+              const meetingIdMatch = currentMeetingLink.match(/\/j\/(\d+)/);
+              if (meetingIdMatch) {
+                const oldMeetingId = meetingIdMatch[1];
+
+                // Delete the old Zoom meeting
+                console.log("Deleting old Zoom meeting");
+                const deleteResult = await zoomService.deleteMeeting(oldMeetingId);
+
+                if (!deleteResult.success) {
+                  console.warn(`Failed to delete old Zoom meeting: ${deleteResult.error}`);
+                  // Continue with update - don't fail the entire process
+                }
+              }
+            }
+
+            // Create new Zoom meeting for the updated time
+            console.log("Creating new Zoom meeting for updated booking");
+            const zoomResult = await zoomService.createInstantMeeting(updatedData);
+
+            if (zoomResult.success && zoomResult.meetingData) {
+              updatedData.meetingLink = zoomResult.meetingData.joinUrl;
+              console.log("New Zoom meeting created successfully");
+            } else {
+              console.error("Failed to create new Zoom meeting:", zoomResult.error);
+              // Continue with update but without meeting link
+              updatedData.meetingLink = "";
+            }
+          }
+        } catch (error) {
+          console.error("Error handling Zoom meeting update:", error);
+          // Continue with update - don't fail the entire process
+          updatedData.meetingLink = "";
+        }
+      } else if (updatedData.meetingType === "in-person") {
+        // If changing from online to in-person, delete the old Zoom meeting
+        try {
+          const currentBooking = await googleSheetsService.findBookingByIdAndEmail(bookingId, email);
+
+          if (currentBooking.success && currentBooking.booking) {
+            const currentMeetingType = currentBooking.booking.meetingType;
+            const currentMeetingLink = currentBooking.booking.meetingLink;
+
+            if (currentMeetingType === "online" && currentMeetingLink) {
+              // Extract meeting ID from the current meeting link
+              const meetingIdMatch = currentMeetingLink.match(/\/j\/(\d+)/);
+              if (meetingIdMatch) {
+                const oldMeetingId = meetingIdMatch[1];
+
+                // Delete the old Zoom meeting
+                console.log("Deleting old Zoom meeting");
+                const deleteResult = await zoomService.deleteMeeting(oldMeetingId);
+
+                if (!deleteResult.success) {
+                  console.warn(`Failed to delete old Zoom meeting: ${deleteResult.error}`);
+                  // Continue with update - don't fail the entire process
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error deleting Zoom meeting when changing to in-person:", error);
+          // Continue with update - don't fail the entire process
+        }
+
+        // Clear the meeting link
+        updatedData.meetingLink = "";
+      }
+
       // Update the booking
       const result = await googleSheetsService.updateBooking(bookingId, email, updatedData);
 
@@ -251,12 +335,12 @@ export async function POST(request: NextRequest) {
           ...updatedData,
           bookingId: bookingId,
         });
-        console.log(`Booking ${bookingId} updated and confirmation email sent`);
       } catch (error) {
         console.error("Error sending updated confirmation email:", error);
         // Don't fail the update if email fails
       }
 
+      console.log("Booking updated and confirmation email sent successfully");
       return NextResponse.json({
         success: true,
         message: "Booking updated successfully",

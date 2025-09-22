@@ -3,7 +3,19 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Calendar, CheckCircle, Clock, Mail, MessageSquare, Phone, User } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  CheckCircle,
+  Clock,
+  ExternalLink,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Phone,
+  User,
+  Video,
+} from "lucide-react";
 import { formatDateForDisplay } from "../utils/time-slots";
 
 interface BookingData {
@@ -15,6 +27,8 @@ interface BookingData {
   description: string;
   selectedDate: string;
   selectedTime: string;
+  meetingType: "in-person" | "online";
+  meetingLink?: string;
 }
 
 interface BookingConfirmationProps {
@@ -73,6 +87,27 @@ export function BookingConfirmation({ bookingData, onEdit, onConfirm, isLoading 
             </div>
           </div>
 
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              {bookingData.meetingType === "online" ? (
+                <Video className="h-4 w-4 text-green-600" />
+              ) : (
+                <MapPin className="h-4 w-4 text-blue-600" />
+              )}
+              <span className="text-sm font-medium">Meeting Type</span>
+            </div>
+            <Badge
+              variant={bookingData.meetingType === "online" ? "default" : "secondary"}
+              className={`text-sm px-3 py-1 ${
+                bookingData.meetingType === "online"
+                  ? "bg-green-100 text-green-800 hover:bg-green-200"
+                  : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+              }`}
+            >
+              {bookingData.meetingType === "online" ? "Online (Zoom)" : "In-Person"}
+            </Badge>
+          </div>
+
           {bookingData.description && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -80,6 +115,41 @@ export function BookingConfirmation({ bookingData, onEdit, onConfirm, isLoading 
                 <span className="text-sm font-medium">Discussion Topic</span>
               </div>
               <p className="text-sm bg-muted p-3 rounded-md">{bookingData.description}</p>
+            </div>
+          )}
+
+          {bookingData.meetingType === "online" && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Video className="h-4 w-4 text-green-600" />
+                <span className="text-sm font-medium">Zoom Meeting</span>
+              </div>
+              {bookingData.meetingLink ? (
+                <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                  <p className="text-sm text-green-800 mb-3">
+                    <strong>Join your meeting using the link below:</strong>
+                  </p>
+                  <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    <a
+                      href={bookingData.meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2"
+                    >
+                      <Video className="h-4 w-4" />
+                      Join Zoom Meeting
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </Button>
+                  <p className="text-xs text-green-600 mt-2">No Zoom account required - you can join as a guest</p>
+                </div>
+              ) : (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Meeting link will be provided closer to the meeting time.</strong>
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -123,24 +193,63 @@ export function BookingConfirmation({ bookingData, onEdit, onConfirm, isLoading 
       </Card>
 
       {/* Important Notes */}
-      <Card className="border-amber-200 bg-amber-50">
+      <Card className={`border-amber-200 ${bookingData.meetingType === "online" ? "bg-green-50" : "bg-amber-50"}`}>
         <CardContent className="pt-6">
-          <h4 className="font-semibold text-amber-800 mb-3">Important Notes</h4>
-          <ul className="text-sm text-amber-700 space-y-2">
+          <h4
+            className={`font-semibold mb-3 ${bookingData.meetingType === "online" ? "text-green-800" : "text-amber-800"}`}
+          >
+            Important Notes
+          </h4>
+          <ul
+            className={`text-sm space-y-2 ${bookingData.meetingType === "online" ? "text-green-700" : "text-amber-700"}`}
+          >
             <li className="flex items-start gap-2">
-              <span className="text-amber-600 mt-1">•</span>
+              <span className={`mt-1 ${bookingData.meetingType === "online" ? "text-green-600" : "text-amber-600"}`}>
+                •
+              </span>
               <span>You will receive a confirmation email shortly with meeting details.</span>
             </li>
+            {bookingData.meetingType === "online" ? (
+              <>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-1">•</span>
+                  <span>Please join 2-3 minutes before your scheduled time.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-1">•</span>
+                  <span>Test your camera and microphone before the meeting.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-1">•</span>
+                  <span>Choose a quiet, well-lit location for the meeting.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-1">•</span>
+                  <span>No Zoom account required - you can join as a guest.</span>
+                </li>
+              </>
+            ) : (
+              <>
+                <li className="flex items-start gap-2">
+                  <span className="text-amber-600 mt-1">•</span>
+                  <span>Please arrive 5 minutes before your scheduled time.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-amber-600 mt-1">•</span>
+                  <span>Bring any relevant documents or materials you'd like to discuss.</span>
+                </li>
+              </>
+            )}
             <li className="flex items-start gap-2">
-              <span className="text-amber-600 mt-1">•</span>
-              <span>Please arrive 5 minutes before your scheduled time.</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="text-amber-600 mt-1">•</span>
+              <span className={`mt-1 ${bookingData.meetingType === "online" ? "text-green-600" : "text-amber-600"}`}>
+                •
+              </span>
               <span>If you need to reschedule, please contact us at least 24 hours in advance.</span>
             </li>
             <li className="flex items-start gap-2">
-              <span className="text-amber-600 mt-1">•</span>
+              <span className={`mt-1 ${bookingData.meetingType === "online" ? "text-green-600" : "text-amber-600"}`}>
+                •
+              </span>
               <span>Meeting duration is 1 hour. Additional time may be subject to availability.</span>
             </li>
           </ul>

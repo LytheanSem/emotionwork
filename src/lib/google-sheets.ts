@@ -35,6 +35,8 @@ interface BookingData {
   description?: string;
   selectedDate: string;
   selectedTime: string;
+  meetingType: "in-person" | "online";
+  meetingLink?: string;
   bookingId?: string; // Unique identifier for the booking
 }
 
@@ -221,6 +223,8 @@ class GoogleSheetsService {
             this.sanitizeForSheet(bookingData.description || ""), // H: description
             "no", // I: Confirm (yes or no) - default to 'no'
             "no", // J: Meeting complete (yes or no) - default to 'no'
+            this.sanitizeForSheet(bookingData.meetingType), // K: Meeting Type
+            this.sanitizeForSheet(bookingData.meetingLink || ""), // L: Meeting Link
           ],
         ];
 
@@ -231,7 +235,7 @@ class GoogleSheetsService {
           // If no empty row found, append to the end
           const response = await this.sheets.spreadsheets.values.append({
             spreadsheetId: this.spreadsheetId,
-            range: "booking list!A:J", // Append to columns A through J (added booking ID column)
+            range: "booking list!A:L", // Append to columns A through L (added booking ID, meeting type, and meeting link columns)
             valueInputOption: "RAW",
             insertDataOption: "INSERT_ROWS",
             requestBody: {
@@ -241,7 +245,7 @@ class GoogleSheetsService {
           console.log("Booking appended to Google Sheets:", response.data);
         } else {
           // Insert at the first empty row
-          const range = `booking list!A${firstEmptyRow}:J${firstEmptyRow}`;
+          const range = `booking list!A${firstEmptyRow}:L${firstEmptyRow}`;
           const response = await this.sheets.spreadsheets.values.update({
             spreadsheetId: this.spreadsheetId,
             range: range,
@@ -317,13 +321,15 @@ class GoogleSheetsService {
       description: string;
       confirmed: string;
       completed: string;
+      meetingType: string;
+      meetingLink: string;
     };
     error?: string;
   }> {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "booking list!A2:J", // Get all data from row 2 onwards
+        range: "booking list!A2:L", // Get all data from row 2 onwards
       });
 
       const rows = response.data.values || [];
@@ -345,6 +351,8 @@ class GoogleSheetsService {
               description: rowData[7],
               confirmed: rowData[8],
               completed: rowData[9],
+              meetingType: rowData[10] || "in-person",
+              meetingLink: rowData[11] || "",
             },
           };
         }
@@ -371,7 +379,7 @@ class GoogleSheetsService {
       // Get all data to find the row number
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "booking list!A2:J",
+        range: "booking list!A2:L",
       });
 
       const rows = response.data.values || [];
@@ -381,7 +389,7 @@ class GoogleSheetsService {
         if (row.length >= 10 && row[0] === bookingId && row[5] === email) {
           // Found the row - delete it by clearing all cells
           const rowNumber = i + 2; // +2 because we start from row 2
-          const range = `booking list!A${rowNumber}:J${rowNumber}`;
+          const range = `booking list!A${rowNumber}:L${rowNumber}`;
 
           await this.sheets.spreadsheets.values.clear({
             spreadsheetId: this.spreadsheetId,
@@ -418,7 +426,7 @@ class GoogleSheetsService {
       // Get all data to find the row number
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "booking list!A2:J",
+        range: "booking list!A2:L",
       });
 
       const rows = response.data.values || [];
@@ -428,7 +436,7 @@ class GoogleSheetsService {
         if (row.length >= 10 && row[0] === bookingId && row[5] === email) {
           // Found the row - update it
           const rowNumber = i + 2; // +2 because we start from row 2
-          const range = `booking list!A${rowNumber}:J${rowNumber}`;
+          const range = `booking list!A${rowNumber}:L${rowNumber}`;
 
           // Format the date and time for display
           const dateTime = this.formatDateTime(updatedData.selectedDate, updatedData.selectedTime);
@@ -446,6 +454,8 @@ class GoogleSheetsService {
               this.sanitizeForSheet(updatedData.description || ""), // H: description
               "no", // I: Confirm (yes or no) - reset to 'no' for updated booking
               "no", // J: Meeting complete (yes or no) - reset to 'no' for updated booking
+              this.sanitizeForSheet(updatedData.meetingType), // K: Meeting Type
+              this.sanitizeForSheet(updatedData.meetingLink || ""), // L: Meeting Link
             ],
           ];
 
@@ -477,7 +487,7 @@ class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.values.get({
         spreadsheetId: this.spreadsheetId,
-        range: "booking list!A2:J", // Get data from row 2 onwards (skip header) - now includes booking ID
+        range: "booking list!A2:L", // Get data from row 2 onwards (skip header) - now includes booking ID
       });
 
       const rows = response.data.values || [];
@@ -486,8 +496,21 @@ class GoogleSheetsService {
       for (const row of rows) {
         if (row.length >= 7) {
           // Ensure we have at least the required fields (including booking ID)
-          const [bookingId, firstName, middleName, lastName, phoneNumber, email, dateTime, description] =
-            row as string[];
+          const [
+            bookingId,
+            firstName,
+            middleName,
+            lastName,
+            phoneNumber,
+            email,
+            dateTime,
+            description, // confirmed (skipped)
+            // completed (skipped)
+            ,
+            ,
+            meetingType,
+            meetingLink,
+          ] = row as string[];
 
           // Parse the date and time back
           const { date, time } = this.parseDateTime(dateTime);
@@ -501,6 +524,8 @@ class GoogleSheetsService {
             description: description || "",
             selectedDate: date,
             selectedTime: time,
+            meetingType: (meetingType as "in-person" | "online") || "in-person",
+            meetingLink: meetingLink || "",
             bookingId: bookingId || "",
           });
         }

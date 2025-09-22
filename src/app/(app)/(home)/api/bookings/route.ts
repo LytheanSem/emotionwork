@@ -3,6 +3,7 @@ import { emailService } from "@/lib/email-service";
 import { googleSheetsService } from "@/lib/google-sheets";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { validateRequestSize } from "@/lib/request-limiter";
+import { zoomService } from "@/lib/zoom-service";
 import { NextRequest, NextResponse } from "next/server";
 
 interface BookingData {
@@ -14,6 +15,8 @@ interface BookingData {
   description?: string;
   selectedDate: string;
   selectedTime: string;
+  meetingType: "in-person" | "online";
+  meetingLink?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -46,7 +49,8 @@ export async function POST(request: NextRequest) {
       !bookingData.email ||
       !bookingData.phoneNumber ||
       !bookingData.selectedDate ||
-      !bookingData.selectedTime
+      !bookingData.selectedTime ||
+      !bookingData.meetingType
     ) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
@@ -84,7 +88,8 @@ export async function POST(request: NextRequest) {
     try {
       const blockedResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/blocked-dates`);
       if (blockedResponse.ok) {
-        const blockedDates = await blockedResponse.json();
+        const blockedDatesData = await blockedResponse.json();
+        const blockedDates = Array.isArray(blockedDatesData) ? blockedDatesData : blockedDatesData.blockedDates || [];
         if (blockedDates.includes(bookingData.selectedDate)) {
           return NextResponse.json({ error: "Selected date is blocked" }, { status: 400 });
         }
@@ -109,6 +114,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "This time slot is no longer available" }, { status: 409 });
     }
 
+    // Create Zoom meeting for online bookings
+    if (bookingData.meetingType === "online") {
+      try {
+        const zoomResult = await zoomService.createInstantMeeting(bookingData);
+        if (zoomResult.success && zoomResult.meetingData) {
+          bookingData.meetingLink = zoomResult.meetingData.joinUrl;
+        } else {
+          console.error("Failed to create Zoom meeting:", zoomResult.error);
+          // Continue with booking but without meeting link
+          bookingData.meetingLink = "";
+        }
+      } catch (error) {
+        console.error("Error creating Zoom meeting:", error);
+        // Continue with booking but without meeting link
+        bookingData.meetingLink = "";
+      }
+    }
+
     // Add booking to Google Sheets
     const result = await googleSheetsService.addBooking(bookingData);
 
@@ -119,16 +142,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to save booking" }, { status: 500 });
     }
 
-    console.log("New booking saved.", { bookingId: result.bookingId });
+    console.log("New booking saved successfully");
 
     // Send confirmation email
     try {
       const emailData = { ...bookingData, bookingId: result.bookingId };
       const emailSent = await emailService.sendBookingConfirmation(emailData);
       if (emailSent) {
-        console.log("Confirmation email sent.", { bookingId: result.bookingId });
+        console.log("Confirmation email sent successfully");
       } else {
-        console.log("Failed to send confirmation email.", { bookingId: result.bookingId });
+        console.log("Failed to send confirmation email");
         // Don't fail the booking if email fails
       }
     } catch (error) {
