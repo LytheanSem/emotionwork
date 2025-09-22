@@ -103,17 +103,6 @@ export default function StageBookingDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/sign-in");
-      return;
-    }
-
-    if (status === "authenticated" && params.id) {
-      fetchBooking();
-    }
-  }, [status, router, params.id, fetchBooking]);
-
   const fetchBooking = useCallback(async () => {
     try {
       setLoading(true);
@@ -131,6 +120,17 @@ export default function StageBookingDetailsPage() {
       setLoading(false);
     }
   }, [params.id]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/sign-in");
+      return;
+    }
+
+    if (status === "authenticated" && params.id) {
+      fetchBooking();
+    }
+  }, [status, router, params.id, fetchBooking]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
