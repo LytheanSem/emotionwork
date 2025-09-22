@@ -109,7 +109,41 @@ class StageBookingService {
   async getBookingStatus(bookingId: string): Promise<{
     status: string;
     message?: string;
-    booking?: any;
+    booking?: {
+      _id: string;
+      userId: string;
+      userEmail: string;
+      userName: string;
+      userProfile: {
+        firstName: string;
+        lastName: string;
+        phone: string;
+        company?: string;
+        address?: string;
+      };
+      stageDetails: {
+        location: string;
+        eventType: string;
+        eventDate: string;
+        eventTime: string;
+        duration?: number;
+        expectedGuests?: number;
+        specialRequirements?: string;
+      };
+      designFiles: Array<{
+        filename: string;
+        originalName: string;
+        url: string;
+        publicId: string;
+        mimeType: string;
+        size: number;
+      }>;
+      status: string;
+      adminNotes?: string;
+      estimatedCost?: number;
+      createdAt: string;
+      updatedAt: string;
+    };
   }> {
     try {
       const response = await fetch(`${this.baseUrl}/${bookingId}`);
@@ -121,7 +155,41 @@ class StageBookingService {
       return await response.json() as {
         status: string;
         message?: string;
-        booking?: any;
+        booking?: {
+          _id: string;
+          userId: string;
+          userEmail: string;
+          userName: string;
+          userProfile: {
+            firstName: string;
+            lastName: string;
+            phone: string;
+            company?: string;
+            address?: string;
+          };
+          stageDetails: {
+            location: string;
+            eventType: string;
+            eventDate: string;
+            eventTime: string;
+            duration?: number;
+            expectedGuests?: number;
+            specialRequirements?: string;
+          };
+          designFiles: Array<{
+            filename: string;
+            originalName: string;
+            url: string;
+            publicId: string;
+            mimeType: string;
+            size: number;
+          }>;
+          status: string;
+          adminNotes?: string;
+          estimatedCost?: number;
+          createdAt: string;
+          updatedAt: string;
+        };
       };
     } catch (error) {
       console.error("Error fetching booking status:", error);
@@ -129,7 +197,41 @@ class StageBookingService {
     }
   }
 
-  async getUserBookings(): Promise<any[]> {
+  async getUserBookings(): Promise<Array<{
+    _id: string;
+    userId: string;
+    userEmail: string;
+    userName: string;
+    userProfile: {
+      firstName: string;
+      lastName: string;
+      phone: string;
+      company?: string;
+      address?: string;
+    };
+    stageDetails: {
+      location: string;
+      eventType: string;
+      eventDate: string;
+      eventTime: string;
+      duration?: number;
+      expectedGuests?: number;
+      specialRequirements?: string;
+    };
+    designFiles: Array<{
+      filename: string;
+      originalName: string;
+      url: string;
+      publicId: string;
+      mimeType: string;
+      size: number;
+    }>;
+    status: string;
+    adminNotes?: string;
+    estimatedCost?: number;
+    createdAt: string;
+    updatedAt: string;
+  }>> {
     try {
       const response = await fetch(`${this.baseUrl}/user`);
       

@@ -2,8 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle, Lock, Upload, MapPin, Calendar, Clock, Users } from "lucide-react";
+import { CheckCircle, Lock, Upload, MapPin, Calendar, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -66,7 +65,7 @@ export default function BookStagePage() {
 
       if (result.success) {
         toast.success("Stage Booking Submitted!", {
-          description: "Your stage booking request has been submitted. We'll review it and get back to you within 24 hours.",
+          description: "Your stage booking request has been submitted. We&apos;ll review it and get back to you within 24 hours.",
           duration: 5000,
         });
 
@@ -172,7 +171,7 @@ export default function BookStagePage() {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Location Planning</h3>
               <p className="text-sm text-gray-600">
-                Specify your event location and we'll handle the logistics
+                Specify your event location and we&apos;ll handle the logistics
               </p>
             </CardContent>
           </Card>
@@ -221,7 +220,7 @@ export default function BookStagePage() {
                 </div>
                 <div>
                   <strong>3. Confirmation</strong><br />
-                  We'll contact you with pricing and next steps
+                  We&apos;ll contact you with pricing and next steps
                 </div>
               </div>
             </CardContent>
