@@ -1,118 +1,94 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { CloudinaryService } from "@/lib/cloudinary";
-import { logger } from "@/lib/logger";
-
-const cloudinaryService = new CloudinaryService();
+import { cloudinaryService, stageBookingCloudinaryService } from "@/lib/cloudinary";
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session?.user?.isAdmin) {
+    
+    if (!session?.user?.email) {
       return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
+        { error: "Authentication required" },
         { status: 401 }
-      );
-    }
-
-    // Check if Cloudinary is configured
-    if (!process.env.CLOUDINARY_CLOUD_NAME || 
-        !process.env.CLOUDINARY_API_KEY || 
-        !process.env.CLOUDINARY_API_SECRET) {
-      return NextResponse.json(
-        { error: "Cloudinary is not configured. Please set up your environment variables." },
-        { status: 500 }
       );
     }
 
     const formData = await request.formData();
-    const file = formData.get("file") as File;
+    const files = formData.getAll('files') as File[];
+    const folder = formData.get('folder') as string || 'stage-designs';
+    const config = formData.get('config') as string || 'primary';
+    const tags = formData.get('tags') as string || 'stage-booking,design';
 
-    if (!file) {
+    if (!files || files.length === 0) {
       return NextResponse.json(
-        { error: "No file provided" },
+        { error: "No files provided" },
         { status: 400 }
       );
     }
 
-    // Validate file
-    const validationResult = cloudinaryService.validateFile(file);
-    if (!validationResult.valid) {
-      return NextResponse.json(
-        { error: validationResult.error },
-        { status: 400 }
-      );
-    }
+    const uploadedFiles = [];
+    
+    // Determine the actual config to use (fallback to primary if secondary is not available)
+    const availableConfigs = cloudinaryService.getAvailableConfigs();
+    const actualConfig = (config === 'secondary' && !availableConfigs.includes('secondary')) ? 'primary' : config;
 
-    // Convert File to Buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    for (const file of files) {
+      try {
+        // Guard against undefined files
+        if (typeof file === 'undefined' || file === null) {
+          console.error('File is undefined or null');
+          return NextResponse.json(
+            { error: "Invalid file provided" },
+            { status: 400 }
+          );
+        }
 
-    // Upload to Cloudinary
-    let result;
-    if (file.type.startsWith("image/")) {
-      result = await cloudinaryService.uploadImage(buffer, {
-        folder: "equipment",
-      });
-    } else if (file.type.startsWith("video/")) {
-      result = await cloudinaryService.uploadVideo(buffer, {
-        folder: "equipment",
-      });
-    } else {
-      result = await cloudinaryService.uploadFile(buffer, {
-        folder: "equipment",
-      });
+        // Guard against invalid file objects
+        if (typeof file !== 'object' || !file.name || typeof file.name !== 'string') {
+          console.error('Invalid file object:', file);
+          return NextResponse.json(
+            { error: "Invalid file object" },
+            { status: 400 }
+          );
+        }
+
+        const service = actualConfig === 'secondary' ? stageBookingCloudinaryService : cloudinaryService;
+        
+        const result = await service.uploadFileWithConfig(file, actualConfig, {
+          folder,
+          resource_type: 'auto',
+          tags: tags.split(',').map(tag => tag.trim()),
+        });
+
+        uploadedFiles.push({
+          filename: file.name,
+          originalName: file.name,
+          url: result.secure_url,
+          publicId: result.public_id,
+          mimeType: file.type,
+          size: file.size,
+          config: actualConfig,
+        });
+      } catch (error) {
+        console.error(`Failed to upload file ${file?.name || 'unknown'}:`, error);
+        return NextResponse.json(
+          { error: `Failed to upload file: ${file?.name || 'unknown'}` },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({
-      secure_url: result.secure_url,
-      public_id: result.public_id,
-      resource_type: result.resource_type,
+      success: true,
+      files: uploadedFiles,
+      config: actualConfig,
     });
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    logger.error("Cloudinary upload error", "cloudinary-upload", { error: errorMessage });
+    console.error("File upload error:", error);
     return NextResponse.json(
-      { error: `Failed to upload file: ${errorMessage}` },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    // Check authentication
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.isAdmin) {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 401 }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const publicId = searchParams.get("public_id");
-    const resourceType = searchParams.get("resource_type") || "image";
-
-    if (!publicId) {
-      return NextResponse.json(
-        { error: "Public ID is required" },
-        { status: 400 }
-      );
-    }
-
-    // Delete from Cloudinary
-    await cloudinaryService.deleteFile(publicId, resourceType as "image" | "video");
-
-    return NextResponse.json({ success: true });
-
-  } catch (error) {
-    console.error("Cloudinary delete error:", error);
-    return NextResponse.json(
-      { error: "Failed to delete file" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

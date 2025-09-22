@@ -7,10 +7,17 @@ export function middleware(request: NextRequest) {
   // Add security headers
   const response = NextResponse.next();
 
-  // Security headers
+  // Enhanced security headers
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("X-Download-Options", "noopen");
+  response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
+  
+  // Add HSTS header for HTTPS
+  if (request.nextUrl.protocol === 'https:') {
+    response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+  }
 
   // CSP is set in next.config.ts headers()
 

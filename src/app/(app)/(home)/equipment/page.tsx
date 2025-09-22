@@ -133,7 +133,7 @@ function EquipmentPageContent() {
             Try adding some equipment through the admin panel first.
           </p>
           <Button
-            onClick={() => window.open("/admin", "_blank")}
+            onClick={() => window.open("/admin", "_blank", "noopener,noreferrer")}
             variant="outline"
             size="sm"
             className="mt-2"

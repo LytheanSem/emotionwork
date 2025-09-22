@@ -145,3 +145,40 @@ export interface Media {
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Stage Booking model
+export interface StageBooking {
+  _id?: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  userProfile: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    company?: string;
+    address?: string;
+  };
+  stageDetails: {
+    location: string;
+    eventType: string;
+    eventDate: string;
+    eventTime: string;
+    duration: number; // in hours
+    expectedGuests: number;
+    specialRequirements?: string;
+  };
+  designFiles: {
+    filename: string;
+    originalName: string;
+    url: string;
+    publicId: string;
+    mimeType: string;
+    size: number;
+  }[];
+  status: "pending" | "approved" | "rejected" | "in_progress" | "completed";
+  adminNotes?: string;
+  estimatedCost?: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
