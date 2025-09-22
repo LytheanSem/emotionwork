@@ -6,8 +6,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { Edit, Loader2, X } from "lucide-react";
+import { Edit, Loader2, MapPin, Video, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookingData, bookingService } from "../../bookmeeting/services/booking-service";
@@ -22,6 +23,8 @@ interface EditBookingFormProps {
     email: string;
     dateTime: string;
     description?: string;
+    meetingType?: string;
+    meetingLink?: string;
   };
   onSuccess: () => void;
   onCancel: () => void;
@@ -42,6 +45,8 @@ export default function EditBookingForm({ booking, onSuccess, onCancel }: EditBo
     description: booking.description || "",
     selectedDate: "",
     selectedTime: "",
+    meetingType: (booking.meetingType as "in-person" | "online") || "in-person",
+    meetingLink: booking.meetingLink || "",
   });
 
   const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
@@ -90,8 +95,8 @@ export default function EditBookingForm({ booking, onSuccess, onCancel }: EditBo
             selectedTime: time,
           }));
 
-          // Also set the calendar selected date using local date parsing
-          setSelectedDate(new Date(parseInt(year), parseInt(monthNum) - 1, parseInt(dayNum)));
+          // Also set the calendar selected date
+          setSelectedDate(new Date(`${year}-${monthNum}-${dayNum}`));
         } else {
           console.warn("Could not parse booking date:", booking.dateTime);
         }
@@ -110,7 +115,6 @@ export default function EditBookingForm({ booking, onSuccess, onCancel }: EditBo
       try {
         console.log("Loading available slots...");
         const response = await bookingService.getAvailableSlots();
-        console.log("Available slots response:", response);
         setAvailableSlots(response.availableSlots || []);
         setBookedSlots(response.bookedSlots || []);
       } catch (error) {
@@ -257,6 +261,8 @@ export default function EditBookingForm({ booking, onSuccess, onCancel }: EditBo
         description: formData.description,
         selectedDate: formData.selectedDate,
         selectedTime: formData.selectedTime,
+        meetingType: formData.meetingType,
+        meetingLink: formData.meetingLink,
       };
 
       const result = await bookingService.updateBooking(booking.bookingId, booking.email, updatedData);
@@ -276,13 +282,6 @@ export default function EditBookingForm({ booking, onSuccess, onCancel }: EditBo
       setSaving(false);
     }
   };
-
-  console.log("EditBookingForm rendering:", {
-    formData,
-    availableSlots: availableSlots.length,
-    loading,
-    error,
-  });
 
   // Simple error fallback
   if (error && !loading) {
@@ -376,6 +375,44 @@ export default function EditBookingForm({ booking, onSuccess, onCancel }: EditBo
             </div>
           </div>
 
+          {/* Meeting Type Selection */}
+          <div className="space-y-4">
+            <h3 className="text-xl font-semibold flex items-center gap-2 text-primary">
+              <Video className="h-5 w-5" />
+              Select Meeting Type
+            </h3>
+            <RadioGroup
+              value={formData.meetingType}
+              onValueChange={(value: "in-person" | "online") => handleInputChange("meetingType", value)}
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+            >
+              <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <RadioGroupItem value="in-person" id="in-person" />
+                <Label htmlFor="in-person" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <div className="font-medium">In-Person Meeting</div>
+                      <div className="text-sm text-muted-foreground">Meet at our physical location</div>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+              <div className="flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                <RadioGroupItem value="online" id="online" />
+                <Label htmlFor="online" className="flex-1 cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <Video className="h-5 w-5 text-green-600" />
+                    <div>
+                      <div className="font-medium">Online Meeting</div>
+                      <div className="text-sm text-muted-foreground">Join via Zoom (no account required)</div>
+                    </div>
+                  </div>
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
           {/* Date Selection */}
           <div className="space-y-4">
             <Label className="text-base font-medium">Select Date *</Label>
@@ -458,7 +495,7 @@ export default function EditBookingForm({ booking, onSuccess, onCancel }: EditBo
               ) : (
                 <>
                   <Edit className="mr-2 h-4 w-4" />
-                  Update Booking
+                  {formData.meetingType === "online" ? "Update Online Meeting" : "Update In-Person Meeting"}
                 </>
               )}
             </Button>

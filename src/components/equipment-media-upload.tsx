@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, X, Play } from "lucide-react";
+import { Play, Upload, X } from "lucide-react";
+import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 
 interface CloudinaryUploadResult {
   secure_url: string;
@@ -54,7 +54,7 @@ export default function EquipmentMediaUpload({
     // Validate file type
     const isImage = file.type.startsWith("image/");
     const isVideo = file.type.startsWith("video/");
-    
+
     if (!isImage && !isVideo) {
       onUploadError("Please select an image or video file");
       return;
@@ -67,7 +67,7 @@ export default function EquipmentMediaUpload({
     }
 
     setSelectedFile(file);
-    
+
     // Create preview
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
@@ -95,12 +95,12 @@ export default function EquipmentMediaUpload({
 
       const result: CloudinaryUploadResult = await response.json();
       onUploadComplete(result);
-      
+
       // Reset state
       setSelectedFile(null);
       setPreviewUrl(null);
       setUploadProgress(0);
-      
+
       // Clear file input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -122,7 +122,7 @@ export default function EquipmentMediaUpload({
     setPreviewUrl(null);
     setUploadProgress(0);
     onRemove();
-    
+
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -131,9 +131,7 @@ export default function EquipmentMediaUpload({
   return (
     <div className="space-y-4">
       <Label htmlFor="equipment-media">Equipment Media</Label>
-      
 
-      
       {/* Current Media Display */}
       {currentMedia && (
         <div className="border rounded-lg p-4 bg-gray-50">
@@ -161,11 +159,7 @@ export default function EquipmentMediaUpload({
               />
             ) : (
               <div className="relative">
-                <video
-                  src={currentMedia.url}
-                  className="w-full h-32 object-cover"
-                  muted
-                />
+                <video src={currentMedia.url} className="w-full h-32 object-cover" muted />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Play className="w-8 h-8 text-white bg-black bg-opacity-50 rounded-full p-1" />
                 </div>
@@ -186,9 +180,7 @@ export default function EquipmentMediaUpload({
           disabled={isUploading}
           className="cursor-pointer"
         />
-        <p className="text-xs text-gray-500">
-          Supported formats: JPG, PNG, GIF, MP4, MOV (max 10MB)
-        </p>
+        <p className="text-xs text-gray-500">Supported formats: JPG, PNG, GIF, MP4, MOV (max 10MB)</p>
       </div>
 
       {/* Preview */}
@@ -205,11 +197,7 @@ export default function EquipmentMediaUpload({
             />
           ) : selectedFile?.type.startsWith("video/") ? (
             <div className="relative">
-              <video
-                src={previewUrl}
-                className="w-full h-32 object-cover"
-                muted
-              />
+              <video src={previewUrl} className="w-full h-32 object-cover" muted />
               <div className="absolute inset-0 flex items-center justify-center">
                 <Play className="w-8 h-8 text-white bg-black bg-opacity-50 rounded-full p-1" />
               </div>
@@ -220,12 +208,7 @@ export default function EquipmentMediaUpload({
 
       {/* Upload Button */}
       {selectedFile && (
-        <Button
-          type="button"
-          onClick={handleUpload}
-          disabled={isUploading}
-          className="w-full"
-        >
+        <Button type="button" onClick={handleUpload} disabled={isUploading} className="w-full">
           {isUploading ? (
             <div className="flex items-center gap-2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

@@ -17,6 +17,8 @@ interface BookingFormData {
   description: string;
   selectedDate: string;
   selectedTime: string;
+  meetingType: "in-person" | "online";
+  meetingLink?: string;
 }
 
 type BookingStep = "form" | "confirmation";
