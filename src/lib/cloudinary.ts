@@ -74,7 +74,7 @@ if (typeof window === 'undefined') {
 
     if (!isCloudinaryConfigured) {
       console.warn('No Cloudinary environment variables are set. Cloudinary features will be disabled.');
-    } else {
+    } else if (cloudinary) {
       // Configure with primary account
       cloudinary.config({
         cloud_name: primaryConfig.cloudName,
