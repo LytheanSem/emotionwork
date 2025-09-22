@@ -215,15 +215,15 @@ export class CloudinaryService {
         const base64 = buffer.toString('base64');
         const dataURI = `data:${file.type};base64,${base64}`;
         
-        uploadResult = await cloudinary.uploader.upload(dataURI, uploadOptions);
+        uploadResult = await cloudinary!.uploader.upload(dataURI, uploadOptions);
       } else if (typeof file === 'string') {
         // Upload from URL
-        uploadResult = await cloudinary.uploader.upload(file, uploadOptions);
+        uploadResult = await cloudinary!.uploader.upload(file, uploadOptions);
       } else {
         // Upload from Buffer
         const base64 = file.toString('base64');
         const dataURI = `data:application/octet-stream;base64,${base64}`;
-        uploadResult = await cloudinary.uploader.upload(dataURI, uploadOptions);
+        uploadResult = await cloudinary!.uploader.upload(dataURI, uploadOptions);
       }
 
       return {
@@ -293,15 +293,15 @@ export class CloudinaryService {
         const base64 = buffer.toString('base64');
         const dataURI = `data:${file.type};base64,${base64}`;
         
-        uploadResult = await cloudinary.uploader.upload(dataURI, uploadOptions);
+        uploadResult = await cloudinary!.uploader.upload(dataURI, uploadOptions);
       } else if (typeof file === 'string') {
         // Upload from URL
-        uploadResult = await cloudinary.uploader.upload(file, uploadOptions);
+        uploadResult = await cloudinary!.uploader.upload(file, uploadOptions);
       } else {
         // Upload from Buffer
         const base64 = file.toString('base64');
         const dataURI = `data:application/octet-stream;base64,${base64}`;
-        uploadResult = await cloudinary.uploader.upload(dataURI, uploadOptions);
+        uploadResult = await cloudinary!.uploader.upload(dataURI, uploadOptions);
       }
 
       return {
