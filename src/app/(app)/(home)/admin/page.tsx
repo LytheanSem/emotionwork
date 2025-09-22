@@ -604,7 +604,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Stats Cards */}
-        <div className={`grid gap-6 mb-8 ${canManageUsers ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : 'grid-cols-1 md:grid-cols-3'}`}>
+        <div className={`grid gap-6 mb-8 ${canManageUsers ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-5' : 'grid-cols-1 md:grid-cols-4'}`}>
           {canManageUsers && (
             <Card className="hover:shadow-lg transition-shadow duration-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -653,6 +653,18 @@ export default function AdminPanel() {
             <CardContent>
               <div className="text-3xl font-bold text-gray-900">{stages.length}</div>
               <p className="text-xs text-gray-500 mt-1">Venues available</p>
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-lg transition-shadow duration-200 cursor-pointer" onClick={() => router.push("/admin/stage-bookings")}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Stage Bookings</CardTitle>
+              <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-900">Manage</div>
+              <p className="text-xs text-gray-500 mt-1">View bookings</p>
             </CardContent>
           </Card>
         </div>

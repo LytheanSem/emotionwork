@@ -1,23 +1,78 @@
-import { v2 as cloudinary } from 'cloudinary';
+// Server-side only Cloudinary configuration
+let cloudinary: any = null;
+let isCloudinaryConfigured = false;
 
-// Configure Cloudinary with graceful fallback
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-const apiKey = process.env.CLOUDINARY_API_KEY;
-const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-const isCloudinaryConfigured = cloudName && apiKey && apiSecret;
-
-if (!isCloudinaryConfigured) {
-  console.warn('Cloudinary environment variables are not set. Cloudinary features will be disabled.');
+// Multiple Cloudinary configurations
+interface CloudinaryConfig {
+  cloudName: string;
+  apiKey: string;
+  apiSecret: string;
+  folder?: string;
 }
 
-// Only configure Cloudinary if credentials are available
-if (isCloudinaryConfigured) {
-  cloudinary.config({
-    cloud_name: cloudName,
-    api_key: apiKey,
-    api_secret: apiSecret,
-  });
+const cloudinaryConfigs: Record<string, CloudinaryConfig> = {};
+
+// Only import and configure Cloudinary on the server side
+if (typeof window === 'undefined') {
+  try {
+    const { v2 } = require('cloudinary');
+    cloudinary = v2;
+    
+    // Primary configuration
+    const primaryConfig = {
+      cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_API_KEY,
+      apiSecret: process.env.CLOUDINARY_API_SECRET,
+      folder: process.env.CLOUDINARY_STAGE_FOLDER || 'stage-designs'
+    };
+
+    // Secondary configuration (if exists) - Used for stage bookings
+    const secondaryConfig = {
+      cloudName: process.env.CLOUDINARY_SECONDARY_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_SECONDARY_API_KEY,
+      apiSecret: process.env.CLOUDINARY_SECONDARY_API_SECRET,
+      folder: process.env.CLOUDINARY_STAGE_FOLDER || 'stage-designs'
+    };
+
+    // Development configuration (if exists)
+    const devConfig = {
+      cloudName: process.env.CLOUDINARY_DEV_CLOUD_NAME,
+      apiKey: process.env.CLOUDINARY_DEV_API_KEY,
+      apiSecret: process.env.CLOUDINARY_DEV_API_SECRET,
+      folder: process.env.CLOUDINARY_DEV_FOLDER || 'dev-uploads'
+    };
+
+    // Store configurations
+    if (primaryConfig.cloudName && primaryConfig.apiKey && primaryConfig.apiSecret) {
+      cloudinaryConfigs.primary = primaryConfig;
+      isCloudinaryConfigured = true;
+    }
+
+    if (secondaryConfig.cloudName && secondaryConfig.apiKey && secondaryConfig.apiSecret) {
+      cloudinaryConfigs.secondary = secondaryConfig;
+    }
+
+    if (devConfig.cloudName && devConfig.apiKey && devConfig.apiSecret) {
+      cloudinaryConfigs.dev = devConfig;
+    }
+
+    if (!isCloudinaryConfigured) {
+      console.warn('No Cloudinary environment variables are set. Cloudinary features will be disabled.');
+    } else {
+      // Configure with primary account
+      cloudinary.config({
+        cloud_name: primaryConfig.cloudName,
+        api_key: primaryConfig.apiKey,
+        api_secret: primaryConfig.apiSecret,
+      });
+      console.log(`Cloudinary configured with primary account: ${primaryConfig.cloudName}`);
+      
+      // Log available configurations
+      console.log('Available Cloudinary configurations:', Object.keys(cloudinaryConfigs));
+    }
+  } catch (error) {
+    console.warn('Failed to initialize Cloudinary:', error);
+  }
 }
 
 export interface CloudinaryUploadResult {
@@ -51,20 +106,138 @@ export interface CloudinaryUploadOptions {
 
 export class CloudinaryService {
   private defaultFolder: string;
+  private defaultConfig: string;
 
-  constructor(defaultFolder: string = 'emotionwork') {
+  constructor(defaultFolder: string = 'emotionwork', defaultConfig: string = 'primary') {
     this.defaultFolder = defaultFolder;
+    this.defaultConfig = defaultConfig;
   }
 
   /**
-   * Upload a file to Cloudinary
+   * Get available Cloudinary configurations
+   */
+  getAvailableConfigs(): string[] {
+    return Object.keys(cloudinaryConfigs);
+  }
+
+  /**
+   * Switch to a different Cloudinary configuration
+   */
+  switchConfig(configName: string): boolean {
+    if (!cloudinaryConfigs[configName]) {
+      console.warn(`Cloudinary configuration '${configName}' not found`);
+      return false;
+    }
+
+    const config = cloudinaryConfigs[configName];
+    cloudinary.config({
+      cloud_name: config.cloudName,
+      api_key: config.apiKey,
+      api_secret: config.apiSecret,
+    });
+    
+    console.log(`Switched to Cloudinary configuration: ${configName}`);
+    return true;
+  }
+
+  /**
+   * Upload file with specific configuration
+   */
+  async uploadFileWithConfig(
+    file: File | Buffer | string,
+    configName: string = this.defaultConfig,
+    options: CloudinaryUploadOptions = {}
+  ): Promise<CloudinaryUploadResult> {
+    // Check if we're on the server side
+    if (typeof window !== 'undefined') {
+      throw new Error('Cloudinary upload can only be performed on the server side.');
+    }
+
+    // Check if configuration exists
+    if (!cloudinaryConfigs[configName]) {
+      throw new Error(`Cloudinary configuration '${configName}' not found`);
+    }
+
+    // Switch to the specified configuration
+    this.switchConfig(configName);
+    const config = cloudinaryConfigs[configName];
+
+    // Use configuration-specific folder if not specified
+    const uploadOptions = {
+      folder: options.folder || config.folder || this.defaultFolder,
+      resource_type: options.resource_type || 'auto',
+      transformation: options.transformation,
+      eager: options.eager,
+      eager_async: options.eager_async,
+      eager_notification_url: options.eager_notification_url,
+      use_filename: options.use_filename ?? true,
+      unique_filename: options.unique_filename ?? true,
+      overwrite: options.overwrite ?? false,
+      invalidate: options.invalidate ?? true,
+      tags: options.tags,
+      context: options.context,
+    };
+
+    try {
+      // Validate file before upload
+      if (file instanceof File) {
+        const validation = this.validateFile(file, options);
+        if (!validation.valid) {
+          throw new Error(validation.error);
+        }
+      }
+
+      let uploadResult;
+
+      if (file instanceof File) {
+        // Convert File to base64 for upload
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64 = buffer.toString('base64');
+        const dataURI = `data:${file.type};base64,${base64}`;
+        
+        uploadResult = await cloudinary.uploader.upload(dataURI, uploadOptions);
+      } else if (typeof file === 'string') {
+        // Upload from URL
+        uploadResult = await cloudinary.uploader.upload(file, uploadOptions);
+      } else {
+        // Upload from Buffer
+        const base64 = file.toString('base64');
+        const dataURI = `data:application/octet-stream;base64,${base64}`;
+        uploadResult = await cloudinary.uploader.upload(dataURI, uploadOptions);
+      }
+
+      return {
+        public_id: uploadResult.public_id,
+        secure_url: uploadResult.secure_url,
+        format: uploadResult.format,
+        width: uploadResult.width,
+        height: uploadResult.height,
+        duration: uploadResult.duration,
+        bytes: uploadResult.bytes,
+        resource_type: uploadResult.resource_type,
+        created_at: uploadResult.created_at,
+      };
+    } catch (error) {
+      console.error('Cloudinary upload error:', error);
+      throw new Error(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Upload a file to Cloudinary (server-side only)
    */
   async uploadFile(
     file: File | Buffer | string,
     options: CloudinaryUploadOptions = {}
   ): Promise<CloudinaryUploadResult> {
+    // Check if we're on the server side
+    if (typeof window !== 'undefined') {
+      throw new Error('Cloudinary upload can only be performed on the server side.');
+    }
+
     // Check if Cloudinary is configured
-    if (!isCloudinaryConfigured) {
+    if (!isCloudinaryConfigured || !cloudinary) {
       throw new Error('Cloudinary is not configured. Please set up your environment variables.');
     }
 
@@ -183,7 +356,7 @@ export class CloudinaryService {
       effect?: string;
     } = {}
   ): string {
-    if (!isCloudinaryConfigured) {
+    if (!isCloudinaryConfigured || !cloudinary) {
       return publicId; // Return original URL if Cloudinary is not configured
     }
 
@@ -214,7 +387,7 @@ export class CloudinaryService {
       start_offset?: number;
     } = {}
   ): string {
-    if (!isCloudinaryConfigured) {
+    if (!isCloudinaryConfigured || !cloudinary) {
       return publicId; // Return original URL if Cloudinary is not configured
     }
 
@@ -251,7 +424,7 @@ export class CloudinaryService {
    * Delete a file from Cloudinary
    */
   async deleteFile(publicId: string, resourceType: 'image' | 'video' | 'raw' = 'image'): Promise<void> {
-    if (!isCloudinaryConfigured) {
+    if (!isCloudinaryConfigured || !cloudinary) {
       console.warn('Cloudinary is not configured. Delete operation skipped.');
       return;
     }
@@ -270,7 +443,7 @@ export class CloudinaryService {
    * Get file information
    */
   async getFileInfo(publicId: string, resourceType: 'image' | 'video' | 'raw' = 'image'): Promise<Record<string, unknown>> {
-    if (!isCloudinaryConfigured) {
+    if (!isCloudinaryConfigured || !cloudinary) {
       throw new Error('Cloudinary is not configured. Please set up your environment variables.');
     }
 
@@ -294,7 +467,21 @@ export class CloudinaryService {
       'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
       // Videos
       'video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov', 'video/wmv',
-      'video/flv', 'video/mkv', 'video/3gp', 'video/m4v'
+      'video/flv', 'video/mkv', 'video/3gp', 'video/m4v',
+      // Documents (for stage designs)
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+      'text/csv',
+      // Archives
+      'application/zip',
+      'application/x-rar-compressed',
+      'application/x-7z-compressed'
     ];
 
     if (file.size > maxSize) {
@@ -339,7 +526,7 @@ export class CloudinaryService {
    * Generate a signed upload preset for client-side uploads
    */
   generateUploadSignature(params: Record<string, unknown> = {}): Record<string, unknown> {
-    if (!isCloudinaryConfigured) {
+    if (!isCloudinaryConfigured || !cloudinary) {
       throw new Error('Cloudinary is not configured. Please set up your environment variables.');
     }
 
@@ -361,5 +548,6 @@ export class CloudinaryService {
   }
 }
 
-// Export a default instance
+// Export default instances
 export const cloudinaryService = new CloudinaryService();
+export const stageBookingCloudinaryService = new CloudinaryService('stage-designs', 'secondary');

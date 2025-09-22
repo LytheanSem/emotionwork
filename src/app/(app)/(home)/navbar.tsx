@@ -100,6 +100,8 @@ export function Navbar() {
       { href: "/portfolio", children: "Portfolio" },
       { href: "/contact", children: "Contact" },
       { href: "/bookmeeting", children: "Book meeting" },
+      { href: "/book-stage", children: "Book a Stage" },
+      { href: "/my-stage-bookings", children: "My Stage Bookings" },
       { href: "/manage-booking", children: "Manage Booking" },
       { href: "/design", children: "Design" },
     ];
