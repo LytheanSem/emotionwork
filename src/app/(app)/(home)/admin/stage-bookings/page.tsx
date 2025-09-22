@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   Calendar, 
   Clock, 
@@ -19,11 +18,8 @@ import {
   FileText, 
   Image, 
   Search,
-  Filter,
   Eye,
-  Edit,
   Trash2,
-  Download,
   ExternalLink
 } from "lucide-react";
 import { StageBooking } from "@/lib/db";
@@ -82,7 +78,7 @@ export default function AdminStageBookingsPage() {
     }
   };
 
-  const updateBooking = async (bookingId: string, updates: any) => {
+  const updateBooking = async (bookingId: string, updates: Partial<StageBooking>) => {
     setIsUpdating(true);
     try {
       const response = await fetch(`/api/stage-bookings/${bookingId}`, {
@@ -187,14 +183,6 @@ export default function AdminStageBookingsPage() {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   if (!session?.user?.role || (session.user.role !== "admin" && !session.user.isAdmin)) {
@@ -364,7 +352,7 @@ function BookingDetailsModal({
   isUpdating 
 }: { 
   booking: StageBooking; 
-  onUpdate: (id: string, updates: any) => void;
+  onUpdate: (id: string, updates: Partial<StageBooking>) => void;
   onDelete: (id: string) => void;
   isUpdating: boolean;
 }) {

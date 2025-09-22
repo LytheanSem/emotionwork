@@ -107,7 +107,7 @@ export async function PUT(
       );
     }
 
-    const updateData: any = {
+    const updateData: Partial<StageBooking> = {
       updatedAt: new Date(),
     };
 

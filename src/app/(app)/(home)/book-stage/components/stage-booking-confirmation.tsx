@@ -264,7 +264,7 @@ export function StageBookingConfirmation({
               <h4 className="font-medium text-orange-900 mb-1">Important Notice</h4>
               <p className="text-sm text-orange-800">
                 Your stage booking request will be reviewed by our team within 24 hours. 
-                We'll contact you with pricing information and next steps. Please ensure all 
+                We&apos;ll contact you with pricing information and next steps. Please ensure all 
                 information is accurate before submitting.
               </p>
             </div>

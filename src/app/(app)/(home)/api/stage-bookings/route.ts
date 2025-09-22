@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getDb, StageBooking } from "@/lib/db";
-import { sanitizeInput, isValidEmail } from "@/lib/utils";
+import { sanitizeInput } from "@/lib/utils";
 import { validateRequestSize } from "@/lib/request-limiter";
 
 export async function POST(request: NextRequest) {
@@ -25,7 +25,32 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     
     // Sanitize input data
-    const sanitizedBody = sanitizeInput(body) as any;
+    const sanitizedBody = sanitizeInput(body) as {
+      userProfile: {
+        firstName: string;
+        lastName: string;
+        phone: string;
+        company?: string;
+        address?: string;
+      };
+      stageDetails: {
+        location: string;
+        eventType: string;
+        eventDate: string;
+        eventTime: string;
+        duration?: number;
+        expectedGuests?: number;
+        specialRequirements?: string;
+      };
+      designFiles: Array<{
+        filename: string;
+        originalName: string;
+        url: string;
+        publicId: string;
+        mimeType: string;
+        size: number;
+      }>;
+    };
 
     // Validate required fields
     const { userProfile, stageDetails, designFiles } = sanitizedBody;
@@ -116,7 +141,7 @@ export async function POST(request: NextRequest) {
         expectedGuests: stageDetails.expectedGuests || 50,
         specialRequirements: stageDetails.specialRequirements || "",
       },
-      designFiles: designFiles.map((file: any) => ({
+      designFiles: designFiles.map((file) => ({
         filename: file.filename,
         originalName: file.originalName,
         url: file.url,
