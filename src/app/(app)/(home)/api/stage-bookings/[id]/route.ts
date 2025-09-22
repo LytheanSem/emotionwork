@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getDb } from "@/lib/db";
+import { getDb, StageBooking } from "@/lib/db";
 import { ObjectId } from "mongodb";
 
 export async function GET(
