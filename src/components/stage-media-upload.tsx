@@ -99,10 +99,11 @@ export default function StageMediaUpload({
       const result = await response.json();
       if (result.success && result.files && result.files.length > 0) {
         const uploadedFile = result.files[0];
+        const mime = uploadedFile?.mimeType || selectedFile.type || "";
         onUploadComplete({
           secure_url: uploadedFile.url,
           public_id: uploadedFile.publicId,
-          resource_type: uploadedFile.mimeType.startsWith("video/") ? "video" : "image",
+          resource_type: mime.startsWith("video/") ? "video" : "image",
         });
       } else {
         throw new Error("No files uploaded");
