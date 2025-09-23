@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Edit, Loader2, MapPin, Video, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { BookingData, bookingService } from "../../bookmeeting/services/booking-service";
+import { BookingData, bookingService } from "../../book-meeting/services/booking-service";
 
 interface EditBookingFormProps {
   booking: {

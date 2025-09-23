@@ -12,51 +12,27 @@ export async function GET() {
 
     const db = await getDb();
     if (!db) {
-      return NextResponse.json(
-        { error: "Database connection failed" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
     }
 
     // Get all stages with category information
-    const stages = await db
-      .collection("stages")
-      .find({})
-      .toArray();
+    const stages = await db.collection("stages").find({}).toArray();
 
     // Transform the data to match expected format
-    const transformedStages = await Promise.all(stages.map(async (stage) => {
-      let category = null;
-      if (stage.categoryId) {
-        category = await db.collection("categories").findOne({ _id: stage.categoryId });
-      }
-      
-      return {
-        id: stage._id?.toString(),
-        name: stage.name,
-        type: stage.type || "",
-        status: stage.status,
-        categoryId: stage.categoryId ? stage.categoryId.toString() : "",
-        imageUrl: stage.imageUrl || "",
-        imagePublicId: stage.imagePublicId || "",
-        imageResourceType: stage.imageResourceType || "image",
-        description: stage.description || "",
-        category: category ? {
-          id: category._id?.toString(),
-          name: category.name,
-          slug: category.slug,
-          description: category.description,
-        } : null,
-      };
+    const transformedStages = stages.map((stage) => ({
+      id: stage._id?.toString(),
+      name: stage.name,
+      status: stage.status,
+      imageUrl: stage.imageUrl || "",
+      imagePublicId: stage.imagePublicId || "",
+      imageResourceType: stage.imageResourceType || "image",
+      description: stage.description || "",
     }));
 
     return NextResponse.json({ stages: transformedStages });
   } catch (error) {
     console.error("Error fetching stages:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch stages" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch stages" }, { status: 500 });
   }
 }
 
@@ -69,24 +45,12 @@ export async function POST(request: Request) {
 
     const db = await getDb();
     if (!db) {
-      return NextResponse.json(
-        { error: "Database connection failed" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
     }
 
     // Parse JSON request
     const jsonData = await request.json();
-    const {
-      name,
-      type = "",
-      status,
-      categoryId = "",
-      description = "",
-      imageUrl = "",
-      imagePublicId = "",
-      imageResourceType = "image",
-    } = jsonData;
+    const { name, status, description = "", imageUrl = "", imagePublicId = "", imageResourceType = "image" } = jsonData;
 
     if (!name || !status) {
       return NextResponse.json(
@@ -109,9 +73,7 @@ export async function POST(request: Request) {
 
     const newStage = {
       name,
-      type,
       status,
-      categoryId: categoryId || null,
       // Cloudinary fields
       imageUrl: imageUrl || null,
       imagePublicId: imagePublicId || null,
@@ -132,9 +94,6 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Error creating stage:", error);
-    return NextResponse.json(
-      { error: "Failed to create stage" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to create stage" }, { status: 500 });
   }
 }

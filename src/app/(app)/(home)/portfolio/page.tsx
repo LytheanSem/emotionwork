@@ -3,19 +3,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 
 interface Stage {
   id: string;
   name: string;
-  type?: string;
   status: "indoor" | "outdoor";
-  category?: {
-    id: string;
-    name: string;
-    description?: string;
-  };
   imageUrl?: string;
   description?: string;
 }
@@ -85,12 +79,8 @@ export default function PortfolioPage() {
       <div className="w-full">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            PRODUCT
-          </h1>
-          <p className="text-lg text-gray-600">
-            Explore our collection of stages.
-          </p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">PRODUCT</h1>
+          <p className="text-lg text-gray-600">Explore our collection of stages.</p>
         </div>
 
         {/* Filter */}
@@ -110,8 +100,8 @@ export default function PortfolioPage() {
         {/* Stages Grid - Fixed 4 columns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredStages.map((stage) => (
-            <Card 
-              key={stage.id} 
+            <Card
+              key={stage.id}
               className="border border-gray-300 rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-200"
               onClick={() => handleStageClick(stage)}
             >
@@ -119,12 +109,7 @@ export default function PortfolioPage() {
                 {/* Image Placeholder - Bigger size */}
                 <div className="relative w-full h-80 bg-gray-200 flex items-center justify-center">
                   {stage.imageUrl ? (
-                    <Image
-                      src={stage.imageUrl}
-                      alt={stage.name}
-                      fill
-                      className="object-cover"
-                    />
+                    <Image src={stage.imageUrl} alt={stage.name} fill className="object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="w-16 h-16 border-2 border-gray-400 flex items-center justify-center">
@@ -133,14 +118,12 @@ export default function PortfolioPage() {
                     </div>
                   )}
                 </div>
-                
+
                 {/* Stage Info */}
                 <div className="p-4">
-                  <h3 className="font-bold text-gray-900 mb-2">
-                    {stage.name}
-                  </h3>
-                  <Badge 
-                    variant="outline" 
+                  <h3 className="font-bold text-gray-900 mb-2">{stage.name}</h3>
+                  <Badge
+                    variant="outline"
                     className={`${getStatusColor(stage.status)} border rounded-full px-3 py-1 text-sm`}
                   >
                     {stage.status}
@@ -165,10 +148,7 @@ export default function PortfolioPage() {
               {/* Modal Header */}
               <div className="flex justify-between items-center p-6 border-b border-gray-200">
                 <h2 className="text-2xl font-bold text-gray-900">{selectedStage.name}</h2>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-                >
+                <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 text-2xl font-bold">
                   ×
                 </button>
               </div>
@@ -178,12 +158,7 @@ export default function PortfolioPage() {
                 {/* Stage Image */}
                 <div className="relative w-full h-80 bg-gray-200 rounded-lg overflow-hidden mb-6">
                   {selectedStage.imageUrl ? (
-                    <Image
-                      src={selectedStage.imageUrl}
-                      alt={selectedStage.name}
-                      fill
-                      className="object-cover"
-                    />
+                    <Image src={selectedStage.imageUrl} alt={selectedStage.name} fill className="object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="w-20 h-20 border-2 border-gray-400 flex items-center justify-center">
@@ -196,37 +171,18 @@ export default function PortfolioPage() {
                 {/* Stage Details */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className={`${getStatusColor(selectedStage.status)} border rounded-full px-4 py-2 text-base`}
                     >
                       {selectedStage.status}
                     </Badge>
-                    {selectedStage.category && (
-                      <Badge className="bg-gray-100 text-gray-800 border-gray-200 border rounded-full px-4 py-2 text-base">
-                        {selectedStage.category.name}
-                      </Badge>
-                    )}
                   </div>
-
-                  {selectedStage.type && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Type</h3>
-                      <p className="text-gray-600">{selectedStage.type}</p>
-                    </div>
-                  )}
 
                   {selectedStage.description && (
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
                       <p className="text-gray-600 leading-relaxed">{selectedStage.description}</p>
-                    </div>
-                  )}
-
-                  {selectedStage.category?.description && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Category Details</h3>
-                      <p className="text-gray-600 leading-relaxed">{selectedStage.category.description}</p>
                     </div>
                   )}
                 </div>

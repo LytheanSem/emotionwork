@@ -2,7 +2,14 @@
 
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useRoutePrefetch } from "@/hooks/use-route-prefetch";
+import { ChevronDown } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { Inter } from "next/font/google";
 import Link from "next/link";
@@ -24,7 +31,7 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
     <Button
       asChild
       variant="outline"
-      className={`bg-transparent hover:bg-transparent rounded-full hover:border-primary border-transparent px-3.5 text-lg font-inter ${
+      className={`bg-transparent hover:bg-transparent rounded-full hover:border-primary border-transparent px-2 xl:px-3.5 text-sm xl:text-lg font-inter ${
         isActive ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : ""
       }`}
     >
@@ -33,13 +40,63 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
   );
 };
 
+const BookingDropdown = () => {
+  const pathname = usePathname();
+  const isBookingActive =
+    pathname.startsWith("/book-meeting") ||
+    pathname.startsWith("/book-stage") ||
+    pathname.startsWith("/my-stage-bookings") ||
+    pathname.startsWith("/manage-booking");
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          className={`bg-transparent hover:bg-transparent rounded-full hover:border-primary border-transparent px-2 xl:px-3.5 text-sm xl:text-lg font-inter ${
+            isBookingActive
+              ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
+              : ""
+          }`}
+        >
+          <span className="hidden lg:inline">Bookings</span>
+          <span className="lg:hidden">Book</span>
+          <ChevronDown className="ml-1 h-3 w-3 xl:h-4 xl:w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="center" className="w-48 xl:w-56">
+        <DropdownMenuItem asChild>
+          <Link href="/book-meeting" className="flex items-center text-sm">
+            <span>Book Meeting</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/book-stage" className="flex items-center text-sm">
+            <span>Book a Stage</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/my-stage-bookings" className="flex items-center text-sm">
+            <span>My Stage Bookings</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/manage-booking" className="flex items-center text-sm">
+            <span>Manage Booking</span>
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const { data: session, status } = useSession();
   const pathname = usePathname();
   const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { prefetchOnHover } = useRoutePrefetch();
 
   // Prevent hydration mismatch by only rendering after client-side hydration
@@ -99,10 +156,6 @@ export function Navbar() {
       { href: "/equipment", children: "Equipment" },
       { href: "/portfolio", children: "Portfolio" },
       { href: "/contact", children: "Contact" },
-      { href: "/bookmeeting", children: "Book meeting" },
-      { href: "/book-stage", children: "Book a Stage" },
-      { href: "/my-stage-bookings", children: "My Stage Bookings" },
-      { href: "/manage-booking", children: "Manage Booking" },
       { href: "/design", children: "Design" },
     ];
 
@@ -112,20 +165,20 @@ export function Navbar() {
   // Always render the same base structure to prevent hydration mismatch
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 h-24 transition-all duration-300 ${inter.className} ${
+      className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-300 ${inter.className} ${
         isClient && isScrolled
           ? "bg-background/95 backdrop-blur-md shadow-lg border-b border-border"
           : "bg-background border-b border-border"
       }`.trim()}
     >
-      <div className="h-full flex items-center justify-between px-6">
-        <Link href="/" className="flex items-center">
-          <Logo width={150} height={90} />
+      <div className="h-full flex items-center justify-between px-4 sm:px-6">
+        {/* Logo - Responsive sizing */}
+        <Link href="/" className="flex items-center flex-shrink-0">
+          <Logo width={120} height={72} className="sm:w-[140px] sm:h-[84px] lg:w-[150px] lg:h-[90px]" />
         </Link>
 
-        <NavbarSidebar items={navigationItems} open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
-
-        <div className="items-center gap-4 hidden lg:flex">
+        {/* Desktop Navigation - Show on xl screens and up */}
+        <div className="items-center gap-2 hidden xl:flex">
           {navigationItems.map((item) => (
             <NavbarItem
               key={item.href}
@@ -136,72 +189,87 @@ export function Navbar() {
               {item.children}
             </NavbarItem>
           ))}
+          <BookingDropdown />
         </div>
 
+        {/* User Section - Responsive layout */}
         {isClient && status !== "loading" && isAuthenticated ? (
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end">
-              <span className="text-sm text-muted-foreground font-inter">Welcome, {displayName}</span>
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+            {/* User info - Hide on very small screens, show on sm+ */}
+            <div className="hidden sm:flex flex-col items-end">
+              <span className="text-xs sm:text-sm text-muted-foreground font-inter truncate max-w-[120px] lg:max-w-none">
+                Welcome, {displayName}
+              </span>
               {isAdmin && <span className="text-xs text-orange-600 font-medium font-inter">Admin User</span>}
               {session?.user?.isManager && !isAdmin && (
                 <span className="text-xs text-blue-600 font-medium font-inter">Manager</span>
               )}
             </div>
+
+            {/* Admin Panel Button - Hide on small screens */}
             {(isAdmin || session?.user?.isManager) && (
               <Button
                 onClick={() => isClient && router.push("/admin")}
                 variant="outline"
                 size="sm"
-                className={`font-inter ${
+                className={`hidden md:flex font-inter text-xs ${
                   isAdmin
                     ? "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
                     : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
                 }`}
               >
-                {isAdmin ? "Admin Panel" : "Manager Panel"}
+                {isAdmin ? "Admin" : "Manager"}
               </Button>
             )}
+
+            {/* Logout Button - Always visible but responsive sizing */}
             <Button
               onClick={handleLogout}
               variant="outline"
               size="sm"
-              className="bg-black text-white hover:bg-gray-800 font-inter"
+              className="bg-black text-white hover:bg-gray-800 font-inter text-xs px-2 sm:px-3"
             >
-              Log out
+              <span className="hidden sm:inline">Log out</span>
+              <span className="sm:hidden">Out</span>
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Button
               onClick={() => isClient && router.push("/sign-in")}
               variant="outline"
               size="sm"
-              className="font-inter"
+              className="font-inter text-xs px-2 sm:px-3"
             >
-              Log in
+              <span className="hidden sm:inline">Log in</span>
+              <span className="sm:hidden">In</span>
             </Button>
             <Button
               onClick={() => isClient && router.push("/sign-up")}
               size="sm"
-              className="bg-black text-white hover:bg-gray-800 font-inter"
+              className="bg-black text-white hover:bg-gray-800 font-inter text-xs px-2 sm:px-3"
             >
-              Sign up
+              <span className="hidden sm:inline">Sign up</span>
+              <span className="sm:hidden">Up</span>
             </Button>
           </div>
         )}
 
-        {/* Mobile menu button */}
-        <div className="flex lg:hidden items-center justify-center">
+        {/* Mobile menu button - Show on screens smaller than xl */}
+        <div className="flex xl:hidden items-center justify-center ml-2">
           <Button
             variant="ghost"
-            className="size-12 border-transparent bg-white"
+            className="size-10 sm:size-12 border-transparent bg-white"
             onClick={() => isClient && setIsSidebarOpen(true)}
           >
-            <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="size-5 sm:size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </Button>
         </div>
+
+        {/* Mobile Sidebar */}
+        <NavbarSidebar items={navigationItems} open={isSidebarOpen} onOpenChange={setIsSidebarOpen} />
       </div>
     </nav>
   );
