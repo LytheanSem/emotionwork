@@ -19,19 +19,19 @@ interface CurrentMedia {
   resource_type: "image" | "video";
 }
 
-interface EquipmentMediaUploadProps {
+interface StageMediaUploadProps {
   onUploadComplete: (result: CloudinaryUploadResult) => void;
   onUploadError: (error: string) => void;
   onRemove: () => void;
   currentMedia?: CurrentMedia;
 }
 
-export default function EquipmentMediaUpload({
+export default function StageMediaUpload({
   onUploadComplete,
   onUploadError,
   onRemove,
   currentMedia,
-}: EquipmentMediaUploadProps) {
+}: StageMediaUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -142,7 +142,7 @@ export default function EquipmentMediaUpload({
 
   return (
     <div className="space-y-4">
-      <Label htmlFor="equipment-media">Equipment Media</Label>
+      <Label htmlFor="stage-media">Stage Media</Label>
 
       {/* Current Media Display */}
       {currentMedia && (
@@ -163,7 +163,7 @@ export default function EquipmentMediaUpload({
             {currentMedia.resource_type === "image" ? (
               <Image
                 src={currentMedia.url}
-                alt="Current equipment media"
+                alt="Current stage media"
                 width={400}
                 height={128}
                 className="w-full h-32 object-cover"
@@ -185,7 +185,7 @@ export default function EquipmentMediaUpload({
       <div className="space-y-2">
         <Input
           ref={fileInputRef}
-          id="equipment-media"
+          id="stage-media"
           type="file"
           accept="image/*,video/*"
           onChange={handleFileSelect}
