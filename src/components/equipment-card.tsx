@@ -1,9 +1,12 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Equipment } from "@/lib/db";
+import { useCart } from "@/contexts/CartContext";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { Plus, ShoppingCart } from "lucide-react";
 
 interface EquipmentCardProps {
   equipment: Equipment;
@@ -35,7 +38,9 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
   const imageSrc = resolveImageSrc(equipment);
   const [isImageVisible, setIsImageVisible] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
+  const [showAddToCart, setShowAddToCart] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -58,10 +63,17 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
     return () => observer.disconnect();
   }, []);
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    addToCart(equipment, 1, 'daily', 1);
+  };
+
   return (
     <div 
-      className="bg-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer border border-border"
+      className="bg-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer border border-border relative group"
       onClick={onClick}
+      onMouseEnter={() => setShowAddToCart(true)}
+      onMouseLeave={() => setShowAddToCart(false)}
     >
              {imageSrc && (
          <div ref={imageRef} className="aspect-square overflow-hidden bg-muted">
@@ -88,6 +100,19 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
            )}
          </div>
        )}
+
+      {/* Add to Cart Button Overlay */}
+      {showAddToCart && equipment.status === "available" && (
+        <div className="absolute top-2 right-2 z-10">
+          <Button
+            size="sm"
+            onClick={handleAddToCart}
+            className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
@@ -122,18 +147,11 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
             </span>
           </div>
           
-          {(equipment.length || equipment.price) && (
+          {equipment.length && (
             <div className="flex items-center justify-between text-sm">
-              {equipment.length && (
-                <span className="text-muted-foreground">
-                  Length: {equipment.length}m
-                </span>
-              )}
-              {equipment.price && (
-                <span className="text-muted-foreground font-medium">
-                  ${equipment.price.toLocaleString()}
-                </span>
-              )}
+              <span className="text-muted-foreground">
+                Length: {equipment.length}m
+              </span>
             </div>
           )}
         </div>

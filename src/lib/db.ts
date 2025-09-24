@@ -162,7 +162,7 @@ export interface StageBooking {
   stageDetails: {
     location: string;
     eventType: string;
-    eventDate: string;
+    eventDates?: string[]; // Made optional to handle legacy data
     eventTime: string;
     duration: number; // in hours
     expectedGuests: number;
@@ -175,6 +175,29 @@ export interface StageBooking {
     publicId: string;
     mimeType: string;
     size: number;
+  }[];
+  equipmentItems?: {
+    id: string;
+    equipment: {
+      _id: string;
+      name: string;
+      category: string;
+      imageUrl?: string;
+    };
+    quantity: number;
+    rentalType: 'daily' | 'weekly';
+    rentalDays: number;
+    // Server-computed pricing (never trust client prices)
+    dailyPrice: number;
+    weeklyPrice: number;
+    totalPrice: number;
+    // Audit trail - prices at time of booking
+    priceAtBooking: {
+      dailyPrice: number;
+      weeklyPrice: number;
+      totalPrice: number;
+      computedAt: Date;
+    };
   }[];
   status: "pending" | "approved" | "rejected" | "in_progress" | "completed";
   adminNotes?: string;

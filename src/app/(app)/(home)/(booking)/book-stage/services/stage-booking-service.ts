@@ -9,13 +9,14 @@ interface StageBookingFormData {
   stageDetails: {
     location: string;
     eventType: string;
-    eventDate: string;
+    eventDates: string[]; // Changed from eventDate to eventDates array
     eventTime: string;
     duration: number;
     expectedGuests: number;
     specialRequirements?: string;
   };
   designFiles: File[];
+  equipmentItems?: any[]; // Add equipment items
 }
 
 interface StageBookingResponse {
@@ -29,14 +30,17 @@ class StageBookingService {
 
   async submitBooking(data: StageBookingFormData): Promise<StageBookingResponse> {
     try {
-      // Upload design files to Cloudinary via API
-      const uploadedFiles = await this.uploadDesignFiles(data.designFiles);
+      // Upload design files to Cloudinary via API (only if files are provided)
+      const uploadedFiles = data.designFiles.length > 0 
+        ? await this.uploadDesignFiles(data.designFiles)
+        : [];
 
       // Prepare booking data
       const bookingData = {
         userProfile: data.userProfile,
         stageDetails: data.stageDetails,
         designFiles: uploadedFiles,
+        equipmentItems: data.equipmentItems || [], // Include equipment items
         status: "pending",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -108,6 +112,49 @@ class StageBookingService {
     }
   }
 
+  async updateBooking(bookingId: string, data: StageBookingFormData): Promise<StageBookingResponse> {
+    try {
+      // Upload design files to Cloudinary via API (only if files are provided)
+      const uploadedFiles = data.designFiles.length > 0 
+        ? await this.uploadDesignFiles(data.designFiles)
+        : [];
+
+      // Prepare booking data
+      const bookingData = {
+        userProfile: data.userProfile,
+        stageDetails: data.stageDetails,
+        designFiles: uploadedFiles,
+        equipmentItems: data.equipmentItems || [], // Include equipment items
+      };
+
+      // Submit to API
+      const response = await fetch(`${this.baseUrl}/${bookingId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update booking");
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        bookingId: bookingId,
+      };
+    } catch (error) {
+      console.error("Stage booking update error:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
+      };
+    }
+  }
+
   async getBookingStatus(bookingId: string): Promise<{
     status: string;
     message?: string;
@@ -126,7 +173,7 @@ class StageBookingService {
       stageDetails: {
         location: string;
         eventType: string;
-        eventDate: string;
+        eventDates: string[]; // Changed from eventDate to eventDates array
         eventTime: string;
         duration?: number;
         expectedGuests?: number;
@@ -172,7 +219,7 @@ class StageBookingService {
           stageDetails: {
             location: string;
             eventType: string;
-            eventDate: string;
+            eventDates: string[]; // Changed from eventDate to eventDates array
             eventTime: string;
             duration?: number;
             expectedGuests?: number;
@@ -215,7 +262,7 @@ class StageBookingService {
       stageDetails: {
         location: string;
         eventType: string;
-        eventDate: string;
+        eventDates: string[]; // Changed from eventDate to eventDates array
         eventTime: string;
         duration?: number;
         expectedGuests?: number;
