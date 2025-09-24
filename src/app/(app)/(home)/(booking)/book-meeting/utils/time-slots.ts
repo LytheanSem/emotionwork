@@ -41,7 +41,7 @@ export function generateTimeSlots(bookedSlots: string[] = []): TimeSlot[] {
   const startDate = new Date(now);
   startDate.setDate(now.getDate() + 1);
 
-  const currentDate = new Date(startDate);
+  let currentDate = new Date(startDate);
   let weekdayCount = 0;
 
   // Find the next 7 weekdays (Monday-Friday)
@@ -63,7 +63,7 @@ export function generateTimeSlots(bookedSlots: string[] = []): TimeSlot[] {
     }
 
     // Move to next day
-    currentDate.setDate(currentDate.getDate() + 1);
+    currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
   }
 
   return slots;

@@ -15,9 +15,10 @@ interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   onComplete?: () => void; // Callback for when checkout is completed
+  redirectUrl?: string; // Custom redirect URL after checkout completion
 }
 
-export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProps) {
+export function CheckoutModal({ isOpen, onClose, onComplete, redirectUrl = "/book-stage" }: CheckoutModalProps) {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -77,7 +78,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete }: CheckoutModalProp
       if (onComplete) {
         onComplete();
       }
-      router.push("/book-stage");
+      router.push(redirectUrl);
       
     } catch (error) {
       toast.error("Failed to place order. Please try again.");

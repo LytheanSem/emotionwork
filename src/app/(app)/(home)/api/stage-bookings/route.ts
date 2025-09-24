@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { getDb, StageBooking } from "@/lib/db";
 import { sanitizeInput, parseLocalDate } from "@/lib/utils";
 import { validateRequestSize } from "@/lib/request-limiter";
+import { calculateEquipmentPricing } from "@/lib/pricing-service";
+import { ObjectId } from "mongodb";
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,21 +55,78 @@ export async function POST(request: NextRequest) {
       equipmentItems?: Array<{
         id: string;
         equipment: {
-          _id: string;
-          name: string;
-          category: string;
-          imageUrl?: string;
+          _id: string; // Only equipment ID is trusted from client
         };
         quantity: number;
         rentalType: 'daily' | 'weekly';
         rentalDays: number;
-        dailyPrice: number;
-        weeklyPrice: number;
+        // NO PRICING DATA ACCEPTED FROM CLIENT - server computes all prices
       }>;
     };
 
     // Validate required fields
     const { userProfile, stageDetails, designFiles, equipmentItems } = sanitizedBody;
+
+    // Calculate server-side pricing for equipment items (ignore client prices)
+    let processedEquipmentItems: any[] = [];
+    if (equipmentItems && equipmentItems.length > 0) {
+      try {
+        const pricingCalculations = await calculateEquipmentPricing(
+          equipmentItems.map(item => ({
+            equipmentId: item.equipment._id,
+            quantity: item.quantity,
+            rentalType: item.rentalType,
+            rentalDays: item.rentalDays
+          }))
+        );
+
+        // Fetch equipment details from database for each item
+        const db = await getDb();
+        if (!db) {
+          throw new Error('Database connection failed');
+        }
+
+        processedEquipmentItems = await Promise.all(
+          equipmentItems.map(async (item, index) => {
+            // Fetch equipment details from database (never trust client data)
+            const equipment = await db.collection('equipment').findOne({ 
+              _id: new ObjectId(item.equipment._id) 
+            });
+            
+            if (!equipment) {
+              throw new Error(`Equipment not found: ${item.equipment._id}`);
+            }
+
+            const calculation = pricingCalculations[index];
+            
+            return {
+              id: item.id,
+              equipment: {
+                _id: equipment._id.toString(),
+                name: equipment.name,
+                category: equipment.categoryId || 'Uncategorized',
+                imageUrl: equipment.imageUrl
+              },
+              quantity: item.quantity,
+              rentalType: item.rentalType,
+              rentalDays: item.rentalDays,
+              // Server-computed pricing (never trust client prices)
+              dailyPrice: calculation.dailyPrice,
+              weeklyPrice: calculation.weeklyPrice,
+              totalPrice: calculation.totalPrice,
+              // Audit trail
+              priceAtBooking: calculation.priceAtBooking
+            };
+          })
+        );
+      } catch (error) {
+        console.error('Error calculating equipment pricing:', error);
+        return NextResponse.json(
+          { error: "Failed to calculate equipment pricing" },
+          { status: 400 }
+        );
+      }
+    }
 
     if (!userProfile?.firstName || !userProfile?.lastName || !userProfile?.phone) {
       return NextResponse.json(
@@ -162,7 +221,7 @@ export async function POST(request: NextRequest) {
         mimeType: file.mimeType,
         size: file.size,
       })),
-      equipmentItems: equipmentItems || [],
+      equipmentItems: processedEquipmentItems,
       status: "pending",
       createdAt: new Date(),
       updatedAt: new Date(),

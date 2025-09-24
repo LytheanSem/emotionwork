@@ -266,6 +266,7 @@ export function EquipmentGrid({ equipment, categories, redirectUrl = "/book-stag
           setShowCheckoutModal(false);
           setShowCartModal(false);
         }}
+        redirectUrl={redirectUrl}
       />
     </div>
   );

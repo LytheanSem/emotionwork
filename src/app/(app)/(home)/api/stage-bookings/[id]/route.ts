@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import type { StageBooking } from "@/lib/db";
 import { ObjectId } from "mongodb";
+import { calculateEquipmentPricing } from "@/lib/pricing-service";
 
 export async function GET(
   request: NextRequest,
@@ -261,36 +262,113 @@ export async function PATCH(
       }
     }
 
-    // Prepare update data
+    // Prepare update data - only update fields that are provided
     const updateData: Partial<StageBooking> = {
-      userName: `${userProfile.firstName} ${userProfile.lastName}`,
-      userProfile: {
+      updatedAt: new Date(),
+    };
+
+    // Only update userName if userProfile is provided
+    if (userProfile) {
+      updateData.userName = `${userProfile.firstName} ${userProfile.lastName}`;
+      updateData.userProfile = {
         firstName: userProfile.firstName,
         lastName: userProfile.lastName,
         phone: userProfile.phone,
         company: userProfile.company || "",
         address: userProfile.address || "",
-      },
-      stageDetails: {
+      };
+    }
+
+    // Only update stageDetails if provided
+    if (stageDetails) {
+      updateData.stageDetails = {
         location: stageDetails.location,
         eventType: stageDetails.eventType,
-        eventDates: stageDetails.eventDates, // Changed from eventDate to eventDates array
+        eventDates: stageDetails.eventDates,
         eventTime: stageDetails.eventTime,
-        duration: stageDetails.duration || 4,
-        expectedGuests: stageDetails.expectedGuests || 50,
-        specialRequirements: stageDetails.specialRequirements || "",
-      },
-      designFiles: (designFiles || []).map((file: any) => ({
+        // Preserve existing values if not provided
+        duration: stageDetails.duration !== undefined ? stageDetails.duration : existingBooking.stageDetails.duration,
+        expectedGuests: stageDetails.expectedGuests !== undefined ? stageDetails.expectedGuests : existingBooking.stageDetails.expectedGuests,
+        specialRequirements: stageDetails.specialRequirements !== undefined ? stageDetails.specialRequirements : existingBooking.stageDetails.specialRequirements || "",
+      };
+    }
+
+    // Only update designFiles if new files are actually provided (preserve existing files if not provided)
+    if (designFiles !== undefined && designFiles.length > 0) {
+      updateData.designFiles = designFiles.map((file: any) => ({
         filename: file.filename,
         originalName: file.originalName,
         url: file.url,
         publicId: file.publicId,
         mimeType: file.mimeType,
         size: file.size,
-      })),
-      equipmentItems: equipmentItems || [], // Include equipment items in update
-      updatedAt: new Date(),
-    };
+      }));
+    }
+
+    // Only update equipment items if provided (preserve existing items if not provided)
+    if (equipmentItems !== undefined) {
+      if (equipmentItems.length > 0) {
+        try {
+          const pricingCalculations = await calculateEquipmentPricing(
+            equipmentItems.map((item: any) => ({
+              equipmentId: item.equipment._id,
+              quantity: item.quantity,
+              rentalType: item.rentalType,
+              rentalDays: item.rentalDays
+            }))
+          );
+
+          // Fetch equipment details from database for each item
+          const db = await getDb();
+          if (!db) {
+            throw new Error('Database connection failed');
+          }
+
+          updateData.equipmentItems = await Promise.all(
+            equipmentItems.map(async (item: any, index: number) => {
+              // Fetch equipment details from database (never trust client data)
+              const equipment = await db.collection('equipment').findOne({ 
+                _id: new ObjectId(item.equipment._id) 
+              });
+              
+              if (!equipment) {
+                throw new Error(`Equipment not found: ${item.equipment._id}`);
+              }
+
+              const calculation = pricingCalculations[index];
+              
+              return {
+                id: item.id,
+                equipment: {
+                  _id: equipment._id.toString(),
+                  name: equipment.name,
+                  category: equipment.categoryId || 'Uncategorized',
+                  imageUrl: equipment.imageUrl
+                },
+                quantity: item.quantity,
+                rentalType: item.rentalType,
+                rentalDays: item.rentalDays,
+                // Server-computed pricing (never trust client prices)
+                dailyPrice: calculation.dailyPrice,
+                weeklyPrice: calculation.weeklyPrice,
+                totalPrice: calculation.totalPrice,
+                // Audit trail
+                priceAtBooking: calculation.priceAtBooking
+              };
+            })
+          );
+        } catch (error) {
+          console.error('Error calculating equipment pricing:', error);
+          return NextResponse.json(
+            { error: "Failed to calculate equipment pricing" },
+            { status: 400 }
+          );
+        }
+      } else {
+        // Explicitly set to empty array if provided as empty
+        updateData.equipmentItems = [];
+      }
+    }
 
     const result = await db
       .collection("stageBookings")

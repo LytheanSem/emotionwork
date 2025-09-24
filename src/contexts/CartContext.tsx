@@ -47,18 +47,47 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('equipment-cart', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // Generate random pricing for equipment
-  const generatePricing = (equipment: Equipment) => {
-    // Generate random prices based on equipment type/category
-    const basePrice = Math.floor(Math.random() * 200) + 50; // $50-$250 base
-    const dailyPrice = basePrice;
-    const weeklyPrice = Math.floor(basePrice * 5.5); // Weekly is ~5.5x daily
+  // Calculate deterministic pricing for equipment
+  const calculatePricing = (equipment: Equipment) => {
+    // Deterministic pricing based on equipment properties
+    let basePrice = 50; // Minimum price
+    
+    // Adjust based on equipment name (deterministic)
+    const nameHash = hashString(equipment.name);
+    basePrice += (nameHash % 150) + 50; // $50-$200 range
+    
+    // Adjust based on category if available
+    if (equipment.categoryId) {
+      const categoryHash = hashString(equipment.categoryId);
+      basePrice += (categoryHash % 50); // Additional $0-$50
+    }
+    
+    // Adjust based on brand if available
+    if (equipment.brand) {
+      const brandHash = hashString(equipment.brand);
+      basePrice += (brandHash % 30); // Additional $0-$30
+    }
+    
+    // Ensure price is within reasonable bounds
+    const dailyPrice = Math.max(50, Math.min(300, basePrice));
+    const weeklyPrice = Math.floor(dailyPrice * 5.5); // Weekly is ~5.5x daily
     
     return { dailyPrice, weeklyPrice };
   };
 
+  // Simple hash function for deterministic pricing
+  const hashString = (str: string): number => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
+  };
+
   const addToCart = (equipment: Equipment, quantity: number, rentalType: 'daily' | 'weekly', rentalDays: number) => {
-    const { dailyPrice, weeklyPrice } = generatePricing(equipment);
+    const { dailyPrice, weeklyPrice } = calculatePricing(equipment);
     
     // Create a unique ID for this cart item
     const cartItemId = `${equipment._id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -112,9 +141,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const getTotalPrice = () => {
     return cartItems.reduce((total, item) => {
-      const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
-      const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
-      return total + (price * item.quantity * days);
+      if (item.rentalType === 'daily') {
+        // Daily pricing: price per day
+        return total + (item.dailyPrice * item.quantity * item.rentalDays);
+      } else {
+        // Weekly pricing: use hybrid model for partial weeks
+        const fullWeeks = Math.floor(item.rentalDays / 7);
+        const remainingDays = item.rentalDays % 7;
+        
+        // Calculate price for full weeks
+        const weeklyPrice = item.weeklyPrice * item.quantity * fullWeeks;
+        
+        // Calculate price for remaining days (use daily rate for partial week)
+        const dailyPrice = item.dailyPrice * item.quantity * remainingDays;
+        
+        return total + weeklyPrice + dailyPrice;
+      }
     }, 0);
   };
 

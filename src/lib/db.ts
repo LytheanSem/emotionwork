@@ -187,8 +187,17 @@ export interface StageBooking {
     quantity: number;
     rentalType: 'daily' | 'weekly';
     rentalDays: number;
+    // Server-computed pricing (never trust client prices)
     dailyPrice: number;
     weeklyPrice: number;
+    totalPrice: number;
+    // Audit trail - prices at time of booking
+    priceAtBooking: {
+      dailyPrice: number;
+      weeklyPrice: number;
+      totalPrice: number;
+      computedAt: Date;
+    };
   }[];
   status: "pending" | "approved" | "rejected" | "in_progress" | "completed";
   adminNotes?: string;

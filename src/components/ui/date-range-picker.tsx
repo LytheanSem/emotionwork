@@ -74,7 +74,7 @@ export function DateRangePicker({
       const start = new Date(range.startDate);
       const end = new Date(range.endDate);
       
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      for (let d = new Date(start); d <= end; d = new Date(d.getTime() + 24 * 60 * 60 * 1000)) {
         dates.push(d.toISOString().split('T')[0]);
       }
     });
@@ -281,14 +281,6 @@ export function DateRangePicker({
                   input.value = '';
                   toast.success("Date added successfully");
                 }
-              }
-            }}
-            onChange={(e) => {
-              if (e.target.value && !value.includes(e.target.value)) {
-                const newDates = [...value, e.target.value].sort();
-                onChange(newDates);
-                e.target.value = '';
-                toast.success("Date added successfully");
               }
             }}
             placeholder="Select a single date"

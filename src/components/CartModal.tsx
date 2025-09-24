@@ -48,9 +48,22 @@ export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-st
   };
 
   const getItemPrice = (item: CartItem) => {
-    const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
-    const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
-    return price * item.quantity * days;
+    if (item.rentalType === 'daily') {
+      // Daily pricing: price per day
+      return item.dailyPrice * item.quantity * item.rentalDays;
+    } else {
+      // Weekly pricing: use hybrid model for partial weeks
+      const fullWeeks = Math.floor(item.rentalDays / 7);
+      const remainingDays = item.rentalDays % 7;
+      
+      // Calculate price for full weeks
+      const weeklyPrice = item.weeklyPrice * item.quantity * fullWeeks;
+      
+      // Calculate price for remaining days (use daily rate for partial week)
+      const dailyPrice = item.dailyPrice * item.quantity * remainingDays;
+      
+      return weeklyPrice + dailyPrice;
+    }
   };
 
   return (
@@ -234,8 +247,14 @@ export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-st
               </Button>
               <Button
                 onClick={() => {
-                  onClose();
-                  router.push(redirectUrl);
+                  if (onCheckout) {
+                    // Use checkout modal if onCheckout is provided
+                    onCheckout();
+                  } else {
+                    // Fallback to redirect if no onCheckout callback
+                    onClose();
+                    router.push(redirectUrl);
+                  }
                 }}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
               >
