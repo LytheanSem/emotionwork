@@ -18,7 +18,9 @@ import {
   XCircle, 
   AlertCircle,
   Loader2,
-  Download
+  Download,
+  Edit,
+  Package
 } from "lucide-react";
 
 interface StageBooking {
@@ -33,7 +35,7 @@ interface StageBooking {
   stageDetails: {
     location: string;
     eventType: string;
-    eventDate: string;
+    eventDates?: string[]; // Made optional to handle legacy data
     eventTime: string;
     duration: number;
     expectedGuests: number;
@@ -46,6 +48,20 @@ interface StageBooking {
     publicId: string;
     mimeType: string;
     size: number;
+  }[];
+  equipmentItems?: {
+    id: string;
+    equipment: {
+      _id: string;
+      name: string;
+      category: string;
+      imageUrl?: string;
+    };
+    quantity: number;
+    rentalType: 'daily' | 'weekly';
+    rentalDays: number;
+    dailyPrice: number;
+    weeklyPrice: number;
   }[];
   status: "pending" | "approved" | "rejected" | "in_progress" | "completed";
   adminNotes?: string;
@@ -149,6 +165,15 @@ export default function MyStageBookingsPage() {
 
   const handleDownloadFile = (file: StageBooking["designFiles"][0]) => {
     window.open(file.url, "_blank", "noopener,noreferrer");
+  };
+
+  const getEquipmentTotal = (equipmentItems: StageBooking["equipmentItems"]) => {
+    if (!equipmentItems || equipmentItems.length === 0) return 0;
+    return equipmentItems.reduce((total, item) => {
+      const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
+      const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
+      return total + (price * item.quantity * days);
+    }, 0);
   };
 
   if (status === "loading" || loading) {
@@ -329,7 +354,16 @@ export default function MyStageBookingsPage() {
                       <div className="space-y-2">
                         <div className="flex items-center text-sm text-gray-600">
                           <Calendar className="h-4 w-4 mr-2" />
-                          {formatDate(booking.stageDetails.eventDate)}
+                          {booking.stageDetails.eventDates && booking.stageDetails.eventDates.length > 0 ? (
+                            booking.stageDetails.eventDates.map((date, index) => (
+                              <span key={index}>
+                                {formatDate(date)}
+                                {index < (booking.stageDetails.eventDates?.length || 0) - 1 && ', '}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-gray-500 italic">No dates specified</span>
+                          )}
                         </div>
                         <div className="flex items-center text-sm text-gray-600">
                           <Clock className="h-4 w-4 mr-2" />
@@ -368,6 +402,39 @@ export default function MyStageBookingsPage() {
                         ))}
                       </div>
                     </div>
+
+                    {/* Equipment Items */}
+                    {booking.equipmentItems && booking.equipmentItems.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-900">Equipment Rental</h4>
+                        <div className="space-y-2">
+                          {booking.equipmentItems.map((item) => (
+                            <div key={item.id} className="flex items-center justify-between bg-orange-50 p-3 rounded-lg">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                                  <Package className="h-5 w-5 text-orange-600" />
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm text-gray-900">{item.equipment.name}</p>
+                                  <p className="text-xs text-gray-500">
+                                    {item.quantity} × {item.rentalType === 'daily' ? `${item.rentalDays} day(s)` : `${Math.ceil(item.rentalDays / 7)} week(s)`}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold text-sm text-gray-900">
+                                  ${(item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice) * item.quantity * (item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7))}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="flex justify-between items-center pt-2 border-t border-orange-200">
+                            <span className="font-semibold text-orange-800">Equipment Total:</span>
+                            <span className="font-bold text-lg text-orange-800">${getEquipmentTotal(booking.equipmentItems)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Admin Notes */}
@@ -378,15 +445,59 @@ export default function MyStageBookingsPage() {
                     </div>
                   )}
 
-                  {/* Estimated Cost */}
-                  {booking.estimatedCost && (
+                  {/* Cost Summary */}
+                  {((booking.equipmentItems && booking.equipmentItems.length > 0) || booking.estimatedCost) && (
                     <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                      <h4 className="font-semibold text-green-900 mb-2">Estimated Cost</h4>
-                      <p className="text-green-800 text-lg font-bold">
-                        ${booking.estimatedCost.toLocaleString()}
-                      </p>
+                      <div className="space-y-2">
+                        {booking.equipmentItems && booking.equipmentItems.length > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-green-700">Equipment Rental:</span>
+                            <span className="font-semibold text-green-800">
+                              ${getEquipmentTotal(booking.equipmentItems).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                        {booking.estimatedCost && (
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm text-green-700">Stage Setup:</span>
+                            <span className="font-semibold text-green-800">
+                              ${booking.estimatedCost.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                        <div className="border-t border-green-200 pt-2 mt-2">
+                          <div className="flex justify-between items-center">
+                            <span className="font-semibold text-green-900">Total Estimated:</span>
+                            <span className="font-bold text-lg text-green-900">
+                              ${((booking.equipmentItems && booking.equipmentItems.length > 0 ? getEquipmentTotal(booking.equipmentItems) : 0) + (booking.estimatedCost || 0)).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
+
+                  {/* Action Buttons */}
+                  <div className="mt-6 flex gap-3">
+                    <Button
+                      onClick={() => router.push(`/my-stage-bookings/${booking._id}`)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      View Details
+                    </Button>
+                    {booking.status === "pending" && (
+                      <Button
+                        onClick={() => router.push(`/my-stage-bookings/${booking._id}?edit=true`)}
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    )}
+                  </div>
 
                 </CardContent>
               </Card>

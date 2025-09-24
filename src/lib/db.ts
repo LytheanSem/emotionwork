@@ -162,7 +162,7 @@ export interface StageBooking {
   stageDetails: {
     location: string;
     eventType: string;
-    eventDate: string;
+    eventDates?: string[]; // Made optional to handle legacy data
     eventTime: string;
     duration: number; // in hours
     expectedGuests: number;
@@ -175,6 +175,20 @@ export interface StageBooking {
     publicId: string;
     mimeType: string;
     size: number;
+  }[];
+  equipmentItems?: {
+    id: string;
+    equipment: {
+      _id: string;
+      name: string;
+      category: string;
+      imageUrl?: string;
+    };
+    quantity: number;
+    rentalType: 'daily' | 'weekly';
+    rentalDays: number;
+    dailyPrice: number;
+    weeklyPrice: number;
   }[];
   status: "pending" | "approved" | "rejected" | "in_progress" | "completed";
   adminNotes?: string;

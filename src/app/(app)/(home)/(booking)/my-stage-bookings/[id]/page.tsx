@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { useCart } from "@/contexts/CartContext";
 import { 
   Calendar, 
   MapPin, 
@@ -26,8 +27,13 @@ import {
   Home,
   DollarSign,
   MessageSquare,
-  User
+  User,
+  Edit,
+  Package
 } from "lucide-react";
+import { StageBookingEditForm } from "../../book-stage/components/stage-booking-edit-form";
+import { stageBookingService } from "../../book-stage/services/stage-booking-service";
+import { toast } from "sonner";
 
 interface StageBooking {
   _id: string;
@@ -41,7 +47,7 @@ interface StageBooking {
   stageDetails: {
     location: string;
     eventType: string;
-    eventDate: string;
+    eventDates?: string[]; // Made optional to handle legacy data
     eventTime: string;
     duration: number;
     expectedGuests: number;
@@ -54,6 +60,20 @@ interface StageBooking {
     publicId: string;
     mimeType: string;
     size: number;
+  }[];
+  equipmentItems?: {
+    id: string;
+    equipment: {
+      _id: string;
+      name: string;
+      category: string;
+      imageUrl?: string;
+    };
+    quantity: number;
+    rentalType: 'daily' | 'weekly';
+    rentalDays: number;
+    dailyPrice: number;
+    weeklyPrice: number;
   }[];
   status: "pending" | "approved" | "rejected" | "in_progress" | "completed";
   adminNotes?: string;
@@ -99,9 +119,12 @@ export default function StageBookingDetailsPage() {
   const { status } = useSession();
   const router = useRouter();
   const params = useParams();
+  const { clearCart } = useCart();
   const [booking, setBooking] = useState<StageBooking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchBooking = useCallback(async () => {
     try {
@@ -113,7 +136,12 @@ export default function StageBookingDetailsPage() {
       }
 
       const data = await response.json();
-      setBooking(data.booking);
+      // Ensure equipmentItems is a proper array
+      if (data.equipmentItems && !Array.isArray(data.equipmentItems)) {
+        data.equipmentItems = [];
+      }
+      
+      setBooking(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -131,6 +159,14 @@ export default function StageBookingDetailsPage() {
       fetchBooking();
     }
   }, [status, router, params.id, fetchBooking]);
+
+  // Check for edit query parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('edit') === 'true') {
+      setIsEditing(true);
+    }
+  }, []);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -170,6 +206,59 @@ export default function StageBookingDetailsPage() {
 
   const handleDownloadFile = (file: StageBooking["designFiles"][0]) => {
     window.open(file.url, "_blank", "noopener,noreferrer");
+  };
+
+  const getEquipmentTotal = (equipmentItems: StageBooking["equipmentItems"]) => {
+    if (!equipmentItems || !Array.isArray(equipmentItems) || equipmentItems.length === 0) return 0;
+    return equipmentItems.reduce((total, item) => {
+      const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
+      const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
+      return total + (price * item.quantity * days);
+    }, 0);
+  };
+
+  const handleEditBooking = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    // Clear the cart when cancelling edit to prevent stale data
+    clearCart();
+  };
+
+  const handleUpdateBooking = async (formData: any) => {
+    if (!booking) return;
+
+    setIsUpdating(true);
+    try {
+      const result = await stageBookingService.updateBooking(booking._id, formData);
+
+      if (result.success) {
+        toast.success("Booking Updated!", {
+          description: "Your stage booking has been updated successfully.",
+          duration: 5000,
+        });
+        setIsEditing(false);
+        // Clear the cart to prevent stale data
+        clearCart();
+        // Refresh the booking data
+        await fetchBooking();
+      } else {
+        toast.error("Update Failed", {
+          description: result.error || "Please try again.",
+          duration: 5000,
+        });
+      }
+    } catch (error) {
+      console.error("Booking update failed:", error);
+      toast.error("Update Failed", {
+        description: "Please try again.",
+        duration: 5000,
+      });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   if (status === "loading" || loading) {
@@ -249,7 +338,19 @@ export default function StageBookingDetailsPage() {
                 {booking.stageDetails.eventType} - {booking.stageDetails.location}
               </p>
             </div>
-            {getStatusBadge(booking.status)}
+            <div className="flex items-center gap-3">
+              {booking.status === "pending" && (
+                <Button
+                  onClick={handleEditBooking}
+                  variant="outline"
+                  disabled={isUpdating}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Booking
+                </Button>
+              )}
+              {getStatusBadge(booking.status)}
+            </div>
           </div>
         </div>
 
@@ -279,7 +380,27 @@ export default function StageBookingDetailsPage() {
           </AlertDescription>
         </Alert>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Edit Form */}
+        {isEditing && (
+          <div className="mb-8">
+            <StageBookingEditForm
+              bookingData={{
+                ...booking,
+                stageDetails: {
+                  ...booking.stageDetails,
+                  eventDates: booking.stageDetails.eventDates || []
+                }
+              }}
+              onSubmit={handleUpdateBooking}
+              onCancel={handleCancelEdit}
+              isLoading={isUpdating}
+            />
+          </div>
+        )}
+
+        {/* Main Content - only show when not editing */}
+        {!isEditing && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Event Details */}
@@ -295,8 +416,16 @@ export default function StageBookingDetailsPage() {
                   <div className="flex items-center">
                     <Calendar className="h-4 w-4 mr-3 text-gray-500" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Event Date</p>
-                      <p className="text-sm text-gray-600">{formatDate(booking.stageDetails.eventDate)}</p>
+                      <p className="text-sm font-medium text-gray-900">Event Dates</p>
+                      <div className="space-y-1">
+                        {booking.stageDetails.eventDates && booking.stageDetails.eventDates.length > 0 ? (
+                          booking.stageDetails.eventDates.map((date, index) => (
+                            <p key={index} className="text-sm text-gray-600">{formatDate(date)}</p>
+                          ))
+                        ) : (
+                          <p className="text-sm text-gray-500 italic">No dates specified</p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
@@ -372,6 +501,71 @@ export default function StageBookingDetailsPage() {
               </CardContent>
             </Card>
 
+            {/* Equipment Items */}
+            
+            {booking.equipmentItems && booking.equipmentItems.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Package className="h-5 w-5 mr-2" />
+                    Equipment Rental ({booking.equipmentItems.length} items)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {booking.equipmentItems.map((item) => {
+                      const unitPrice = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
+                      const duration = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
+                      const totalPrice = unitPrice * item.quantity * duration;
+                      
+                      return (
+                        <div key={item.id} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-4">
+                              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <Package className="h-6 w-6 text-orange-600" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900">{item.equipment.name}</h4>
+                                <p className="text-sm text-gray-600 mb-2">{item.equipment.category}</p>
+                                
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                  <div>
+                                    <span className="text-gray-500">Quantity:</span>
+                                    <span className="ml-1 font-medium">{item.quantity}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500">Duration:</span>
+                                    <span className="ml-1 font-medium">
+                                      {item.rentalType === 'daily' ? `${item.rentalDays} day(s)` : `${duration} week(s)`}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500">Rate:</span>
+                                    <span className="ml-1 font-medium">
+                                      ${unitPrice}/{item.rentalType === 'daily' ? 'day' : 'week'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="text-gray-500">Subtotal:</span>
+                                    <span className="ml-1 font-semibold text-orange-600">${totalPrice}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <div className="flex justify-between items-center pt-4 border-t border-orange-200">
+                      <span className="font-semibold text-lg text-orange-800">Equipment Total:</span>
+                      <span className="font-bold text-xl text-orange-800">${getEquipmentTotal(booking.equipmentItems)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Admin Notes */}
             {booking.adminNotes && (
               <Card>
@@ -437,25 +631,78 @@ export default function StageBookingDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* Estimated Cost */}
-            {booking.estimatedCost && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <DollarSign className="h-5 w-5 mr-2" />
-                    Estimated Cost
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-green-600">
-                      ${booking.estimatedCost.toLocaleString()}
-                    </p>
-                    <p className="text-sm text-gray-500 mt-1">Final pricing may vary</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Cost Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2" />
+                  Cost Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Equipment Rental Cost - Always show if equipment is selected */}
+                  {booking.equipmentItems && booking.equipmentItems.length > 0 ? (
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-semibold text-green-900">Equipment Rental:</p>
+                          <p className="text-sm text-green-700">
+                            {booking.equipmentItems.length} item(s) • {booking.equipmentItems.reduce((sum, item) => sum + item.quantity, 0)} units
+                          </p>
+                        </div>
+                        <p className="text-xl font-bold text-green-900">
+                          ${getEquipmentTotal(booking.equipmentItems).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-gray-500 text-center">No equipment selected</p>
+                    </div>
+                  )}
+                  
+                  
+                  {/* Stage Setup Cost - Only show if admin has provided it */}
+                  {booking.estimatedCost && (
+                    <div className="bg-blue-50 rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-semibold text-blue-900">Stage Setup & Services:</p>
+                          <p className="text-sm text-blue-700">Custom stage design and setup</p>
+                        </div>
+                        <p className="text-xl font-bold text-blue-900">
+                          ${booking.estimatedCost.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Total Cost - Show if there are any costs */}
+                  {((booking.equipmentItems && booking.equipmentItems.length > 0) || booking.estimatedCost) && (
+                    <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-bold text-lg text-gray-900">Total Estimated:</p>
+                          <p className="text-sm text-gray-600">Final pricing may vary</p>
+                        </div>
+                        <p className="text-2xl font-bold text-gray-900">
+                          ${((booking.equipmentItems && booking.equipmentItems.length > 0 ? getEquipmentTotal(booking.equipmentItems) : 0) + (booking.estimatedCost || 0)).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Show message if no costs available */}
+                  {(!booking.equipmentItems || booking.equipmentItems.length === 0) && !booking.estimatedCost && (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No cost information available yet</p>
+                      <p className="text-sm text-gray-400 mt-1">Cost will be provided after review</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Booking Timeline */}
             <Card>
@@ -486,6 +733,7 @@ export default function StageBookingDetailsPage() {
             </Card>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

@@ -40,6 +40,7 @@ interface BookingData {
   bookingId?: string; // Unique identifier for the booking
 }
 
+
 class GoogleSheetsService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private sheets: any; // Google Sheets API client - complex typing from googleapis
@@ -50,19 +51,19 @@ class GoogleSheetsService {
     // Initialize Google Sheets API
     const auth = new google.auth.GoogleAuth({
       credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        client_email: process.env.STAGE_BOOKINGS_GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        private_key: process.env.STAGE_BOOKINGS_GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
       },
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     });
 
     this.sheets = google.sheets({ version: "v4", auth });
-    this.spreadsheetId = process.env.GOOGLE_SHEET_ID || "";
+    this.spreadsheetId = process.env.STAGE_BOOKINGS_GOOGLE_SHEET_ID || "";
 
     // Debug logging
     console.log("Google Sheets Service initialized:");
     console.log("- Spreadsheet ID:", this.spreadsheetId ? "Set" : "NOT SET");
-    console.log("- Service Account Email:", process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ? "Set" : "NOT SET");
+    console.log("- Service Account Email:", process.env.STAGE_BOOKINGS_GOOGLE_SERVICE_ACCOUNT_EMAIL ? "Set" : "NOT SET");
     console.log("- Private Key: Set");
   }
 
@@ -150,7 +151,7 @@ class GoogleSheetsService {
   async testConnection(): Promise<{ success: boolean; error?: string; sheetNames?: string[] }> {
     try {
       if (!this.spreadsheetId) {
-        return { success: false, error: "GOOGLE_SHEET_ID not set" };
+        return { success: false, error: "STAGE_BOOKINGS_GOOGLE_SHEET_ID not set" };
       }
 
       // Get spreadsheet metadata
@@ -605,6 +606,7 @@ class GoogleSheetsService {
     console.warn(`Could not parse date from: "${dateTimeString}"`);
     return { date: "", time };
   }
+
 }
 
 export const googleSheetsService = new GoogleSheetsService();

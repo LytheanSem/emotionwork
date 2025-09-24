@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { StageBooking } from "@/lib/db";
-import { Calendar, Clock, ExternalLink, Eye, FileText, Image, MapPin, Search, Trash2, Users } from "lucide-react";
+import { Calendar, Clock, DollarSign, ExternalLink, Eye, FileText, Image, MapPin, Package, Search, Trash2, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -42,7 +42,6 @@ export default function AdminStageBookingsPage() {
       const response = await fetch("/api/stage-bookings");
       if (response.ok) {
         const data = await response.json();
-        console.log("Fetched data successfully");
 
         if (data && Array.isArray(data.bookings)) {
           setBookings(data.bookings);
@@ -294,7 +293,18 @@ export default function AdminStageBookingsPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
-                          <span>{new Date(booking.stageDetails.eventDate).toLocaleDateString()}</span>
+                          <span>
+                            {booking.stageDetails.eventDates && booking.stageDetails.eventDates.length > 0 ? (
+                              booking.stageDetails.eventDates.map((date, index) => (
+                                <span key={index}>
+                                  {new Date(date).toLocaleDateString()}
+                                  {index < (booking.stageDetails.eventDates?.length || 0) - 1 && ', '}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-gray-500 italic">No dates specified</span>
+                            )}
+                          </span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4" />
@@ -311,6 +321,11 @@ export default function AdminStageBookingsPage() {
                         <p>Phone: {booking.userProfile.phone}</p>
                         <p>Event Type: {booking.stageDetails.eventType}</p>
                         <p>Files: {booking.designFiles.length} uploaded</p>
+                        {booking.equipmentItems && booking.equipmentItems.length > 0 && (
+                          <p className="text-orange-600 font-medium">
+                            Equipment: {booking.equipmentItems.length} item(s) • {booking.equipmentItems.reduce((sum, item) => sum + item.quantity, 0)} units
+                          </p>
+                        )}
                         <p>Submitted: {formatDate(booking.createdAt.toString())}</p>
                       </div>
                     </div>
@@ -451,7 +466,15 @@ function BookingDetailsModal({
             </div>
             <div>
               <Label className="text-sm font-medium text-gray-500">Event Date</Label>
-              <p className="text-gray-900">{new Date(booking.stageDetails.eventDate).toLocaleDateString()}</p>
+              <div className="text-gray-900">
+                {booking.stageDetails.eventDates && booking.stageDetails.eventDates.length > 0 ? (
+                  booking.stageDetails.eventDates.map((date, index) => (
+                    <p key={index}>{new Date(date).toLocaleDateString()}</p>
+                  ))
+                ) : (
+                  <p className="text-gray-500 italic">No dates specified</p>
+                )}
+              </div>
             </div>
             <div>
               <Label className="text-sm font-medium text-gray-500">Event Time</Label>
@@ -506,6 +529,161 @@ function BookingDetailsModal({
                 </Button>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Equipment Items */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Package className="h-5 w-5 mr-2" />
+            Equipment Rental ({booking.equipmentItems?.length || 0} items)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {booking.equipmentItems && booking.equipmentItems.length > 0 ? (
+            <div className="space-y-4">
+              {booking.equipmentItems.map((item) => {
+                const unitPrice = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
+                const duration = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
+                const totalPrice = unitPrice * item.quantity * duration;
+                
+                return (
+                  <div key={item.id} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Package className="h-6 w-6 text-orange-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">{item.equipment.name}</h4>
+                          <p className="text-sm text-gray-600 mb-2">{item.equipment.category}</p>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-500">Quantity:</span>
+                              <span className="ml-1 font-medium">{item.quantity}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Duration:</span>
+                              <span className="ml-1 font-medium">
+                                {item.rentalType === 'daily' ? `${item.rentalDays} day(s)` : `${duration} week(s)`}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Rate:</span>
+                              <span className="ml-1 font-medium">
+                                ${unitPrice}/{item.rentalType === 'daily' ? 'day' : 'week'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Subtotal:</span>
+                              <span className="ml-1 font-semibold text-orange-600">${totalPrice}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex justify-between items-center pt-4 border-t border-orange-200">
+                <span className="font-semibold text-lg text-orange-800">Equipment Total:</span>
+                <span className="font-bold text-xl text-orange-800">
+                  ${booking.equipmentItems.reduce((total, item) => {
+                    const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
+                    const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
+                    return total + (price * item.quantity * days);
+                  }, 0)}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Package className="h-8 w-8 text-gray-400" />
+              </div>
+              <p className="text-gray-500 text-lg font-medium">No Equipment Selected</p>
+              <p className="text-gray-400 text-sm mt-1">Customer did not select any equipment for this booking</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Cost Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <DollarSign className="h-5 w-5 mr-2" />
+            Cost Summary
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Equipment Rental Cost */}
+            {booking.equipmentItems && booking.equipmentItems.length > 0 && (
+              <div className="bg-green-50 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-green-900">Equipment Rental:</p>
+                    <p className="text-sm text-green-700">
+                      {booking.equipmentItems.length} item(s) • {booking.equipmentItems.reduce((sum, item) => sum + item.quantity, 0)} units
+                    </p>
+                  </div>
+                  <p className="text-xl font-bold text-green-900">
+                    ${booking.equipmentItems.reduce((total, item) => {
+                      const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
+                      const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
+                      return total + (price * item.quantity * days);
+                    }, 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {/* Stage Setup Cost */}
+            {booking.estimatedCost && (
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-semibold text-blue-900">Stage Setup & Services:</p>
+                    <p className="text-sm text-blue-700">Custom stage design and setup</p>
+                  </div>
+                  <p className="text-xl font-bold text-blue-900">
+                    ${booking.estimatedCost.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {/* Total Cost */}
+            {((booking.equipmentItems && booking.equipmentItems.length > 0) || booking.estimatedCost) && (
+              <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-bold text-lg text-gray-900">Total Estimated:</p>
+                    <p className="text-sm text-gray-600">Final pricing may vary</p>
+                  </div>
+                  <p className="text-2xl font-bold text-gray-900">
+                    ${((booking.equipmentItems && booking.equipmentItems.length > 0 ? 
+                      booking.equipmentItems.reduce((total, item) => {
+                        const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
+                        const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
+                        return total + (price * item.quantity * days);
+                      }, 0) : 0) + (booking.estimatedCost || 0)).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {/* Show message if no costs available */}
+            {(!booking.equipmentItems || booking.equipmentItems.length === 0) && !booking.estimatedCost && (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No cost information available yet</p>
+                <p className="text-sm text-gray-400 mt-1">Cost will be provided after review</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

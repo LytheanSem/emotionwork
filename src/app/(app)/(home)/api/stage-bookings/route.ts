@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       stageDetails: {
         location: string;
         eventType: string;
-        eventDate: string;
+        eventDates: string[]; // Changed from eventDate to eventDates array
         eventTime: string;
         duration?: number;
         expectedGuests?: number;
@@ -50,10 +50,24 @@ export async function POST(request: NextRequest) {
         mimeType: string;
         size: number;
       }>;
+      equipmentItems?: Array<{
+        id: string;
+        equipment: {
+          _id: string;
+          name: string;
+          category: string;
+          imageUrl?: string;
+        };
+        quantity: number;
+        rentalType: 'daily' | 'weekly';
+        rentalDays: number;
+        dailyPrice: number;
+        weeklyPrice: number;
+      }>;
     };
 
     // Validate required fields
-    const { userProfile, stageDetails, designFiles } = sanitizedBody;
+    const { userProfile, stageDetails, designFiles, equipmentItems } = sanitizedBody;
 
     if (!userProfile?.firstName || !userProfile?.lastName || !userProfile?.phone) {
       return NextResponse.json(
@@ -62,19 +76,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!stageDetails?.location || !stageDetails?.eventType || !stageDetails?.eventDate || !stageDetails?.eventTime) {
+    if (!stageDetails?.location || !stageDetails?.eventType || !stageDetails?.eventDates || stageDetails?.eventDates.length === 0 || !stageDetails?.eventTime) {
       return NextResponse.json(
         { error: "Missing required stage details" },
         { status: 400 }
       );
     }
 
-    if (!designFiles || designFiles.length === 0) {
-      return NextResponse.json(
-        { error: "At least one design file is required" },
-        { status: 400 }
-      );
-    }
+    // Design files are now optional - no validation needed
 
     // Additional validation for stage details
     if (stageDetails.expectedGuests && (stageDetails.expectedGuests < 1 || stageDetails.expectedGuests > 10000)) {
@@ -91,25 +100,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate date format and future date using local date parsing
-    let eventDate: Date;
-    try {
-      eventDate = parseLocalDate(stageDetails.eventDate);
-    } catch (error) {
-      return NextResponse.json(
-        { error: `Invalid event date format: ${error instanceof Error ? error.message : 'Unknown error'}` },
-        { status: 400 }
-      );
-    }
-    
+    // Validate date format and future date using local date parsing for all dates
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (eventDate < today) {
-      return NextResponse.json(
-        { error: "Event date must be in the future" },
-        { status: 400 }
-      );
+    for (const dateStr of stageDetails.eventDates) {
+      let eventDate: Date;
+      try {
+        eventDate = parseLocalDate(dateStr);
+      } catch (error) {
+        return NextResponse.json(
+          { error: `Invalid event date format: ${error instanceof Error ? error.message : 'Unknown error'}` },
+          { status: 400 }
+        );
+      }
+
+      if (eventDate < today) {
+        return NextResponse.json(
+          { error: "All event dates must be in the future" },
+          { status: 400 }
+        );
+      }
     }
 
     // Get database connection and user ID
@@ -137,13 +148,13 @@ export async function POST(request: NextRequest) {
       stageDetails: {
         location: stageDetails.location,
         eventType: stageDetails.eventType,
-        eventDate: stageDetails.eventDate,
+        eventDates: stageDetails.eventDates, // Changed from eventDate to eventDates array
         eventTime: stageDetails.eventTime,
         duration: stageDetails.duration || 4,
         expectedGuests: stageDetails.expectedGuests || 50,
         specialRequirements: stageDetails.specialRequirements || "",
       },
-      designFiles: designFiles.map((file) => ({
+      designFiles: (designFiles || []).map((file) => ({
         filename: file.filename,
         originalName: file.originalName,
         url: file.url,
@@ -151,10 +162,12 @@ export async function POST(request: NextRequest) {
         mimeType: file.mimeType,
         size: file.size,
       })),
+      equipmentItems: equipmentItems || [],
       status: "pending",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
 
     // Insert into database
     const result = await database.collection("stageBookings").insertOne(stageBooking);
@@ -166,9 +179,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const bookingId = result.insertedId.toString();
+
     return NextResponse.json({
       success: true,
-      bookingId: result.insertedId.toString(),
+      bookingId: bookingId,
       message: "Stage booking created successfully",
     });
 

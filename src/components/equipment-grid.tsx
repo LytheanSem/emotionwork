@@ -2,10 +2,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Equipment } from "@/lib/db";
+import { useCart } from "@/contexts/CartContext";
+import { CartModal } from "./CartModal";
+import { CheckoutModal } from "./CheckoutModal";
 import dynamic from "next/dynamic";
 import React, { Suspense, useState } from "react";
 import { EquipmentFallback } from "./equipment-fallback";
 import { Badge } from "@/components/ui/badge";
+import { ShoppingCart } from "lucide-react";
 import Image from "next/image";
 
 const LazyEquipmentCard = dynamic(
@@ -29,12 +33,17 @@ const LazyEquipmentCard = dynamic(
 interface EquipmentGridProps {
   equipment: Equipment[];
   categories: Array<{ id: string; name: string; slug: string }>;
+  redirectUrl?: string; // Custom redirect URL for cart
+  buttonText?: string; // Custom button text for cart
 }
 
-export function EquipmentGrid({ equipment, categories }: EquipmentGridProps) {
+export function EquipmentGrid({ equipment, categories, redirectUrl = "/book-stage", buttonText = "Proceed to Book Stage" }: EquipmentGridProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showCartModal, setShowCartModal] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const { getCartItemCount } = useCart();
 
   const filteredEquipment = selectedCategory
     ? equipment.filter((eq) => eq.categoryId === selectedCategory)
@@ -57,25 +66,41 @@ export function EquipmentGrid({ equipment, categories }: EquipmentGridProps) {
 
   return (
     <div className="space-y-6">
-      {/* Category Filter */}
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant={selectedCategory === null ? "default" : "outline"}
-          onClick={() => setSelectedCategory(null)}
-          className="text-sm"
-        >
-          All Categories
-        </Button>
-        {categories.map((category) => (
+      {/* Header with Cart Button */}
+      <div className="flex justify-between items-center">
+        <div className="flex flex-wrap gap-2">
           <Button
-            key={category.id}
-            variant={selectedCategory === category.id ? "default" : "outline"}
-            onClick={() => setSelectedCategory(category.id)}
+            variant={selectedCategory === null ? "default" : "outline"}
+            onClick={() => setSelectedCategory(null)}
             className="text-sm"
           >
-            {category.name}
+            All Categories
           </Button>
-        ))}
+          {categories.map((category) => (
+            <Button
+              key={category.id}
+              variant={selectedCategory === category.id ? "default" : "outline"}
+              onClick={() => setSelectedCategory(category.id)}
+              className="text-sm"
+            >
+              {category.name}
+            </Button>
+          ))}
+        </div>
+        
+        {/* Cart Button */}
+        <Button
+          onClick={() => setShowCartModal(true)}
+          className="relative bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          Cart
+          {getCartItemCount() > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+              {getCartItemCount()}
+            </span>
+          )}
+        </Button>
       </div>
 
       {/* Equipment Count */}
@@ -223,6 +248,25 @@ export function EquipmentGrid({ equipment, categories }: EquipmentGridProps) {
           </div>
         </div>
       )}
+
+      {/* Cart Modal */}
+      <CartModal
+        isOpen={showCartModal}
+        onClose={() => setShowCartModal(false)}
+        onCheckout={() => setShowCheckoutModal(true)}
+        redirectUrl={redirectUrl}
+        buttonText={buttonText}
+      />
+
+      {/* Checkout Modal */}
+      <CheckoutModal
+        isOpen={showCheckoutModal}
+        onClose={() => setShowCheckoutModal(false)}
+        onComplete={() => {
+          setShowCheckoutModal(false);
+          setShowCartModal(false);
+        }}
+      />
     </div>
   );
 }
