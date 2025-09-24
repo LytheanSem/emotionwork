@@ -170,9 +170,14 @@ export default function MyStageBookingsPage() {
   const getEquipmentTotal = (equipmentItems: StageBooking["equipmentItems"]) => {
     if (!equipmentItems || equipmentItems.length === 0) return 0;
     return equipmentItems.reduce((total, item) => {
-      const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
-      const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
-      return total + (price * item.quantity * days);
+      if (item.rentalType === 'daily') {
+        return total + (item.dailyPrice * item.quantity * item.rentalDays);
+      }
+      const fullWeeks = Math.floor(item.rentalDays / 7);
+      const remainingDays = item.rentalDays % 7;
+      const weekly = item.weeklyPrice * item.quantity * fullWeeks;
+      const daily = item.dailyPrice * item.quantity * remainingDays;
+      return total + weekly + daily;
     }, 0);
   };
 
@@ -417,13 +422,22 @@ export default function MyStageBookingsPage() {
                                 <div>
                                   <p className="font-medium text-sm text-gray-900">{item.equipment.name}</p>
                                   <p className="text-xs text-gray-500">
-                                    {item.quantity} × {item.rentalType === 'daily' ? `${item.rentalDays} day(s)` : `${Math.ceil(item.rentalDays / 7)} week(s)`}
+                                    {item.quantity} × {item.rentalDays} day(s)
                                   </p>
                                 </div>
                               </div>
                               <div className="text-right">
                                 <p className="font-semibold text-sm text-gray-900">
-                                  ${(item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice) * item.quantity * (item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7))}
+                                  ${(() => {
+                                    if (item.rentalType === 'daily') {
+                                      return item.dailyPrice * item.quantity * item.rentalDays;
+                                    }
+                                    const fullWeeks = Math.floor(item.rentalDays / 7);
+                                    const remainingDays = item.rentalDays % 7;
+                                    const weekly = item.weeklyPrice * item.quantity * fullWeeks;
+                                    const daily = item.dailyPrice * item.quantity * remainingDays;
+                                    return weekly + daily;
+                                  })()}
                                 </p>
                               </div>
                             </div>

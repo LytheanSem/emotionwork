@@ -67,6 +67,13 @@ export function DateRangePicker({
     }
   }, [value]);
 
+  // DST-safe helper function for adding days
+  const addDays = (date: Date, days: number): Date => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() + days);
+    return newDate;
+  };
+
   // Convert ranges back to date array
   const rangesToDates = (ranges: DateRange[]): string[] => {
     const dates: string[] = [];
@@ -74,7 +81,7 @@ export function DateRangePicker({
       const start = new Date(range.startDate);
       const end = new Date(range.endDate);
       
-      for (let d = new Date(start); d <= end; d = new Date(d.getTime() + 24 * 60 * 60 * 1000)) {
+      for (let d = new Date(start); d <= end; d = addDays(d, 1)) {
         dates.push(d.toISOString().split('T')[0]);
       }
     });

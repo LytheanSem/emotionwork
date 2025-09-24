@@ -88,9 +88,14 @@ export function CheckoutModal({ isOpen, onClose, onComplete, redirectUrl = "/boo
   };
 
   const getItemPrice = (item: any) => {
-    const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
-    const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
-    return price * item.quantity * days;
+    if (item.rentalType === 'daily') {
+      return item.dailyPrice * item.quantity * item.rentalDays;
+    }
+    const fullWeeks = Math.floor(item.rentalDays / 7);
+    const remainingDays = item.rentalDays % 7;
+    const weekly = item.weeklyPrice * item.quantity * fullWeeks;
+    const daily = item.dailyPrice * item.quantity * remainingDays;
+    return weekly + daily;
   };
 
   return (
@@ -268,7 +273,7 @@ export function CheckoutModal({ isOpen, onClose, onComplete, redirectUrl = "/boo
                         <div className="flex-1">
                           <h4 className="font-medium text-gray-900">{item.equipment.name}</h4>
                           <p className="text-sm text-gray-500">
-                            {item.quantity} × {item.rentalType === 'daily' ? `${item.rentalDays} day(s)` : `${Math.ceil(item.rentalDays / 7)} week(s)`}
+                            {item.quantity} × {item.rentalType === 'daily' ? `${item.rentalDays} day(s)` : `${item.rentalDays} day(s)`}
                           </p>
                           <p className="text-sm text-gray-500">
                             ${item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice} per {item.rentalType === 'daily' ? 'day' : 'week'}

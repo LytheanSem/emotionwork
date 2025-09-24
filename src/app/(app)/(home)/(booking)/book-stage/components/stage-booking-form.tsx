@@ -390,9 +390,16 @@ export function StageBookingForm({ onSubmit }: StageBookingFormProps) {
               
               <div className="space-y-3">
                 {cartItems.map((item) => {
-                  const unitPrice = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
-                  const duration = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
-                  const totalPrice = unitPrice * item.quantity * duration;
+                  const totalPrice = (() => {
+                    if (item.rentalType === 'daily') {
+                      return item.dailyPrice * item.quantity * item.rentalDays;
+                    }
+                    const fullWeeks = Math.floor(item.rentalDays / 7);
+                    const remainingDays = item.rentalDays % 7;
+                    const weekly = item.weeklyPrice * item.quantity * fullWeeks;
+                    const daily = item.dailyPrice * item.quantity * remainingDays;
+                    return weekly + daily;
+                  })();
                   
                   return (
                     <div key={item.id} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
@@ -413,13 +420,13 @@ export function StageBookingForm({ onSubmit }: StageBookingFormProps) {
                               <div>
                                 <span className="text-gray-500">Duration:</span>
                                 <span className="ml-1 font-medium">
-                                  {item.rentalType === 'daily' ? `${item.rentalDays} day(s)` : `${duration} week(s)`}
+                                  {item.rentalDays} day(s)
                                 </span>
                               </div>
                               <div>
                                 <span className="text-gray-500">Rate:</span>
                                 <span className="ml-1 font-medium">
-                                  ${unitPrice}/{item.rentalType === 'daily' ? 'day' : 'week'}
+                                  ${item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice}/{item.rentalType === 'daily' ? 'day' : 'week'}
                                 </span>
                               </div>
                               <div>

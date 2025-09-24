@@ -14,6 +14,18 @@ import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+// Helper function for hybrid pricing calculation (matches server logic)
+const getItemPrice = (item: any) => {
+  if (item.rentalType === 'daily') {
+    return item.dailyPrice * item.quantity * item.rentalDays;
+  }
+  const fullWeeks = Math.floor(item.rentalDays / 7);
+  const remainingDays = item.rentalDays % 7;
+  const weekly = item.weeklyPrice * item.quantity * fullWeeks;
+  const daily = item.dailyPrice * item.quantity * remainingDays;
+  return weekly + daily;
+};
+
 export default function AdminStageBookingsPage() {
   const { data: session } = useSession();
   const [bookings, setBookings] = useState<StageBooking[]>([]);
@@ -545,9 +557,7 @@ function BookingDetailsModal({
           {booking.equipmentItems && booking.equipmentItems.length > 0 ? (
             <div className="space-y-4">
               {booking.equipmentItems.map((item) => {
-                const unitPrice = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
-                const duration = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
-                const totalPrice = unitPrice * item.quantity * duration;
+                const totalPrice = getItemPrice(item);
                 
                 return (
                   <div key={item.id} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
@@ -568,13 +578,13 @@ function BookingDetailsModal({
                             <div>
                               <span className="text-gray-500">Duration:</span>
                               <span className="ml-1 font-medium">
-                                {item.rentalType === 'daily' ? `${item.rentalDays} day(s)` : `${duration} week(s)`}
+                                {item.rentalDays} day(s)
                               </span>
                             </div>
                             <div>
                               <span className="text-gray-500">Rate:</span>
                               <span className="ml-1 font-medium">
-                                ${unitPrice}/{item.rentalType === 'daily' ? 'day' : 'week'}
+                                ${item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice}/{item.rentalType === 'daily' ? 'day' : 'week'}
                               </span>
                             </div>
                             <div>
@@ -591,11 +601,7 @@ function BookingDetailsModal({
               <div className="flex justify-between items-center pt-4 border-t border-orange-200">
                 <span className="font-semibold text-lg text-orange-800">Equipment Total:</span>
                 <span className="font-bold text-xl text-orange-800">
-                  ${booking.equipmentItems.reduce((total, item) => {
-                    const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
-                    const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
-                    return total + (price * item.quantity * days);
-                  }, 0)}
+                  ${booking.equipmentItems.reduce((total, item) => total + getItemPrice(item), 0)}
                 </span>
               </div>
             </div>
@@ -632,11 +638,7 @@ function BookingDetailsModal({
                     </p>
                   </div>
                   <p className="text-xl font-bold text-green-900">
-                    ${booking.equipmentItems.reduce((total, item) => {
-                      const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
-                      const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
-                      return total + (price * item.quantity * days);
-                    }, 0).toLocaleString()}
+                    ${booking.equipmentItems.reduce((total, item) => total + getItemPrice(item), 0).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -667,11 +669,7 @@ function BookingDetailsModal({
                   </div>
                   <p className="text-2xl font-bold text-gray-900">
                     ${((booking.equipmentItems && booking.equipmentItems.length > 0 ? 
-                      booking.equipmentItems.reduce((total, item) => {
-                        const price = item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice;
-                        const days = item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7);
-                        return total + (price * item.quantity * days);
-                      }, 0) : 0) + (booking.estimatedCost || 0)).toLocaleString()}
+                      booking.equipmentItems.reduce((total, item) => total + getItemPrice(item), 0) : 0) + (booking.estimatedCost || 0)).toLocaleString()}
                   </p>
                 </div>
               </div>
