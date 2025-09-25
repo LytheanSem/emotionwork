@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCart, CartItem } from "@/contexts/CartContext";
-import { X, ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import { CartItem, useCart } from "@/contexts/CartContext";
+import { Minus, Plus, ShoppingCart, Trash2, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 interface CartModalProps {
   isOpen: boolean;
@@ -19,18 +19,16 @@ interface CartModalProps {
   buttonText?: string; // Custom button text
 }
 
-export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-stage", buttonText = "Proceed to Book Stage" }: CartModalProps) {
+export function CartModal({
+  isOpen,
+  onClose,
+  onCheckout,
+  redirectUrl = "/book-stage",
+  buttonText = "Proceed to Book Stage",
+}: CartModalProps) {
   const router = useRouter();
-  const { 
-    cartItems, 
-    removeFromCart, 
-    updateQuantity, 
-    updateRentalType, 
-    clearCart, 
-    getTotalPrice, 
-    getCartItemCount 
-  } = useCart();
-  
+  const { cartItems, removeFromCart, updateQuantity, updateRentalType, clearCart, getTotalPrice, getCartItemCount } =
+    useCart();
 
   if (!isOpen) return null;
 
@@ -38,8 +36,8 @@ export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-st
     updateQuantity(item.id, newQuantity);
   };
 
-  const handleRentalTypeChange = (item: CartItem, rentalType: 'daily' | 'weekly') => {
-    const rentalDays = rentalType === 'daily' ? 1 : 7;
+  const handleRentalTypeChange = (item: CartItem, rentalType: "daily" | "weekly") => {
+    const rentalDays = rentalType === "daily" ? 1 : 7;
     updateRentalType(item.id, rentalType, rentalDays);
   };
 
@@ -48,20 +46,20 @@ export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-st
   };
 
   const getItemPrice = (item: CartItem) => {
-    if (item.rentalType === 'daily') {
+    if (item.rentalType === "daily") {
       // Daily pricing: price per day
       return item.dailyPrice * item.quantity * item.rentalDays;
     } else {
       // Weekly pricing: use hybrid model for partial weeks
       const fullWeeks = Math.floor(item.rentalDays / 7);
       const remainingDays = item.rentalDays % 7;
-      
+
       // Calculate price for full weeks
       const weeklyPrice = item.weeklyPrice * item.quantity * fullWeeks;
-      
+
       // Calculate price for remaining days (use daily rate for partial week)
       const dailyPrice = item.dailyPrice * item.quantity * remainingDays;
-      
+
       return weeklyPrice + dailyPrice;
     }
   };
@@ -73,14 +71,9 @@ export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-st
         <div className="flex justify-between items-center p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <ShoppingCart className="h-6 w-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">
-              Shopping Cart ({getCartItemCount()} items)
-            </h2>
+            <h2 className="text-2xl font-bold text-gray-900">Shopping Cart ({getCartItemCount()} items)</h2>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl font-bold">
             ×
           </button>
         </div>
@@ -120,13 +113,9 @@ export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-st
                       <div className="flex justify-between items-start mb-2">
                         <div>
                           <h3 className="font-semibold text-gray-900">{item.equipment.name}</h3>
-                          {item.equipment.brand && (
-                            <p className="text-sm text-gray-500">{item.equipment.brand}</p>
-                          )}
+                          {item.equipment.brand && <p className="text-sm text-gray-500">{item.equipment.brand}</p>}
                         </div>
-                        <Badge
-                          variant={item.equipment.status === "available" ? "default" : "secondary"}
-                        >
+                        <Badge variant={item.equipment.status === "available" ? "default" : "secondary"}>
                           {item.equipment.status}
                         </Badge>
                       </div>
@@ -161,7 +150,7 @@ export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-st
                           <Label className="text-sm font-medium">Rental Type</Label>
                           <Select
                             value={item.rentalType}
-                            onValueChange={(value: 'daily' | 'weekly') => handleRentalTypeChange(item, value)}
+                            onValueChange={(value: "daily" | "weekly") => handleRentalTypeChange(item, value)}
                           >
                             <SelectTrigger className="mt-1">
                               <SelectValue />
@@ -176,15 +165,15 @@ export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-st
                         {/* Rental Duration */}
                         <div>
                           <Label className="text-sm font-medium">
-                            {item.rentalType === 'daily' ? 'Days' : 'Weeks'}
+                            {item.rentalType === "daily" ? "Days" : "Weeks"}
                           </Label>
                           <Input
                             type="number"
                             min="1"
-                            value={item.rentalType === 'daily' ? item.rentalDays : Math.ceil(item.rentalDays / 7)}
+                            value={item.rentalType === "daily" ? item.rentalDays : Math.ceil(item.rentalDays / 7)}
                             onChange={(e) => {
                               const value = parseInt(e.target.value) || 1;
-                              const days = item.rentalType === 'daily' ? value : value * 7;
+                              const days = item.rentalType === "daily" ? value : value * 7;
                               handleRentalDaysChange(item, days);
                             }}
                             className="mt-1"
@@ -196,14 +185,12 @@ export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-st
                       <div className="mt-4 flex justify-between items-center">
                         <div className="text-sm text-gray-600">
                           <span className="font-medium">
-                            ${item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice}
+                            ${item.rentalType === "daily" ? item.dailyPrice : item.weeklyPrice}
                           </span>
-                          <span className="text-gray-500"> per {item.rentalType === 'daily' ? 'day' : 'week'}</span>
+                          <span className="text-gray-500"> per {item.rentalType === "daily" ? "day" : "week"}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-lg">
-                            ${getItemPrice(item).toLocaleString()}
-                          </span>
+                          <span className="font-semibold text-lg">${getItemPrice(item).toLocaleString()}</span>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -226,35 +213,20 @@ export function CartModal({ isOpen, onClose, onCheckout, redirectUrl = "/book-st
         {cartItems.length > 0 && (
           <div className="border-t border-gray-200 p-6">
             <div className="flex justify-between items-center mb-4">
-              <div className="text-lg font-semibold">
-                Total: ${getTotalPrice().toLocaleString()}
-              </div>
-              <Button
-                variant="outline"
-                onClick={clearCart}
-                className="text-red-600 hover:text-red-700"
-              >
+              <div className="text-lg font-semibold">Total: ${getTotalPrice().toLocaleString()}</div>
+              <Button variant="outline" onClick={clearCart} className="text-red-600 hover:text-red-700">
                 Clear Cart
               </Button>
             </div>
             <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="flex-1"
-              >
+              <Button variant="outline" onClick={onClose} className="flex-1">
                 Continue Shopping
               </Button>
               <Button
                 onClick={() => {
-                  if (onCheckout) {
-                    // Use checkout modal if onCheckout is provided
-                    onCheckout();
-                  } else {
-                    // Fallback to redirect if no onCheckout callback
-                    onClose();
-                    router.push(redirectUrl);
-                  }
+                  // Always navigate directly to book-stage page
+                  onClose();
+                  router.push(redirectUrl);
                 }}
                 className="flex-1 bg-blue-600 hover:bg-blue-700"
               >

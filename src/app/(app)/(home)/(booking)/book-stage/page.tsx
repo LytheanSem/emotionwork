@@ -1,9 +1,12 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, CheckCircle, Lock, MapPin, Upload, Users } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
+import { Calendar, CheckCircle, Lock, MapPin, Minus, Plus, ShoppingCart, Trash2, Upload, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { StageBookingConfirmation } from "./components/stage-booking-confirmation";
@@ -37,6 +40,7 @@ export default function BookStagePage() {
   const [currentStep, setCurrentStep] = useState<BookingStep>("auth");
   const [bookingData, setBookingData] = useState<StageBookingFormData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { cartItems, removeFromCart, updateQuantity, updateRentalType, getTotalPrice, getCartItemCount } = useCart();
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -90,6 +94,32 @@ export default function BookStagePage() {
     }
   };
 
+  // Cart helper functions
+  const handleQuantityChange = (item: any, newQuantity: number) => {
+    updateQuantity(item.id, newQuantity);
+  };
+
+  const handleRentalTypeChange = (item: any, rentalType: "daily" | "weekly") => {
+    const rentalDays = rentalType === "daily" ? 1 : 7;
+    updateRentalType(item.id, rentalType, rentalDays);
+  };
+
+  const handleRentalDaysChange = (item: any, days: number) => {
+    updateRentalType(item.id, item.rentalType, days);
+  };
+
+  const getItemPrice = (item: any) => {
+    if (item.rentalType === "daily") {
+      return item.dailyPrice * item.quantity * item.rentalDays;
+    } else {
+      const fullWeeks = Math.floor(item.rentalDays / 7);
+      const remainingDays = item.rentalDays % 7;
+      const weeklyPrice = item.weeklyPrice * item.quantity * fullWeeks;
+      const dailyPrice = item.dailyPrice * item.quantity * remainingDays;
+      return weeklyPrice + dailyPrice;
+    }
+  };
+
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
@@ -112,6 +142,145 @@ export default function BookStagePage() {
             let us bring your vision to life.
           </p>
         </div>
+
+        {/* Selected Equipment Section */}
+        {cartItems.length > 0 && (
+          <div className="max-w-6xl mx-auto mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ShoppingCart className="h-5 w-5" />
+                  Selected Equipment ({getCartItemCount()} items)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {cartItems.map((item) => (
+                    <div key={item.id} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex gap-4">
+                        {/* Equipment Image */}
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                          {item.equipment.imageUrl ? (
+                            <Image
+                              src={item.equipment.imageUrl}
+                              alt={item.equipment.name}
+                              width={80}
+                              height={80}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <span className="text-gray-400 text-2xl">×</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Equipment Details */}
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{item.equipment.name}</h3>
+                              {item.equipment.brand && <p className="text-sm text-gray-500">{item.equipment.brand}</p>}
+                            </div>
+                            <Badge variant={item.equipment.status === "available" ? "default" : "secondary"}>
+                              {item.equipment.status}
+                            </Badge>
+                          </div>
+
+                          {/* Rental Options */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            {/* Quantity */}
+                            <div>
+                              <label className="text-sm font-medium">Quantity</label>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleQuantityChange(item, item.quantity - 1)}
+                                  disabled={item.quantity <= 1}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="w-8 text-center">{item.quantity}</span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleQuantityChange(item, item.quantity + 1)}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Rental Type */}
+                            <div>
+                              <label className="text-sm font-medium">Rental Type</label>
+                              <select
+                                value={item.rentalType}
+                                onChange={(e) => handleRentalTypeChange(item, e.target.value as "daily" | "weekly")}
+                                className="mt-1 w-full p-2 border border-gray-300 rounded-md"
+                              >
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                              </select>
+                            </div>
+
+                            {/* Rental Duration */}
+                            <div>
+                              <label className="text-sm font-medium">
+                                {item.rentalType === "daily" ? "Days" : "Weeks"}
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={item.rentalType === "daily" ? item.rentalDays : Math.ceil(item.rentalDays / 7)}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value) || 1;
+                                  const days = item.rentalType === "daily" ? value : value * 7;
+                                  handleRentalDaysChange(item, days);
+                                }}
+                                className="mt-1 w-full p-2 border border-gray-300 rounded-md"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Pricing */}
+                          <div className="mt-4 flex justify-between items-center">
+                            <div className="text-sm text-gray-600">
+                              <span className="font-medium">
+                                ${item.rentalType === "daily" ? item.dailyPrice : item.weeklyPrice}
+                              </span>
+                              <span className="text-gray-500"> per {item.rentalType === "daily" ? "day" : "week"}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-lg">${getItemPrice(item).toLocaleString()}</span>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeFromCart(item.id)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Total Price */}
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <div className="flex justify-between items-center text-lg font-semibold">
+                    <span>Total Equipment Cost</span>
+                    <span>${getTotalPrice().toLocaleString()}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto">
