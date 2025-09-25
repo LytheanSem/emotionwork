@@ -52,7 +52,9 @@ export async function POST(request: NextRequest) {
       equipmentItems?: Array<{
         id: string;
         equipment: {
-          _id: string; // Only equipment ID is trusted from client
+          _id?: string; // Only equipment ID is trusted from client
+          id?: string; // Handle both _id and id fields
+          name?: string; // For error messages
         };
         quantity: number;
         rentalType: "daily" | "weekly";

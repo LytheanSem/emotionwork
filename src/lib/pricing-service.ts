@@ -68,7 +68,7 @@ export async function getEquipmentPricing(equipmentId: string): Promise<Equipmen
  * Calculate base price for equipment based on its properties
  * This is deterministic and cannot be manipulated by clients
  */
-function calculateBasePrice(equipment: any): number {
+export function calculateBasePrice(equipment: any): number {
   // Base pricing logic - can be customized based on business rules
   let basePrice = 50; // Minimum price
 
@@ -95,7 +95,7 @@ function calculateBasePrice(equipment: any): number {
 /**
  * Simple hash function for deterministic pricing
  */
-function hashString(str: string): number {
+export function hashString(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
