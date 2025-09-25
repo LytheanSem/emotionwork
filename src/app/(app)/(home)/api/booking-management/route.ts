@@ -219,16 +219,13 @@ export async function POST(request: NextRequest) {
 
       // Blocked dates check
       try {
-        const res = await fetch(`${process.env.NEXTAUTH_URL}/api/blocked-dates`);
-        if (res.ok) {
-          const data = await res.json();
-          const blocked = Array.isArray(data) ? data : data.blockedDates;
-          if (blocked?.includes(updatedData.selectedDate)) {
-            return NextResponse.json({ success: false, error: "Selected date is blocked" }, { status: 400 });
-          }
+        const blockedDates = await googleSheetsService.getBlockedDates();
+        if (blockedDates.includes(updatedData.selectedDate)) {
+          return NextResponse.json({ success: false, error: "Selected date is blocked" }, { status: 400 });
         }
-      } catch {
-        /* non-fatal */
+      } catch (error) {
+        console.warn("Could not check blocked dates:", error);
+        // Continue with update - don't fail for this
       }
 
       // Enforce availability server-side (allow same slot)

@@ -47,23 +47,41 @@ class GoogleSheetsService {
   private mutex = new Mutex();
 
   constructor() {
-    // Initialize Google Sheets API
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      },
-      scopes: ["https://www.googleapis.com/auth/spreadsheets"],
-    });
+    try {
+      // Validate required environment variables
+      if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL) {
+        throw new Error("GOOGLE_SERVICE_ACCOUNT_EMAIL environment variable is required");
+      }
+      if (!process.env.GOOGLE_PRIVATE_KEY) {
+        throw new Error("GOOGLE_PRIVATE_KEY environment variable is required");
+      }
+      if (!process.env.GOOGLE_SHEET_ID) {
+        throw new Error("GOOGLE_SHEET_ID environment variable is required");
+      }
 
-    this.sheets = google.sheets({ version: "v4", auth });
-    this.spreadsheetId = process.env.GOOGLE_SHEET_ID || "";
+      // Initialize Google Sheets API
+      const auth = new google.auth.GoogleAuth({
+        credentials: {
+          client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+          private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+        },
+        scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+      });
 
-    // Debug logging
-    console.log("Google Sheets Service initialized:");
-    console.log("- Spreadsheet ID:", this.spreadsheetId ? "Set" : "NOT SET");
-    console.log("- Service Account Email:", process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ? "Set" : "NOT SET");
-    console.log("- Private Key: Set");
+      this.sheets = google.sheets({ version: "v4", auth });
+      this.spreadsheetId = process.env.GOOGLE_SHEET_ID;
+
+      // Debug logging
+      console.log("Google Sheets Service initialized successfully");
+      console.log("- Spreadsheet ID:", this.spreadsheetId ? "Set" : "NOT SET");
+      console.log("- Service Account Email:", process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ? "Set" : "NOT SET");
+      console.log("- Private Key: Set");
+    } catch (error) {
+      console.error("Failed to initialize Google Sheets Service:", error);
+      // Set default values to prevent crashes
+      this.spreadsheetId = "";
+      this.sheets = null;
+    }
   }
 
   /**
@@ -187,6 +205,12 @@ class GoogleSheetsService {
    */
   async addBooking(bookingData: BookingData): Promise<{ success: boolean; bookingId?: string; conflict?: boolean }> {
     try {
+      // Check if service is properly initialized
+      if (!this.sheets || !this.spreadsheetId) {
+        console.error("Google Sheets service not properly initialized");
+        return { success: false };
+      }
+
       // Generate unique booking ID
       const bookingId = this.generateBookingId();
 
@@ -543,6 +567,12 @@ class GoogleSheetsService {
    */
   async getBookedSlots(): Promise<string[]> {
     try {
+      // Check if service is properly initialized
+      if (!this.sheets || !this.spreadsheetId) {
+        console.error("Google Sheets service not properly initialized");
+        return [];
+      }
+
       const bookings = await this.getBookings();
       return bookings.map((booking) => `${booking.selectedDate}-${booking.selectedTime}`);
     } catch (error) {

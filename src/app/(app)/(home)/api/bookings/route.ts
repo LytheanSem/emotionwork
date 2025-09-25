@@ -98,13 +98,9 @@ export async function POST(request: NextRequest) {
 
     // Check for blocked dates (holidays)
     try {
-      const blockedResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/blocked-dates`);
-      if (blockedResponse.ok) {
-        const blockedDatesData = await blockedResponse.json();
-        const blockedDates = Array.isArray(blockedDatesData) ? blockedDatesData : blockedDatesData.blockedDates || [];
-        if (blockedDates.includes(bookingData.selectedDate)) {
-          return NextResponse.json({ error: "Selected date is blocked" }, { status: 400 });
-        }
+      const blockedDates = await googleSheetsService.getBlockedDates();
+      if (blockedDates.includes(bookingData.selectedDate)) {
+        return NextResponse.json({ error: "Selected date is blocked" }, { status: 400 });
       }
     } catch (error) {
       console.warn("Could not check blocked dates:", error);
