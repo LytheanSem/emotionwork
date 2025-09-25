@@ -40,7 +40,6 @@ interface BookingData {
   bookingId?: string; // Unique identifier for the booking
 }
 
-
 class GoogleSheetsService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private sheets: any; // Google Sheets API client - complex typing from googleapis
@@ -636,7 +635,6 @@ class GoogleSheetsService {
     console.warn(`Could not parse date from: "${dateTimeString}"`);
     return { date: "", time };
   }
-
 }
 
 export const googleSheetsService = new GoogleSheetsService();
