@@ -1,34 +1,29 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Equipment } from "@/lib/db";
-import { useCart } from "@/contexts/CartContext";
-import { CartModal } from "./CartModal";
-import { CheckoutModal } from "./CheckoutModal";
-import dynamic from "next/dynamic";
-import React, { Suspense, useState } from "react";
-import { EquipmentFallback } from "./equipment-fallback";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useCart } from "@/contexts/CartContext";
+import { Equipment } from "@/lib/db";
 import { ShoppingCart } from "lucide-react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
+import React, { Suspense, useState } from "react";
+import { CartModal } from "./CartModal";
+import { EquipmentFallback } from "./equipment-fallback";
 
-const LazyEquipmentCard = dynamic(
-  () =>
-    import("./equipment-card").then((mod) => ({ default: mod.EquipmentCard })),
-  {
-    loading: () => (
-      <div className="bg-card rounded-lg shadow-md overflow-hidden animate-pulse border border-border">
-        <div className="aspect-square bg-muted"></div>
-        <div className="p-4 space-y-2">
-          <div className="h-4 bg-muted rounded w-3/4"></div>
-          <div className="h-3 bg-muted rounded w-1/2"></div>
-          <div className="h-3 bg-muted rounded w-1/4"></div>
-        </div>
+const LazyEquipmentCard = dynamic(() => import("./equipment-card").then((mod) => ({ default: mod.EquipmentCard })), {
+  loading: () => (
+    <div className="bg-card rounded-lg shadow-md overflow-hidden animate-pulse border border-border">
+      <div className="aspect-square bg-muted"></div>
+      <div className="p-4 space-y-2">
+        <div className="h-4 bg-muted rounded w-3/4"></div>
+        <div className="h-3 bg-muted rounded w-1/2"></div>
+        <div className="h-3 bg-muted rounded w-1/4"></div>
       </div>
-    ),
-    ssr: false,
-  }
-);
+    </div>
+  ),
+  ssr: false,
+});
 
 interface EquipmentGridProps {
   equipment: Equipment[];
@@ -37,22 +32,22 @@ interface EquipmentGridProps {
   buttonText?: string; // Custom button text for cart
 }
 
-export function EquipmentGrid({ equipment, categories, redirectUrl = "/book-stage", buttonText = "Proceed to Book Stage" }: EquipmentGridProps) {
+export function EquipmentGrid({
+  equipment,
+  categories,
+  redirectUrl = "/book-stage",
+  buttonText = "Proceed to Book Stage",
+}: EquipmentGridProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showCartModal, setShowCartModal] = useState(false);
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const { getCartItemCount } = useCart();
 
-  const filteredEquipment = selectedCategory
-    ? equipment.filter((eq) => eq.categoryId === selectedCategory)
-    : equipment;
+  const filteredEquipment = selectedCategory ? equipment.filter((eq) => eq.categoryId === selectedCategory) : equipment;
 
   // Get the selected category name for display
-  const selectedCategoryName = selectedCategory
-    ? categories.find((c) => c.id === selectedCategory)?.name
-    : null;
+  const selectedCategoryName = selectedCategory ? categories.find((c) => c.id === selectedCategory)?.name : null;
 
   const handleEquipmentClick = (equipment: Equipment) => {
     setSelectedEquipment(equipment);
@@ -87,12 +82,9 @@ export function EquipmentGrid({ equipment, categories, redirectUrl = "/book-stag
             </Button>
           ))}
         </div>
-        
+
         {/* Cart Button */}
-        <Button
-          onClick={() => setShowCartModal(true)}
-          className="relative bg-blue-600 hover:bg-blue-700 text-white"
-        >
+        <Button onClick={() => setShowCartModal(true)} className="relative bg-blue-600 hover:bg-blue-700 text-white">
           <ShoppingCart className="h-4 w-4 mr-2" />
           Cart
           {getCartItemCount() > 0 && (
@@ -127,10 +119,7 @@ export function EquipmentGrid({ equipment, categories, redirectUrl = "/book-stag
                 </div>
               }
             >
-              <LazyEquipmentCard 
-                equipment={item} 
-                onClick={() => handleEquipmentClick(item)}
-              />
+              <LazyEquipmentCard equipment={item} onClick={() => handleEquipmentClick(item)} />
             </Suspense>
           ))}
         </div>
@@ -153,10 +142,7 @@ export function EquipmentGrid({ equipment, categories, redirectUrl = "/book-stag
             {/* Modal Header */}
             <div className="flex justify-between items-center p-6 border-b border-gray-200">
               <h2 className="text-2xl font-bold text-gray-900">{selectedEquipment.name}</h2>
-              <button
-                onClick={closeModal}
-                className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
-              >
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 text-2xl font-bold">
                 ×
               </button>
             </div>
@@ -221,7 +207,7 @@ export function EquipmentGrid({ equipment, categories, redirectUrl = "/book-stag
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">Category</h3>
                       <p className="text-gray-600">
-                        {categories.find(c => c.id === selectedEquipment.categoryId)?.name || 'Unknown'}
+                        {categories.find((c) => c.id === selectedEquipment.categoryId)?.name || "Unknown"}
                       </p>
                     </div>
                   )}
@@ -253,20 +239,8 @@ export function EquipmentGrid({ equipment, categories, redirectUrl = "/book-stag
       <CartModal
         isOpen={showCartModal}
         onClose={() => setShowCartModal(false)}
-        onCheckout={() => setShowCheckoutModal(true)}
         redirectUrl={redirectUrl}
         buttonText={buttonText}
-      />
-
-      {/* Checkout Modal */}
-      <CheckoutModal
-        isOpen={showCheckoutModal}
-        onClose={() => setShowCheckoutModal(false)}
-        onComplete={() => {
-          setShowCheckoutModal(false);
-          setShowCartModal(false);
-        }}
-        redirectUrl={redirectUrl}
       />
     </div>
   );
