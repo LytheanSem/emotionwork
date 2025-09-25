@@ -13,7 +13,8 @@ import {
   Image, 
   Edit, 
   CheckCircle,
-  AlertCircle 
+  AlertCircle,
+  Package
 } from "lucide-react";
 
 interface StageBookingFormData {
@@ -27,13 +28,14 @@ interface StageBookingFormData {
   stageDetails: {
     location: string;
     eventType: string;
-    eventDate: string;
+    eventDates: string[]; // Changed from eventDate to eventDates array
     eventTime: string;
     duration: number;
     expectedGuests: number;
     specialRequirements?: string;
   };
   designFiles: File[];
+  equipmentItems?: any[];
 }
 
 interface StageBookingConfirmationProps {
@@ -49,6 +51,20 @@ export function StageBookingConfirmation({
   onConfirm,
   isLoading,
 }: StageBookingConfirmationProps) {
+  
+  const getEquipmentTotal = (equipmentItems: any[]) => {
+    if (!equipmentItems || equipmentItems.length === 0) return 0;
+    return equipmentItems.reduce((total, item) => {
+      if (item.rentalType === 'daily') {
+        return total + (item.dailyPrice * item.quantity * item.rentalDays);
+      }
+      const fullWeeks = Math.floor(item.rentalDays / 7);
+      const remainingDays = item.rentalDays % 7;
+      const weekly = item.weeklyPrice * item.quantity * fullWeeks;
+      const daily = item.dailyPrice * item.quantity * remainingDays;
+      return total + weekly + daily;
+    }, 0);
+  };
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -182,8 +198,16 @@ export function StageBookingConfirmation({
             <div className="flex items-start gap-3">
               <Calendar className="h-5 w-5 text-gray-400 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-gray-500">Event Date</p>
-                <p className="text-gray-900">{formatDate(bookingData.stageDetails.eventDate)}</p>
+                <p className="text-sm font-medium text-gray-500">Event Dates</p>
+                <div className="space-y-1">
+                  {bookingData.stageDetails.eventDates && bookingData.stageDetails.eventDates.length > 0 ? (
+                    bookingData.stageDetails.eventDates.map((date, index) => (
+                      <p key={index} className="text-gray-900">{formatDate(date)}</p>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 italic">No dates specified</p>
+                  )}
+                </div>
               </div>
             </div>
             
@@ -272,6 +296,88 @@ export function StageBookingConfirmation({
           </div>
         </CardContent>
       </Card>
+
+      {/* Equipment Items */}
+      {bookingData.equipmentItems && bookingData.equipmentItems.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <span className="h-2 w-2 bg-orange-600 rounded-full"></span>
+              Equipment Rental ({bookingData.equipmentItems.length} items)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {bookingData.equipmentItems.map((item) => {
+                const totalPrice = (() => {
+                  if (item.rentalType === 'daily') {
+                    return item.dailyPrice * item.quantity * item.rentalDays;
+                  }
+                  const fullWeeks = Math.floor(item.rentalDays / 7);
+                  const remainingDays = item.rentalDays % 7;
+                  const weekly = item.weeklyPrice * item.quantity * fullWeeks;
+                  const daily = item.dailyPrice * item.quantity * remainingDays;
+                  return weekly + daily;
+                })();
+                
+                return (
+                  <div key={item.id} className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Package className="h-6 w-6 text-orange-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">{item.equipment.name}</h4>
+                          <p className="text-sm text-gray-600 mb-2">{item.equipment.category}</p>
+                          
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-gray-500">Quantity:</span>
+                              <span className="ml-1 font-medium">{item.quantity}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Duration:</span>
+                              <span className="ml-1 font-medium">
+                                {item.rentalDays} day(s)
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Rate:</span>
+                              <span className="ml-1 font-medium">
+                                ${item.rentalType === 'daily' ? item.dailyPrice : item.weeklyPrice}/{item.rentalType === 'daily' ? 'day' : 'week'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Subtotal:</span>
+                              <span className="ml-1 font-semibold text-orange-600">${totalPrice}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              <div className="bg-orange-100 border border-orange-300 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h4 className="font-semibold text-orange-800">Equipment Rental Summary</h4>
+                    <p className="text-sm text-orange-600">
+                      {bookingData.equipmentItems.length} item(s) • {bookingData.equipmentItems.reduce((sum, item) => sum + item.quantity, 0)} total units
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-orange-800">${getEquipmentTotal(bookingData.equipmentItems)}</p>
+                    <p className="text-sm text-orange-600">Total Equipment Cost</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 justify-end">

@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { getDb, StageBooking } from "@/lib/db";
 import { sanitizeInput, parseLocalDate } from "@/lib/utils";
 import { validateRequestSize } from "@/lib/request-limiter";
+import { calculateEquipmentPricing } from "@/lib/pricing-service";
+import { ObjectId } from "mongodb";
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +38,7 @@ export async function POST(request: NextRequest) {
       stageDetails: {
         location: string;
         eventType: string;
-        eventDate: string;
+        eventDates: string[]; // Changed from eventDate to eventDates array
         eventTime: string;
         duration?: number;
         expectedGuests?: number;
@@ -50,10 +52,81 @@ export async function POST(request: NextRequest) {
         mimeType: string;
         size: number;
       }>;
+      equipmentItems?: Array<{
+        id: string;
+        equipment: {
+          _id: string; // Only equipment ID is trusted from client
+        };
+        quantity: number;
+        rentalType: 'daily' | 'weekly';
+        rentalDays: number;
+        // NO PRICING DATA ACCEPTED FROM CLIENT - server computes all prices
+      }>;
     };
 
     // Validate required fields
-    const { userProfile, stageDetails, designFiles } = sanitizedBody;
+    const { userProfile, stageDetails, designFiles, equipmentItems } = sanitizedBody;
+
+    // Calculate server-side pricing for equipment items (ignore client prices)
+    let processedEquipmentItems: any[] = [];
+    if (equipmentItems && equipmentItems.length > 0) {
+      try {
+        const pricingCalculations = await calculateEquipmentPricing(
+          equipmentItems.map(item => ({
+            equipmentId: item.equipment._id,
+            quantity: item.quantity,
+            rentalType: item.rentalType,
+            rentalDays: item.rentalDays
+          }))
+        );
+
+        // Fetch equipment details from database for each item
+        const db = await getDb();
+        if (!db) {
+          throw new Error('Database connection failed');
+        }
+
+        processedEquipmentItems = await Promise.all(
+          equipmentItems.map(async (item, index) => {
+            // Fetch equipment details from database (never trust client data)
+            const equipment = await db.collection('equipment').findOne({ 
+              _id: new ObjectId(item.equipment._id) 
+            });
+            
+            if (!equipment) {
+              throw new Error(`Equipment not found: ${item.equipment._id}`);
+            }
+
+            const calculation = pricingCalculations[index];
+            
+            return {
+              id: item.id,
+              equipment: {
+                _id: equipment._id.toString(),
+                name: equipment.name,
+                category: equipment.categoryId || 'Uncategorized',
+                imageUrl: equipment.imageUrl
+              },
+              quantity: item.quantity,
+              rentalType: item.rentalType,
+              rentalDays: item.rentalDays,
+              // Server-computed pricing (never trust client prices)
+              dailyPrice: calculation.dailyPrice,
+              weeklyPrice: calculation.weeklyPrice,
+              totalPrice: calculation.totalPrice,
+              // Audit trail
+              priceAtBooking: calculation.priceAtBooking
+            };
+          })
+        );
+      } catch (error) {
+        console.error('Error calculating equipment pricing:', error);
+        return NextResponse.json(
+          { error: "Failed to calculate equipment pricing" },
+          { status: 400 }
+        );
+      }
+    }
 
     if (!userProfile?.firstName || !userProfile?.lastName || !userProfile?.phone) {
       return NextResponse.json(
@@ -62,19 +135,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!stageDetails?.location || !stageDetails?.eventType || !stageDetails?.eventDate || !stageDetails?.eventTime) {
+    if (!stageDetails?.location || !stageDetails?.eventType || !stageDetails?.eventDates || stageDetails?.eventDates.length === 0 || !stageDetails?.eventTime) {
       return NextResponse.json(
         { error: "Missing required stage details" },
         { status: 400 }
       );
     }
 
-    if (!designFiles || designFiles.length === 0) {
-      return NextResponse.json(
-        { error: "At least one design file is required" },
-        { status: 400 }
-      );
-    }
+    // Design files are now optional - no validation needed
 
     // Additional validation for stage details
     if (stageDetails.expectedGuests && (stageDetails.expectedGuests < 1 || stageDetails.expectedGuests > 10000)) {
@@ -91,25 +159,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate date format and future date using local date parsing
-    let eventDate: Date;
-    try {
-      eventDate = parseLocalDate(stageDetails.eventDate);
-    } catch (error) {
-      return NextResponse.json(
-        { error: `Invalid event date format: ${error instanceof Error ? error.message : 'Unknown error'}` },
-        { status: 400 }
-      );
-    }
-    
+    // Validate date format and future date using local date parsing for all dates
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (eventDate < today) {
-      return NextResponse.json(
-        { error: "Event date must be in the future" },
-        { status: 400 }
-      );
+    for (const dateStr of stageDetails.eventDates) {
+      let eventDate: Date;
+      try {
+        eventDate = parseLocalDate(dateStr);
+      } catch (error) {
+        return NextResponse.json(
+          { error: `Invalid event date format: ${error instanceof Error ? error.message : 'Unknown error'}` },
+          { status: 400 }
+        );
+      }
+
+      if (eventDate < today) {
+        return NextResponse.json(
+          { error: "All event dates must be in the future" },
+          { status: 400 }
+        );
+      }
     }
 
     // Get database connection and user ID
@@ -137,13 +207,13 @@ export async function POST(request: NextRequest) {
       stageDetails: {
         location: stageDetails.location,
         eventType: stageDetails.eventType,
-        eventDate: stageDetails.eventDate,
+        eventDates: stageDetails.eventDates, // Changed from eventDate to eventDates array
         eventTime: stageDetails.eventTime,
         duration: stageDetails.duration || 4,
         expectedGuests: stageDetails.expectedGuests || 50,
         specialRequirements: stageDetails.specialRequirements || "",
       },
-      designFiles: designFiles.map((file) => ({
+      designFiles: (designFiles || []).map((file) => ({
         filename: file.filename,
         originalName: file.originalName,
         url: file.url,
@@ -151,10 +221,12 @@ export async function POST(request: NextRequest) {
         mimeType: file.mimeType,
         size: file.size,
       })),
+      equipmentItems: processedEquipmentItems,
       status: "pending",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+
 
     // Insert into database
     const result = await database.collection("stageBookings").insertOne(stageBooking);
@@ -166,9 +238,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const bookingId = result.insertedId.toString();
+
     return NextResponse.json({
       success: true,
-      bookingId: result.insertedId.toString(),
+      bookingId: bookingId,
       message: "Stage booking created successfully",
     });
 

@@ -37,11 +37,18 @@ export function generateTimeSlots(bookedSlots: string[] = []): TimeSlot[] {
   const slots: TimeSlot[] = [];
   const now = new Date();
 
+  // DST-safe helper function for adding days
+  const addDays = (date: Date, days: number): Date => {
+    const newDate = new Date(date);
+    newDate.setDate(newDate.getDate() + days);
+    return newDate;
+  };
+
   // Always start from tomorrow (no same-day booking)
   const startDate = new Date(now);
   startDate.setDate(now.getDate() + 1);
 
-  const currentDate = new Date(startDate);
+  let currentDate = new Date(startDate);
   let weekdayCount = 0;
 
   // Find the next 7 weekdays (Monday-Friday)
@@ -62,8 +69,8 @@ export function generateTimeSlots(bookedSlots: string[] = []): TimeSlot[] {
       weekdayCount++;
     }
 
-    // Move to next day
-    currentDate.setDate(currentDate.getDate() + 1);
+    // Move to next day (DST-safe)
+    currentDate = addDays(currentDate, 1);
   }
 
   return slots;

@@ -40,6 +40,7 @@ interface BookingData {
   bookingId?: string; // Unique identifier for the booking
 }
 
+
 class GoogleSheetsService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private sheets: any; // Google Sheets API client - complex typing from googleapis
@@ -168,7 +169,7 @@ class GoogleSheetsService {
   async testConnection(): Promise<{ success: boolean; error?: string; sheetNames?: string[] }> {
     try {
       if (!this.spreadsheetId) {
-        return { success: false, error: "GOOGLE_SHEET_ID not set" };
+        return { success: false, error: "STAGE_BOOKINGS_GOOGLE_SHEET_ID not set" };
       }
 
       // Get spreadsheet metadata
@@ -635,6 +636,7 @@ class GoogleSheetsService {
     console.warn(`Could not parse date from: "${dateTimeString}"`);
     return { date: "", time };
   }
+
 }
 
 export const googleSheetsService = new GoogleSheetsService();

@@ -21,7 +21,7 @@ interface StageBookingFormData {
   stageDetails: {
     location: string;
     eventType: string;
-    eventDate: string;
+    eventDates: string[]; // Changed from eventDate to eventDates array
     eventTime: string;
     duration: number;
     expectedGuests: number;

@@ -4,8 +4,13 @@ import { EquipmentGrid } from "@/components/equipment-grid";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 
 function EquipmentPageContent() {
+  const searchParams = useSearchParams();
+  const isEditMode = searchParams.get('edit') === 'true';
+  const bookingId = searchParams.get('bookingId');
+  
   // Cache is now properly managed with staleTime and cacheTime
 
   // Use direct API instead of tRPC for now
@@ -109,6 +114,8 @@ function EquipmentPageContent() {
           <EquipmentGrid
             equipment={equipmentData.equipment}
             categories={equipmentData.categories}
+            redirectUrl={isEditMode && bookingId ? `/my-stage-bookings/${bookingId}?edit=true` : "/book-stage"}
+            buttonText={isEditMode ? "Back to Edit Booking" : "Proceed to Book Stage"}
           />
         </div>
       </div>
