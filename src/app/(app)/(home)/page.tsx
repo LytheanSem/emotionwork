@@ -337,7 +337,7 @@ export default function Home() {
             <div className="group relative rounded-3xl overflow-hidden shadow-2xl hover:shadow-cyan-500/25 transition-all duration-500">
               <div className="relative aspect-[4/3]">
                 <Image
-                  src="/uploads/stages/IMG_1113.JPG"
+                  src="/stages/IMG_1113.JPG"
                   alt="Indoor Events"
                   fill
                   className="object-cover transition-all duration-700 group-hover:scale-110"
@@ -362,7 +362,7 @@ export default function Home() {
             <div className="group relative rounded-3xl overflow-hidden shadow-2xl hover:shadow-blue-500/25 transition-all duration-500">
               <div className="relative aspect-[4/3]">
                 <Image
-                  src="/uploads/stages/IMG_1108.JPG"
+                  src="/stages/IMG_1108.JPG"
                   alt="Outdoor Events"
                   fill
                   className="object-cover transition-all duration-700 group-hover:scale-110"
