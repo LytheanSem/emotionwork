@@ -2,11 +2,11 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Equipment } from "@/lib/db";
 import { useCart } from "@/contexts/CartContext";
+import { Equipment } from "@/lib/db";
+import { Plus, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { Plus, ShoppingCart } from "lucide-react";
 
 interface EquipmentCardProps {
   equipment: Equipment;
@@ -65,41 +65,41 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
-    addToCart(equipment, 1, 'daily', 1);
+    addToCart(equipment, 1, "daily", 1);
   };
 
   return (
-    <div 
-      className="bg-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer border border-border relative group"
+    <div
+      className="bg-gradient-to-br from-slate-800/90 to-slate-700/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border border-cyan-500/20 relative group hover:scale-105 hover:border-cyan-400/40"
       onClick={onClick}
       onMouseEnter={() => setShowAddToCart(true)}
       onMouseLeave={() => setShowAddToCart(false)}
     >
-             {imageSrc && (
-         <div ref={imageRef} className="aspect-square overflow-hidden bg-muted">
-           {isImageVisible ? (
-             <div className="w-full h-full flex items-center justify-center p-4">
-               <Image
-                 src={imageSrc}
-                 alt={equipment.name}
-                 width={400}
-                 height={400}
-                 className={`max-w-full max-h-full object-contain transition-all duration-300 ${
-                   isImageLoaded ? "hover:scale-105" : "blur-sm"
-                 }`}
-                 onLoad={() => setIsImageLoaded(true)}
-                 loading="lazy"
-                 placeholder="blur"
-                 blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-               />
-             </div>
-           ) : (
-             <div className="w-full h-full bg-muted animate-pulse flex items-center justify-center">
-               <div className="text-muted-foreground text-sm">Loading...</div>
-             </div>
-           )}
-         </div>
-       )}
+      {imageSrc && (
+        <div ref={imageRef} className="aspect-square overflow-hidden bg-slate-600/50">
+          {isImageVisible ? (
+            <div className="w-full h-full flex items-center justify-center p-4">
+              <Image
+                src={imageSrc}
+                alt={equipment.name}
+                width={400}
+                height={400}
+                className={`max-w-full max-h-full object-contain transition-all duration-300 ${
+                  isImageLoaded ? "hover:scale-105" : "blur-sm"
+                }`}
+                onLoad={() => setIsImageLoaded(true)}
+                loading="lazy"
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+              />
+            </div>
+          ) : (
+            <div className="w-full h-full bg-slate-600/50 animate-pulse flex items-center justify-center">
+              <div className="text-cyan-200 text-sm">Loading...</div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add to Cart Button Overlay */}
       {showAddToCart && equipment.status === "available" && (
@@ -116,9 +116,7 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
 
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="text-lg font-semibold text-card-foreground line-clamp-2">
-            {equipment.name}
-          </h3>
+          <h3 className="text-lg font-semibold text-white line-clamp-2">{equipment.name}</h3>
           <div className="flex flex-col items-end gap-1">
             <Badge
               variant={
@@ -132,26 +130,18 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
             >
               {equipment.status}
             </Badge>
-                         {equipment.brand && (
-               <span className="text-sm text-muted-foreground">
-                 {equipment.brand}
-               </span>
-             )}
+            {equipment.brand && <span className="text-sm text-cyan-200">{equipment.brand}</span>}
           </div>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">
-              Quantity: {equipment.quantity}
-            </span>
+            <span className="text-sm text-cyan-100/80">Quantity: {equipment.quantity}</span>
           </div>
-          
+
           {equipment.length && (
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                Length: {equipment.length}m
-              </span>
+              <span className="text-cyan-100/80">Length: {equipment.length}m</span>
             </div>
           )}
         </div>

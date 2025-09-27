@@ -1,27 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
-  Clock, 
-  FileText, 
-  CheckCircle, 
-  XCircle, 
+import {
   AlertCircle,
-  Loader2,
+  Calendar,
+  CheckCircle,
+  Clock,
   Download,
   Edit,
-  Package
+  FileText,
+  Loader2,
+  MapPin,
+  Package,
+  Users,
+  XCircle,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface StageBooking {
   _id: string;
@@ -58,7 +58,7 @@ interface StageBooking {
       imageUrl?: string;
     };
     quantity: number;
-    rentalType: 'daily' | 'weekly';
+    rentalType: "daily" | "weekly";
     rentalDays: number;
     dailyPrice: number;
     weeklyPrice: number;
@@ -71,30 +71,30 @@ interface StageBooking {
 }
 
 const statusConfig = {
-  pending: { 
-    label: "Pending Review", 
-    color: "bg-yellow-100 text-yellow-800", 
-    icon: Clock 
+  pending: {
+    label: "Pending Review",
+    color: "bg-yellow-100 text-yellow-800",
+    icon: Clock,
   },
-  approved: { 
-    label: "Approved", 
-    color: "bg-green-100 text-green-800", 
-    icon: CheckCircle 
+  approved: {
+    label: "Approved",
+    color: "bg-green-100 text-green-800",
+    icon: CheckCircle,
   },
-  rejected: { 
-    label: "Rejected", 
-    color: "bg-red-100 text-red-800", 
-    icon: XCircle 
+  rejected: {
+    label: "Rejected",
+    color: "bg-red-100 text-red-800",
+    icon: XCircle,
   },
-  in_progress: { 
-    label: "In Progress", 
-    color: "bg-blue-100 text-blue-800", 
-    icon: Loader2 
+  in_progress: {
+    label: "In Progress",
+    color: "bg-blue-100 text-blue-800",
+    icon: Loader2,
   },
-  completed: { 
-    label: "Completed", 
-    color: "bg-purple-100 text-purple-800", 
-    icon: CheckCircle 
+  completed: {
+    label: "Completed",
+    color: "bg-purple-100 text-purple-800",
+    icon: CheckCircle,
   },
 };
 
@@ -120,7 +120,7 @@ export default function MyStageBookingsPage() {
     try {
       setLoading(true);
       const response = await fetch("/api/stage-bookings");
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch bookings");
       }
@@ -153,7 +153,7 @@ export default function MyStageBookingsPage() {
   const getStatusBadge = (status: StageBooking["status"]) => {
     const config = statusConfig[status];
     const Icon = config.icon;
-    
+
     return (
       <Badge className={`${config.color} border-0`}>
         <Icon className="w-3 h-3 mr-1" />
@@ -162,7 +162,6 @@ export default function MyStageBookingsPage() {
     );
   };
 
-
   const handleDownloadFile = (file: StageBooking["designFiles"][0]) => {
     window.open(file.url, "_blank", "noopener,noreferrer");
   };
@@ -170,8 +169,8 @@ export default function MyStageBookingsPage() {
   const getEquipmentTotal = (equipmentItems: StageBooking["equipmentItems"]) => {
     if (!equipmentItems || equipmentItems.length === 0) return 0;
     return equipmentItems.reduce((total, item) => {
-      if (item.rentalType === 'daily') {
-        return total + (item.dailyPrice * item.quantity * item.rentalDays);
+      if (item.rentalType === "daily") {
+        return total + item.dailyPrice * item.quantity * item.rentalDays;
       }
       const fullWeeks = Math.floor(item.rentalDays / 7);
       const remainingDays = item.rentalDays % 7;
@@ -183,13 +182,13 @@ export default function MyStageBookingsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <Skeleton className="h-8 w-64 mb-2" />
             <Skeleton className="h-4 w-96" />
           </div>
-          
+
           <div className="grid gap-6">
             {[1, 2, 3].map((i) => (
               <Card key={i}>
@@ -220,7 +219,7 @@ export default function MyStageBookingsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Alert className="mb-8">
             <AlertCircle className="h-4 w-4" />
@@ -232,16 +231,12 @@ export default function MyStageBookingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            My Stage Bookings
-          </h1>
-          <p className="text-gray-600">
-            View and track the status of your stage booking requests
-          </p>
+          <h1 className="text-3xl font-bold text-white mb-2">My Stage Bookings</h1>
+          <p className="text-cyan-100/80">View and track the status of your stage booking requests</p>
         </div>
 
         {/* Stats */}
@@ -253,13 +248,13 @@ export default function MyStageBookingsPage() {
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-500">Pending</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {bookings.filter(b => b.status === "pending").length}
+                    {bookings.filter((b) => b.status === "pending").length}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center">
@@ -267,13 +262,13 @@ export default function MyStageBookingsPage() {
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-500">Approved</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {bookings.filter(b => b.status === "approved").length}
+                    {bookings.filter((b) => b.status === "approved").length}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center">
@@ -281,13 +276,13 @@ export default function MyStageBookingsPage() {
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-500">In Progress</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {bookings.filter(b => b.status === "in_progress").length}
+                    {bookings.filter((b) => b.status === "in_progress").length}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center">
@@ -295,13 +290,13 @@ export default function MyStageBookingsPage() {
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-500">Completed</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {bookings.filter(b => b.status === "completed").length}
+                    {bookings.filter((b) => b.status === "completed").length}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center">
@@ -309,7 +304,7 @@ export default function MyStageBookingsPage() {
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-500">Rejected</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {bookings.filter(b => b.status === "rejected").length}
+                    {bookings.filter((b) => b.status === "rejected").length}
                   </p>
                 </div>
               </div>
@@ -322,15 +317,9 @@ export default function MyStageBookingsPage() {
           <Card>
             <CardContent className="p-8 text-center">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Stage Bookings Yet
-              </h3>
-              <p className="text-gray-500 mb-4">
-                You haven&apos;t submitted any stage booking requests yet.
-              </p>
-              <Button onClick={() => router.push("/book-stage")}>
-                Book a Stage
-              </Button>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Stage Bookings Yet</h3>
+              <p className="text-gray-500 mb-4">You haven&apos;t submitted any stage booking requests yet.</p>
+              <Button onClick={() => router.push("/book-stage")}>Book a Stage</Button>
             </CardContent>
           </Card>
         ) : (
@@ -343,14 +332,12 @@ export default function MyStageBookingsPage() {
                       <CardTitle className="text-xl">
                         {booking.stageDetails.eventType} - {booking.stageDetails.location}
                       </CardTitle>
-                      <p className="text-gray-600 mt-1">
-                        Submitted on {formatDate(booking.createdAt)}
-                      </p>
+                      <p className="text-gray-600 mt-1">Submitted on {formatDate(booking.createdAt)}</p>
                     </div>
                     {getStatusBadge(booking.status)}
                   </div>
                 </CardHeader>
-                
+
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Event Details */}
@@ -363,7 +350,7 @@ export default function MyStageBookingsPage() {
                             booking.stageDetails.eventDates.map((date, index) => (
                               <span key={index}>
                                 {formatDate(date)}
-                                {index < (booking.stageDetails.eventDates?.length || 0) - 1 && ', '}
+                                {index < (booking.stageDetails.eventDates?.length || 0) - 1 && ", "}
                               </span>
                             ))
                           ) : (
@@ -395,11 +382,7 @@ export default function MyStageBookingsPage() {
                               <FileText className="h-4 w-4 mr-2 text-gray-500" />
                               <span className="text-sm text-gray-700">{file.originalName}</span>
                             </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDownloadFile(file)}
-                            >
+                            <Button size="sm" variant="outline" onClick={() => handleDownloadFile(file)}>
                               <Download className="h-3 w-3 mr-1" />
                               Download
                             </Button>
@@ -414,7 +397,10 @@ export default function MyStageBookingsPage() {
                         <h4 className="font-semibold text-gray-900">Equipment Rental</h4>
                         <div className="space-y-2">
                           {booking.equipmentItems.map((item) => (
-                            <div key={item.id} className="flex items-center justify-between bg-orange-50 p-3 rounded-lg">
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between bg-orange-50 p-3 rounded-lg"
+                            >
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
                                   <Package className="h-5 w-5 text-orange-600" />
@@ -428,8 +414,9 @@ export default function MyStageBookingsPage() {
                               </div>
                               <div className="text-right">
                                 <p className="font-semibold text-sm text-gray-900">
-                                  ${(() => {
-                                    if (item.rentalType === 'daily') {
+                                  $
+                                  {(() => {
+                                    if (item.rentalType === "daily") {
                                       return item.dailyPrice * item.quantity * item.rentalDays;
                                     }
                                     const fullWeeks = Math.floor(item.rentalDays / 7);
@@ -444,7 +431,9 @@ export default function MyStageBookingsPage() {
                           ))}
                           <div className="flex justify-between items-center pt-2 border-t border-orange-200">
                             <span className="font-semibold text-orange-800">Equipment Total:</span>
-                            <span className="font-bold text-lg text-orange-800">${getEquipmentTotal(booking.equipmentItems)}</span>
+                            <span className="font-bold text-lg text-orange-800">
+                              ${getEquipmentTotal(booking.equipmentItems)}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -483,7 +472,12 @@ export default function MyStageBookingsPage() {
                           <div className="flex justify-between items-center">
                             <span className="font-semibold text-green-900">Total Estimated:</span>
                             <span className="font-bold text-lg text-green-900">
-                              ${((booking.equipmentItems && booking.equipmentItems.length > 0 ? getEquipmentTotal(booking.equipmentItems) : 0) + (booking.estimatedCost || 0)).toLocaleString()}
+                              $
+                              {(
+                                (booking.equipmentItems && booking.equipmentItems.length > 0
+                                  ? getEquipmentTotal(booking.equipmentItems)
+                                  : 0) + (booking.estimatedCost || 0)
+                              ).toLocaleString()}
                             </span>
                           </div>
                         </div>
@@ -512,7 +506,6 @@ export default function MyStageBookingsPage() {
                       </Button>
                     )}
                   </div>
-
                 </CardContent>
               </Card>
             ))}
@@ -522,4 +515,3 @@ export default function MyStageBookingsPage() {
     </div>
   );
 }
-

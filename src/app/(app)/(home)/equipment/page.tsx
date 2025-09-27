@@ -8,9 +8,9 @@ import { useSearchParams } from "next/navigation";
 
 function EquipmentPageContent() {
   const searchParams = useSearchParams();
-  const isEditMode = searchParams.get('edit') === 'true';
-  const bookingId = searchParams.get('bookingId');
-  
+  const isEditMode = searchParams.get("edit") === "true";
+  const bookingId = searchParams.get("bookingId");
+
   // Cache is now properly managed with staleTime and cacheTime
 
   // Use direct API instead of tRPC for now
@@ -36,20 +36,16 @@ function EquipmentPageContent() {
   // Show loading state
   if (equipmentLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-6 pb-32">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-12 px-6 pb-32">
         <div className="w-full">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Our Equipment
-            </h1>
-            <p className="text-gray-600">
-              Professional lighting, sound, and staging equipment for your events
-            </p>
+            <h1 className="text-3xl font-bold text-white mb-2">Our Equipment</h1>
+            <p className="text-cyan-100/80">Professional lighting, sound, and staging equipment for your events</p>
           </div>
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading equipment...</p>
+              <p className="text-cyan-100/80">Loading equipment...</p>
             </div>
           </div>
         </div>
@@ -60,27 +56,16 @@ function EquipmentPageContent() {
   // Show error state
   if (equipmentError) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-6 pb-32">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-12 px-6 pb-32">
         <div className="w-full">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Our Equipment
-            </h1>
-            <p className="text-gray-600">
-              Professional lighting, sound, and staging equipment for your events
-            </p>
+            <h1 className="text-3xl font-bold text-white mb-2">Our Equipment</h1>
+            <p className="text-cyan-100/80">Professional lighting, sound, and staging equipment for your events</p>
           </div>
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 text-sm">
-              ❌ Error loading equipment data
-            </p>
-            <p className="text-red-700 text-xs mt-2">{equipmentError.message}</p>
-            <Button
-              onClick={() => window.location.reload()}
-              variant="outline"
-              size="sm"
-              className="mt-2"
-            >
+          <div className="mt-4 p-4 bg-red-500/20 border border-red-400/30 rounded-lg backdrop-blur-sm">
+            <p className="text-red-200 text-sm">❌ Error loading equipment data</p>
+            <p className="text-red-300 text-xs mt-2">{equipmentError.message}</p>
+            <Button onClick={() => window.location.reload()} variant="outline" size="sm" className="mt-2">
               Retry
             </Button>
           </div>
@@ -90,24 +75,15 @@ function EquipmentPageContent() {
   }
 
   // Show real data
-  if (
-    equipmentData?.success &&
-    equipmentData.equipment &&
-    equipmentData.categories
-  ) {
+  if (equipmentData?.success && equipmentData.equipment && equipmentData.categories) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12 px-6 pb-32">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-12 px-6 pb-32">
         <div className="w-full">
           <div className="mb-8">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Our Equipment
-                </h1>
-                <p className="text-gray-600">
-                  Professional lighting, sound, and staging equipment for your
-                  events
-                </p>
+                <h1 className="text-3xl font-bold text-white mb-2">Our Equipment</h1>
+                <p className="text-cyan-100/80">Professional lighting, sound, and staging equipment for your events</p>
               </div>
             </div>
           </div>
@@ -124,21 +100,15 @@ function EquipmentPageContent() {
 
   // Fallback if no data
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-6 pb-32">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-12 px-6 pb-32">
       <div className="w-full">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Our Equipment</h1>
-          <p className="text-gray-600">
-            Professional lighting, sound, and staging equipment for your events
-          </p>
+          <h1 className="text-3xl font-bold text-white mb-2">Our Equipment</h1>
+          <p className="text-cyan-100/80">Professional lighting, sound, and staging equipment for your events</p>
         </div>
-        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-yellow-800 text-sm">
-            ⚠️ No equipment data available
-          </p>
-          <p className="text-yellow-700 text-xs mt-2">
-            Try adding some equipment through the admin panel first.
-          </p>
+        <div className="mt-4 p-4 bg-yellow-500/20 border border-yellow-400/30 rounded-lg backdrop-blur-sm">
+          <p className="text-yellow-200 text-sm">⚠️ No equipment data available</p>
+          <p className="text-yellow-300 text-xs mt-2">Try adding some equipment through the admin panel first.</p>
           <Button
             onClick={() => window.open("/admin", "_blank", "noopener,noreferrer")}
             variant="outline"

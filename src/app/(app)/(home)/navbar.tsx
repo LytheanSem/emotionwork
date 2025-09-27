@@ -31,11 +31,18 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
     <Button
       asChild
       variant="outline"
-      className={`bg-transparent hover:bg-transparent rounded-full hover:border-primary border-transparent px-2 xl:px-3.5 text-sm xl:text-lg font-inter ${
-        isActive ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" : ""
+      className={`group relative bg-transparent hover:bg-transparent rounded-full border-transparent px-2 xl:px-3.5 text-sm xl:text-lg font-inter transition-all duration-300 ${
+        isActive
+          ? "text-cyan-300 bg-cyan-500/20 border-cyan-500/30 hover:bg-cyan-500/30 hover:text-cyan-200"
+          : "text-white/80 hover:text-white hover:bg-white/10 border-white/20 hover:border-white/40"
       }`}
     >
-      <Link href={href}>{children}</Link>
+      <Link href={href}>
+        <span className="relative z-10">{children}</span>
+        {isActive && (
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full blur-sm"></div>
+        )}
+      </Link>
     </Button>
   );
 };
@@ -53,35 +60,55 @@ const BookingDropdown = () => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className={`bg-transparent hover:bg-transparent rounded-full hover:border-primary border-transparent px-2 xl:px-3.5 text-sm xl:text-lg font-inter ${
+          className={`group relative bg-transparent hover:bg-transparent rounded-full border-transparent px-2 xl:px-3.5 text-sm xl:text-lg font-inter transition-all duration-300 ${
             isBookingActive
-              ? "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground"
-              : ""
+              ? "text-cyan-300 bg-cyan-500/20 border-cyan-500/30 hover:bg-cyan-500/30 hover:text-cyan-200"
+              : "text-white/80 hover:text-white hover:bg-white/10 border-white/20 hover:border-white/40"
           }`}
         >
-          <span className="hidden lg:inline">Bookings</span>
-          <span className="lg:hidden">Book</span>
-          <ChevronDown className="ml-1 h-3 w-3 xl:h-4 xl:w-4" />
+          <span className="relative z-10 flex items-center">
+            <span className="hidden lg:inline">Bookings</span>
+            <span className="lg:hidden">Book</span>
+            <ChevronDown className="ml-2 h-3 w-3 xl:h-4 xl:w-4 group-hover:translate-y-0.5 transition-transform duration-200" />
+          </span>
+          {isBookingActive && (
+            <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-full blur-sm"></div>
+          )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="center" className="w-48 xl:w-56">
+      <DropdownMenuContent
+        align="center"
+        className="w-48 xl:w-56 bg-slate-900/95 backdrop-blur-xl border border-cyan-500/20 shadow-2xl"
+      >
         <DropdownMenuItem asChild>
-          <Link href="/book-meeting" className="flex items-center text-sm">
+          <Link
+            href="/book-meeting"
+            className="flex items-center text-sm text-white/80 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors duration-200"
+          >
             <span>Book Meeting</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/book-stage" className="flex items-center text-sm">
+          <Link
+            href="/book-stage"
+            className="flex items-center text-sm text-white/80 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors duration-200"
+          >
             <span>Book a Stage</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/my-stage-bookings" className="flex items-center text-sm">
+          <Link
+            href="/my-stage-bookings"
+            className="flex items-center text-sm text-white/80 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors duration-200"
+          >
             <span>My Stage Bookings</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/manage-booking" className="flex items-center text-sm">
+          <Link
+            href="/manage-booking"
+            className="flex items-center text-sm text-white/80 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors duration-200"
+          >
             <span>Manage Booking</span>
           </Link>
         </DropdownMenuItem>
@@ -165,10 +192,10 @@ export function Navbar() {
   // Always render the same base structure to prevent hydration mismatch
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-300 ${inter.className} ${
+      className={`fixed top-0 left-0 right-0 z-50 h-20 transition-all duration-500 ${inter.className} ${
         isClient && isScrolled
-          ? "bg-background/95 backdrop-blur-md shadow-lg border-b border-border"
-          : "bg-background border-b border-border"
+          ? "bg-gradient-to-r from-slate-900/95 via-blue-900/95 to-slate-900/95 backdrop-blur-xl shadow-2xl border-b border-cyan-500/20"
+          : "bg-gradient-to-r from-slate-900/90 via-blue-900/90 to-slate-900/90 backdrop-blur-lg border-b border-cyan-500/10"
       }`.trim()}
     >
       <div className="h-full flex items-center justify-between px-4 sm:px-6">
@@ -197,7 +224,7 @@ export function Navbar() {
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
             {/* User info - Hide on very small screens, show on sm+ */}
             <div className="hidden sm:flex flex-col items-end">
-              <span className="text-xs sm:text-sm text-muted-foreground font-inter truncate max-w-[120px] lg:max-w-none">
+              <span className="text-xs sm:text-sm text-cyan-200/80 font-inter truncate max-w-[120px] lg:max-w-none">
                 Welcome, {displayName}
               </span>
               {isAdmin && <span className="text-xs text-orange-600 font-medium font-inter">Admin User</span>}
@@ -212,13 +239,20 @@ export function Navbar() {
                 onClick={() => isClient && router.push("/admin")}
                 variant="outline"
                 size="sm"
-                className={`hidden md:flex font-inter text-xs ${
+                className={`hidden md:flex font-inter text-xs group relative transition-all duration-300 ${
                   isAdmin
-                    ? "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
-                    : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                    ? "bg-gradient-to-r from-orange-500/20 to-red-500/20 text-orange-300 border-orange-500/30 hover:bg-orange-500/30 hover:text-orange-200 hover:border-orange-400/50"
+                    : "bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30 hover:text-blue-200 hover:border-blue-400/50"
                 }`}
               >
-                {isAdmin ? "Admin" : "Manager"}
+                <span className="relative z-10">{isAdmin ? "Admin" : "Manager"}</span>
+                <div
+                  className={`absolute inset-0 rounded-md blur-sm opacity-30 group-hover:opacity-50 transition-opacity duration-300 ${
+                    isAdmin
+                      ? "bg-gradient-to-r from-orange-500 to-red-500"
+                      : "bg-gradient-to-r from-blue-500 to-cyan-500"
+                  }`}
+                ></div>
               </Button>
             )}
 
@@ -227,10 +261,13 @@ export function Navbar() {
               onClick={handleLogout}
               variant="outline"
               size="sm"
-              className="bg-black text-white hover:bg-gray-800 font-inter text-xs px-2 sm:px-3"
+              className="group relative bg-gradient-to-r from-red-500/20 to-pink-500/20 text-red-300 border-red-500/30 hover:bg-red-500/30 hover:text-red-200 hover:border-red-400/50 font-inter text-xs px-2 sm:px-3 transition-all duration-300"
             >
-              <span className="hidden sm:inline">Log out</span>
-              <span className="sm:hidden">Out</span>
+              <span className="relative z-10">
+                <span className="hidden sm:inline">Log out</span>
+                <span className="sm:hidden">Out</span>
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-pink-500 rounded-md blur-sm opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
             </Button>
           </div>
         ) : (
@@ -239,18 +276,24 @@ export function Navbar() {
               onClick={() => isClient && router.push("/sign-in")}
               variant="outline"
               size="sm"
-              className="font-inter text-xs px-2 sm:px-3"
+              className="group relative bg-transparent text-white/80 border-white/20 hover:bg-white/10 hover:text-white hover:border-white/40 font-inter text-xs px-2 sm:px-3 transition-all duration-300"
             >
-              <span className="hidden sm:inline">Log in</span>
-              <span className="sm:hidden">In</span>
+              <span className="relative z-10">
+                <span className="hidden sm:inline">Log in</span>
+                <span className="sm:hidden">In</span>
+              </span>
             </Button>
             <Button
               onClick={() => isClient && router.push("/sign-up")}
               size="sm"
-              className="bg-black text-white hover:bg-gray-800 font-inter text-xs px-2 sm:px-3"
+              className="group relative bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-inter text-xs px-2 sm:px-3 transition-all duration-300 hover:scale-105 shadow-lg overflow-hidden"
             >
-              <span className="hidden sm:inline">Sign up</span>
-              <span className="sm:hidden">Up</span>
+              <span className="relative z-10">
+                <span className="hidden sm:inline">Sign up</span>
+                <span className="sm:hidden">Up</span>
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
             </Button>
           </div>
         )}
@@ -259,10 +302,15 @@ export function Navbar() {
         <div className="flex xl:hidden items-center justify-center ml-2">
           <Button
             variant="ghost"
-            className="size-10 sm:size-12 border-transparent bg-white"
+            className="group size-10 sm:size-12 border border-white/20 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white hover:text-cyan-300 transition-all duration-300"
             onClick={() => isClient && setIsSidebarOpen(true)}
           >
-            <svg className="size-5 sm:size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="size-5 sm:size-6 group-hover:scale-110 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </Button>

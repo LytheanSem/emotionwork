@@ -15,13 +15,8 @@ export function EquipmentFallback({
 }: EquipmentFallbackProps) {
   return (
     <div className="text-center py-12">
-      <div className="text-gray-400 mb-4">
-        <svg
-          className="w-16 h-16 mx-auto"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
+      <div className="text-cyan-300 mb-4">
+        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -30,12 +25,16 @@ export function EquipmentFallback({
           />
         </svg>
       </div>
-      <h2 className="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
-      <p className="text-gray-600 mb-6 max-w-md mx-auto">{message}</p>
+      <h2 className="text-xl font-semibold text-white mb-2">{title}</h2>
+      <p className="text-cyan-100/80 mb-6 max-w-md mx-auto">{message}</p>
 
       <div className="flex gap-3 justify-center">
         {showRetry && (
-          <Button onClick={() => window.location.reload()} variant="outline">
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+            className="bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50"
+          >
             Try Again
           </Button>
         )}
@@ -43,7 +42,7 @@ export function EquipmentFallback({
         {showAddEquipment && (
           <Button
             onClick={() => window.open("/admin", "_blank", "noopener,noreferrer")}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-cyan-600 hover:bg-cyan-700 text-white"
           >
             Add Equipment
           </Button>
