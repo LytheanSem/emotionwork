@@ -1,8 +1,8 @@
 import { CartProvider } from "@/contexts/CartContext";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Navbar } from "./navbar";
 
-export default function HomeLayout({ children }: { children: React.ReactNode }) {
+export default function HomeLayout({ children }: { children: ReactNode }) {
   return (
     <CartProvider>
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex flex-col">
