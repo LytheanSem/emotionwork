@@ -85,12 +85,12 @@ export default function BookMeetingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <div className="container mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Book a Meeting</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Book a Meeting</h1>
+          <p className="text-lg text-cyan-100/80 max-w-2xl mx-auto">
             Schedule a consultation with our team. We&apos;re here to help you with your project needs.
           </p>
         </div>

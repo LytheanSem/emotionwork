@@ -1,18 +1,13 @@
+import { CartProvider } from "@/contexts/CartContext";
 import { Suspense } from "react";
 import { Navbar } from "./navbar";
-import FooterSimple from "./footer-simple";
-import { CartProvider } from "@/contexts/CartContext";
 
-export default function HomeLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function HomeLayout({ children }: { children: React.ReactNode }) {
   return (
     <CartProvider>
-      <div className="min-h-screen bg-white flex flex-col">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex flex-col">
         <Navbar />
-        <main className="pt-24 flex-1">
+        <main className="flex-1 pt-20">
           <Suspense
             fallback={
               <div className="container mx-auto px-4 py-8">
@@ -27,7 +22,6 @@ export default function HomeLayout({
             {children}
           </Suspense>
         </main>
-        <FooterSimple />
       </div>
     </CartProvider>
   );

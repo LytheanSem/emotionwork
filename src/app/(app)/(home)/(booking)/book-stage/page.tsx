@@ -122,22 +122,22 @@ export default function BookStagePage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-lg text-gray-600">Loading...</p>
+          <p className="mt-4 text-lg text-cyan-100/80">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <div className="container mx-auto px-4 py-8">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Book a Stage</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Book a Stage</h1>
+          <p className="text-lg text-cyan-100/80 max-w-2xl mx-auto">
             Design and book your custom stage for events, concerts, and special occasions. Upload your design files and
             let us bring your vision to life.
           </p>

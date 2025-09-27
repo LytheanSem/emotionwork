@@ -67,7 +67,11 @@ export function EquipmentGrid({
           <Button
             variant={selectedCategory === null ? "default" : "outline"}
             onClick={() => setSelectedCategory(null)}
-            className="text-sm"
+            className={`text-sm ${
+              selectedCategory === null
+                ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                : "bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50"
+            }`}
           >
             All Categories
           </Button>
@@ -76,7 +80,11 @@ export function EquipmentGrid({
               key={category.id}
               variant={selectedCategory === category.id ? "default" : "outline"}
               onClick={() => setSelectedCategory(category.id)}
-              className="text-sm"
+              className={`text-sm ${
+                selectedCategory === category.id
+                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                  : "bg-white/10 hover:bg-white/20 text-white border-white/30 hover:border-white/50"
+              }`}
             >
               {category.name}
             </Button>
@@ -84,11 +92,14 @@ export function EquipmentGrid({
         </div>
 
         {/* Cart Button */}
-        <Button onClick={() => setShowCartModal(true)} className="relative bg-blue-600 hover:bg-blue-700 text-white">
+        <Button
+          onClick={() => setShowCartModal(true)}
+          className="relative bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
+        >
           <ShoppingCart className="h-4 w-4 mr-2" />
           Cart
           {getCartItemCount() > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+            <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-lg">
               {getCartItemCount()}
             </span>
           )}
@@ -96,7 +107,7 @@ export function EquipmentGrid({
       </div>
 
       {/* Equipment Count */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-sm text-cyan-100/80">
         {filteredEquipment.length} equipment item
         {filteredEquipment.length !== 1 ? "s" : ""}
         {selectedCategory && ` in ${selectedCategoryName}`}

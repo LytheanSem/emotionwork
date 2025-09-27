@@ -196,21 +196,21 @@ export default function ManageBookingPage() {
   // Show loading state when redirecting
   if (isRedirecting) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-lg text-gray-600">Redirecting...</p>
+          <p className="text-lg text-cyan-100/80">Redirecting...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Manage Your Booking</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Manage Your Booking</h1>
+          <p className="text-lg text-cyan-100/80 max-w-2xl mx-auto">
             Enter your booking ID and email to view, modify, or cancel your appointment.
           </p>
         </div>

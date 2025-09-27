@@ -2,86 +2,127 @@ import { Button } from "@/components/ui/button";
 import { Source_Sans_3 } from "next/font/google";
 import Link from "next/link";
 
-const sourceSans3 = Source_Sans_3({ 
+const sourceSans3 = Source_Sans_3({
   subsets: ["latin"],
-  weight: ["300", "400", "600", "700"]
+  weight: ["300", "400", "600", "700"],
 });
 
 export default function Services() {
   return (
-    <div className={`${sourceSans3.className} min-h-screen bg-gray-50`}>
-      {/* Hero Section */}
-      <section className="py-24 px-6 bg-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="w-16 h-0.5 bg-cyan-500 mx-auto mb-8"></div>
-          <h1 className="text-4xl md:text-6xl font-light tracking-tight mb-8 leading-none text-gray-900">
+    <div className={`${sourceSans3.className} min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900`}>
+      {/* Enhanced Hero Section */}
+      <section className="py-32 px-6 relative overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-transparent to-blue-500/10"></div>
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl"></div>
+
+        <div className="max-w-6xl mx-auto text-center relative z-10">
+          <div className="relative mb-12">
+            <div className="w-24 h-1 bg-gradient-to-r from-cyan-400 to-blue-500 mx-auto rounded-full"></div>
+            <div className="absolute inset-0 w-24 h-1 bg-gradient-to-r from-cyan-400 to-blue-500 mx-auto rounded-full blur-sm opacity-50"></div>
+          </div>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 leading-none text-white">
             OUR
             <br />
-            <span className="font-thin text-cyan-500">SERVICES</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">SERVICES</span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-600 font-light max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-cyan-100/80 font-medium max-w-3xl mx-auto leading-relaxed">
             Professional event production services since 2013
           </p>
         </div>
       </section>
 
-      {/* Services Overview */}
-      <section className="py-24 px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-light text-gray-900 mb-4">What We Offer</h2>
-            <div className="w-16 h-0.5 bg-cyan-500 mx-auto mb-6"></div>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              From sound and lighting to stage construction, we provide comprehensive event production solutions
+      {/* Enhanced Services Overview */}
+      <section className="py-32 px-6 bg-gradient-to-br from-white via-blue-50/30 to-cyan-50/30 relative overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-blue-500/5"></div>
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-20">
+            <div className="inline-block mb-8">
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-4">
+                What We
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-600">
+                  Offer
+                </span>
+              </h2>
+            </div>
+            <div className="relative mb-6">
+              <div className="w-24 h-1 bg-gradient-to-r from-cyan-500 to-blue-600 mx-auto rounded-full"></div>
+              <div className="absolute inset-0 w-24 h-1 bg-gradient-to-r from-cyan-500 to-blue-600 mx-auto rounded-full blur-sm opacity-50"></div>
+            </div>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              From sound and lighting to stage construction, we provide comprehensive event production solutions that
+              bring your vision to life
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12 mb-20">
+          <div className="grid lg:grid-cols-2 gap-8 mb-20">
             {/* Professional Sound System */}
-            <div className="bg-white rounded-2xl shadow-lg p-8">
-              <div className="flex items-center mb-6">
-                <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mr-6">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                  </svg>
+            <div className="group bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 hover:shadow-2xl hover:shadow-cyan-500/20 transition-all duration-500 border border-white/20 hover:border-cyan-200/50">
+              <div className="flex items-center mb-8">
+                <div className="relative">
+                  <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 via-cyan-400 to-blue-600 rounded-3xl flex items-center justify-center mr-6 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-2xl shadow-cyan-500/25">
+                    <svg
+                      className="w-10 h-10 text-white group-hover:scale-110 transition-transform duration-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="absolute inset-0 w-20 h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-3xl mr-6 blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-500"></div>
                 </div>
-                <h3 className="text-2xl font-semibold text-gray-900">Professional Sound System Rental</h3>
+                <h3 className="text-2xl font-bold text-gray-900 group-hover:text-cyan-600 transition-colors duration-300">
+                  Professional Sound System Rental
+                </h3>
               </div>
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                We provide high-quality sound equipment rental services for concerts, events, and productions. Our professional sound systems include state-of-the-art speakers, microphones, mixing consoles, and audio processing equipment to ensure crystal-clear sound quality for your event.
+              <p className="text-gray-600 mb-8 leading-relaxed text-lg">
+                We provide high-quality sound equipment rental services for concerts, events, and productions. Our
+                professional sound systems include state-of-the-art speakers, microphones, mixing consoles, and audio
+                processing equipment to ensure crystal-clear sound quality for your event.
               </p>
-              <ul className="space-y-3 text-gray-600 mb-6">
-                <li className="flex items-center">
-                  <div className="w-6 h-6 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center mr-4">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <ul className="space-y-4 text-gray-600 mb-8">
+                <li className="flex items-center group/item">
+                  <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 group-hover/item:scale-110 transition-transform duration-300">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  High-end speaker systems
+                  <span className="text-lg">High-end speaker systems</span>
                 </li>
-                <li className="flex items-center">
-                  <div className="w-6 h-6 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center mr-4">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <li className="flex items-center group/item">
+                  <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 group-hover/item:scale-110 transition-transform duration-300">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  Professional microphones
+                  <span className="text-lg">Professional microphones</span>
                 </li>
-                <li className="flex items-center">
-                  <div className="w-6 h-6 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center mr-4">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <li className="flex items-center group/item">
+                  <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 group-hover/item:scale-110 transition-transform duration-300">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  Digital mixing consoles
+                  <span className="text-lg">Digital mixing consoles</span>
                 </li>
-                <li className="flex items-center">
-                  <div className="w-6 h-6 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center mr-4">
-                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <li className="flex items-center group/item">
+                  <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 group-hover/item:scale-110 transition-transform duration-300">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  Expert setup and support
+                  <span className="text-lg">Expert setup and support</span>
                 </li>
               </ul>
             </div>
@@ -91,13 +132,20 @@ export default function Services() {
               <div className="flex items-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mr-6">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-2xl font-semibold text-gray-900">Professional Lighting System Rental</h3>
               </div>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Create stunning visual experiences with our advanced lighting solutions. We offer a wide range of professional lighting equipment including LED fixtures, moving lights, spotlights, and atmospheric effects to transform any venue into a spectacular event space.
+                Create stunning visual experiences with our advanced lighting solutions. We offer a wide range of
+                professional lighting equipment including LED fixtures, moving lights, spotlights, and atmospheric
+                effects to transform any venue into a spectacular event space.
               </p>
               <ul className="space-y-3 text-gray-600 mb-6">
                 <li className="flex items-center">
@@ -133,20 +181,27 @@ export default function Services() {
                   Professional lighting control
                 </li>
               </ul>
-        </div>
+            </div>
 
             {/* LED Screen & Projector */}
             <div className="bg-white rounded-2xl shadow-lg p-8">
               <div className="flex items-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mr-6">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3m0 0h8m-8 0v16a1 1 0 001 1h6a1 1 0 001-1V4H7z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2m0 0V1a1 1 0 011-1h2a1 1 0 011 1v18a1 1 0 01-1 1H4a1 1 0 01-1-1V1a1 1 0 011-1h2a1 1 0 011 1v3m0 0h8m-8 0v16a1 1 0 001 1h6a1 1 0 001-1V4H7z"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-2xl font-semibold text-gray-900">LED Screen & Projector Service</h3>
               </div>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                High-resolution LED displays and professional projectors for visual presentations, live streaming, and dynamic content display. Our LED screens and projectors are perfect for concerts, conferences, weddings, and corporate events.
+                High-resolution LED displays and professional projectors for visual presentations, live streaming, and
+                dynamic content display. Our LED screens and projectors are perfect for concerts, conferences, weddings,
+                and corporate events.
               </p>
               <ul className="space-y-3 text-gray-600 mb-6">
                 <li className="flex items-center">
@@ -189,13 +244,20 @@ export default function Services() {
               <div className="flex items-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mr-6">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-2xl font-semibold text-gray-900">3D Visual & Production Design</h3>
               </div>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Creative 3D visual effects and comprehensive production design services to bring your event vision to life. Our team creates stunning visual experiences that captivate audiences and enhance your event&apos;s impact.
+                Creative 3D visual effects and comprehensive production design services to bring your event vision to
+                life. Our team creates stunning visual experiences that captivate audiences and enhance your
+                event&apos;s impact.
               </p>
               <ul className="space-y-3 text-gray-600 mb-6">
                 <li className="flex items-center">
@@ -238,13 +300,20 @@ export default function Services() {
               <div className="flex items-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center mr-6">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    />
                   </svg>
                 </div>
                 <h3 className="text-2xl font-semibold text-gray-900">Stage & Truss Structure</h3>
               </div>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Professional stage construction and truss systems for safe, secure event setups. We provide complete stage solutions including custom stage designs, truss systems, and safety equipment to ensure your event runs smoothly and safely.
+                Professional stage construction and truss systems for safe, secure event setups. We provide complete
+                stage solutions including custom stage designs, truss systems, and safety equipment to ensure your event
+                runs smoothly and safely.
               </p>
               <ul className="space-y-3 text-gray-600 mb-6">
                 <li className="flex items-center">
@@ -291,11 +360,12 @@ export default function Services() {
           <h2 className="text-2xl md:text-3xl font-light mb-4">Ready to Get Started?</h2>
           <div className="w-12 h-0.5 bg-white mx-auto mb-6"></div>
           <p className="text-lg text-white/90 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Contact us today to discuss your event requirements and get a customized quote for our professional services.
+            Contact us today to discuss your event requirements and get a customized quote for our professional
+            services.
           </p>
           <div className="flex justify-center">
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-3 text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg"
               asChild
             >
