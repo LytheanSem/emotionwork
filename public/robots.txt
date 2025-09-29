@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://visualemotionwork.com/sitemap.xml
+
+# Disallow admin areas
+Disallow: /admin/
+Disallow: /admin-fallback/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /manage-booking/
+
+# Allow important pages
+Allow: /
+Allow: /about
+Allow: /services
+Allow: /equipment
+Allow: /portfolio
+Allow: /contact
+Allow: /design
+Allow: /book-meeting
+Allow: /book-stage
