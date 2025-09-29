@@ -22,7 +22,7 @@ export function StructuredData() {
       email: "visualemotion@gmail.com",
     },
     sameAs: ["https://www.facebook.com/VisualEmotionworkCoLtd"],
-    serviceArea: {
+    areaServed: {
       "@type": "Country",
       name: "Cambodia",
     },
@@ -99,7 +99,7 @@ export function StructuredData() {
     },
     openingHours: "Mo-Fr 08:00-18:00",
     priceRange: "$$",
-    servedArea: {
+    areaServed: {
       "@type": "Country",
       name: "Cambodia",
     },

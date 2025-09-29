@@ -40,9 +40,6 @@ export const metadata: Metadata = {
     telephone: false,
   },
   metadataBase: new URL("https://visualemotionwork.com"),
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     title: "Visual EmotionWork - Professional Event Management Cambodia",
     description:
