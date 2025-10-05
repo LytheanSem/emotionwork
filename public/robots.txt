@@ -4,12 +4,13 @@ Allow: /
 # Sitemap
 Sitemap: https://visualemotionwork.com/sitemap.xml
 
-# Disallow admin areas
+# Disallow admin areas and private pages
 Disallow: /admin/
 Disallow: /admin-fallback/
 Disallow: /api/
 Disallow: /_next/
 Disallow: /manage-booking/
+Disallow: /my-stage-bookings/
 
 # Allow important pages
 Allow: /
@@ -21,3 +22,6 @@ Allow: /contact
 Allow: /design
 Allow: /book-meeting
 Allow: /book-stage
+
+# Crawl delay to be respectful
+Crawl-delay: 1

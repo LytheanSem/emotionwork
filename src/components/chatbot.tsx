@@ -34,7 +34,7 @@ const App = () => {
           ],
           i18n: {
             en: {
-              title: "Visual EmotionWork Chatbot",
+              title: "Visual Emotionwork Chatbot",
               subtitle: "Start a chat. We're here to help you 24/7.",
               footer: "",
               getStarted: "New Conversation",

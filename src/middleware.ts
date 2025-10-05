@@ -3,8 +3,16 @@ import { NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const hostname = request.headers.get("host") || "";
 
-  // Add security headers
+  // Handle www redirect to non-www (backup to next.config.ts redirects)
+  if (hostname.startsWith("www.")) {
+    const newUrl = new URL(request.url);
+    newUrl.hostname = hostname.replace("www.", "");
+    return NextResponse.redirect(newUrl, 301);
+  }
+
+  // Create response
   const response = NextResponse.next();
 
   // Enhanced security headers
@@ -13,7 +21,7 @@ export function middleware(request: NextRequest) {
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("X-Download-Options", "noopen");
   response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
-  
+
   // Add HSTS header for HTTPS
   if (request.nextUrl.protocol === 'https:') {
     response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
