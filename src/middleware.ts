@@ -3,14 +3,8 @@ import { NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hostname = request.headers.get("host") || "";
 
-  // Handle www redirect to non-www (backup to next.config.ts redirects)
-  if (hostname.startsWith("www.")) {
-    const newUrl = new URL(request.url);
-    newUrl.hostname = hostname.replace("www.", "");
-    return NextResponse.redirect(newUrl, 301);
-  }
+  // www redirects are handled by next.config.ts redirects
 
   // Create response
   const response = NextResponse.next();
