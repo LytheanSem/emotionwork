@@ -6,6 +6,19 @@
   "outputDirectory": ".next",
   "public": true,
   "regions": ["iad1"],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.visualemotionwork.com"
+        }
+      ],
+      "destination": "https://visualemotionwork.com/$1",
+      "permanent": true
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

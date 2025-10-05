@@ -3,15 +3,6 @@ import { NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hostname = request.headers.get("host") || "";
-
-  // Handle www redirect to non-www (with loop prevention)
-  if (hostname.startsWith("www.") && !request.nextUrl.searchParams.has("no-redirect")) {
-    const newUrl = new URL(request.url);
-    newUrl.hostname = hostname.replace("www.", "");
-    newUrl.searchParams.set("no-redirect", "1"); // Prevent redirect loops
-    return NextResponse.redirect(newUrl, 301);
-  }
 
   // Create response
   const response = NextResponse.next();
