@@ -124,7 +124,7 @@ const nextConfig: NextConfig = {
             value: "www.visualemotionwork.com",
           },
         ],
-        destination: "https://visualemotionwork.com/:path*",
+        destination: "https://visualemotionwork.com/$1",
         permanent: true,
       },
       // Redirect HTTP to HTTPS
@@ -137,7 +137,7 @@ const nextConfig: NextConfig = {
             value: "http",
           },
         ],
-        destination: "https://visualemotionwork.com/:path*",
+        destination: "https://visualemotionwork.com/$1",
         permanent: true,
       },
     ];
