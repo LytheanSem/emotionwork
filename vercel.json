@@ -11,9 +11,8 @@
       "source": "/(.*)",
       "has": [
         {
-          "type": "header",
-          "key": "x-forwarded-proto",
-          "value": "http"
+          "type": "host",
+          "value": "www.visualemotionwork.com"
         }
       ],
       "destination": "https://visualemotionwork.com/$1",

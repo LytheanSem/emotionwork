@@ -14,7 +14,7 @@ const sourceSans3 = Source_Sans_3({
 
 export const metadata: Metadata = {
   title: {
-    default: "Visual EmotionWork - Professional Event Management & Concert Production Cambodia",
+    default: "Visual Emotionwork - Professional Event Management & Concert Production Cambodia",
     template: "%s | Visual EmotionWork",
   },
   description:
@@ -74,6 +74,9 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-snippet": -1,
     },
+  },
+  alternates: {
+    canonical: "https://visualemotionwork.com",
   },
 };
 
