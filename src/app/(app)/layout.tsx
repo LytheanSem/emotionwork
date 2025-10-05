@@ -15,7 +15,7 @@ const sourceSans3 = Source_Sans_3({
 export const metadata: Metadata = {
   title: {
     default: "Visual Emotionwork - Professional Event Management & Concert Production Cambodia",
-    template: "%s | Visual EmotionWork",
+    template: "%s | Visual Emotionwork",
   },
   description:
     "Leading event management and concert production company in Cambodia since 2013. Specializing in concert design, event construction, professional sound & lighting systems, LED screens, and stage construction. Transform your vision into unforgettable experiences.",
@@ -31,9 +31,9 @@ export const metadata: Metadata = {
     "concert stage design",
     "corporate event management",
   ],
-  authors: [{ name: "Visual EmotionWork" }],
-  creator: "Visual EmotionWork",
-  publisher: "Visual EmotionWork",
+  authors: [{ name: "Visual Emotionwork" }],
+  creator: "Visual Emotionwork",
+  publisher: "Visual Emotionwork",
   formatDetection: {
     email: false,
     address: false,
@@ -41,17 +41,17 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://visualemotionwork.com"),
   openGraph: {
-    title: "Visual EmotionWork - Professional Event Management Cambodia",
+    title: "Visual Emotionwork - Professional Event Management Cambodia",
     description:
       "Leading event management and concert production company in Cambodia since 2013. Professional sound, lighting, LED screens, and stage construction services.",
     url: "https://visualemotionwork.com",
-    siteName: "Visual EmotionWork",
+    siteName: "Visual Emotionwork",
     images: [
       {
         url: "/logo_3.png",
         width: 1200,
         height: 630,
-        alt: "Visual EmotionWork - Professional Event Management Cambodia",
+        alt: "Visual Emotionwork - Professional Event Management Cambodia",
       },
     ],
     locale: "en_US",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Visual EmotionWork - Professional Event Management Cambodia",
+    title: "Visual Emotionwork - Professional Event Management Cambodia",
     description:
       "Leading event management and concert production company in Cambodia since 2013. Professional sound, lighting, LED screens, and stage construction services.",
     images: ["/logo_3.png"],
