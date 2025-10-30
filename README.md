@@ -150,8 +150,8 @@ Displays images, specifications, and rental prices with filtering and cart funct
 ---
 
 ## 🌐 Deployment  
-**Frontend & Backend:** [Vercel Deployment Link](#https://www.visualemotionwork.com/)  
-**Repository:** [GitHub Project Link](#)  
+**Frontend & Backend:** [Vercel Deployment Link](https://www.visualemotionwork.com/)  
+**Repository:** [GitHub Project Link](https://github.com/LytheanSem/emotionwork)  
 
 ---
 
