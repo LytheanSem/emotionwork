@@ -145,11 +145,12 @@ Displays images, specifications, and rental prices with filtering and cart funct
 **Team Members:**  
 - Paveena Chuayaem  
 - Vibol Rothmony Seng
+- Lythean Sem
 
 ---
 
 ## 🌐 Deployment  
-**Frontend & Backend:** [Vercel Deployment Link](#)  
+**Frontend & Backend:** [Vercel Deployment Link](#https://www.visualemotionwork.com/)  
 **Repository:** [GitHub Project Link](#)  
 
 ---
