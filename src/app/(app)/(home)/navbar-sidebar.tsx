@@ -26,8 +26,6 @@ export const NavbarSidebar = ({ items, open, onOpenChange }: Props) => {
 
   const bookingItems = [
     { href: "/book-meeting", children: "Book Meeting" },
-    { href: "/book-stage", children: "Book a Stage" },
-    { href: "/my-stage-bookings", children: "My Stage Bookings" },
     { href: "/manage-booking", children: "Manage Booking" },
   ];
 
@@ -78,7 +76,7 @@ export const NavbarSidebar = ({ items, open, onOpenChange }: Props) => {
               href="/sign-in"
               className="w-full text-left p-4 hover:bg-primary hover:text-primary-foreground flex items-center text-base font-medium"
             >
-              Log in
+              Sign in
             </Link>
           </div>
         </ScrollArea>

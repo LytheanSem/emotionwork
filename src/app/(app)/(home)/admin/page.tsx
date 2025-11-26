@@ -358,6 +358,12 @@ export default function AdminPanel() {
 
   const createEquipment = async () => {
     try {
+      // Validate required fields
+      if (!newEquipment.name || !newEquipment.status || !newEquipment.quantity) {
+        toast.error("Please fill in all required fields (Name, Status, Quantity)");
+        return;
+      }
+
       const response = await fetch("/api/admin/equipment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -382,7 +388,8 @@ export default function AdminPanel() {
         });
         loadAdminData();
       } else {
-        toast.error("Failed to create equipment");
+        const errorData = await response.json();
+        toast.error(errorData.error || "Failed to create equipment");
       }
     } catch (error) {
       console.error("Error creating equipment:", error);
@@ -593,7 +600,7 @@ export default function AdminPanel() {
 
         {/* Stats Cards */}
         <div
-          className={`grid gap-6 mb-8 ${canManageUsers ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-5" : "grid-cols-1 md:grid-cols-4"}`}
+          className={`grid gap-6 mb-8 ${canManageUsers ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4" : "grid-cols-1 md:grid-cols-3"}`}
         >
           {canManageUsers && (
             <Card className="hover:shadow-lg transition-shadow duration-200">
@@ -663,26 +670,6 @@ export default function AdminPanel() {
             <CardContent>
               <div className="text-3xl font-bold text-gray-900">{stages.length}</div>
               <p className="text-xs text-gray-500 mt-1">Venues available</p>
-            </CardContent>
-          </Card>
-          <Card
-            className="hover:shadow-lg transition-shadow duration-200 cursor-pointer"
-            onClick={() => router.push("/admin/stage-bookings")}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Stage Bookings</CardTitle>
-              <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-                />
-              </svg>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gray-900">Manage</div>
-              <p className="text-xs text-gray-500 mt-1">View bookings</p>
             </CardContent>
           </Card>
         </div>
@@ -1616,8 +1603,11 @@ export default function AdminPanel() {
                   id="equipmentQuantity"
                   type="number"
                   min="1"
-                  value={newEquipment.quantity}
-                  onChange={(e) => setNewEquipment({ ...newEquipment, quantity: parseInt(e.target.value) })}
+                  value={newEquipment.quantity || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setNewEquipment({ ...newEquipment, quantity: value ? parseInt(value) || 1 : 1 });
+                  }}
                 />
               </div>
               <div>
@@ -1677,42 +1667,6 @@ export default function AdminPanel() {
                   onChange={(e) => setNewEquipment({ ...newEquipment, description: e.target.value })}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="equipmentLength">Length (meters)</Label>
-                  <Input
-                    id="equipmentLength"
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    placeholder="e.g., 2.5"
-                    value={newEquipment.length || ""}
-                    onChange={(e) =>
-                      setNewEquipment({
-                        ...newEquipment,
-                        length: e.target.value ? parseFloat(e.target.value) : undefined,
-                      })
-                    }
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="equipmentPrice">Price (USD)</Label>
-                  <Input
-                    id="equipmentPrice"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="e.g., 1500.00"
-                    value={newEquipment.price || ""}
-                    onChange={(e) =>
-                      setNewEquipment({
-                        ...newEquipment,
-                        price: e.target.value ? parseFloat(e.target.value) : undefined,
-                      })
-                    }
-                  />
-                </div>
-              </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setShowCreateEquipment(false)}>
                   Cancel
@@ -1768,8 +1722,11 @@ export default function AdminPanel() {
                     id="editEquipmentQuantity"
                     type="number"
                     min="1"
-                    value={editingEquipment.quantity}
-                    onChange={(e) => setEditingEquipment({ ...editingEquipment, quantity: parseInt(e.target.value) })}
+                    value={editingEquipment.quantity || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setEditingEquipment({ ...editingEquipment, quantity: value ? parseInt(value) || 1 : 1 });
+                    }}
                   />
                 </div>
                 <div>
@@ -1828,42 +1785,6 @@ export default function AdminPanel() {
                     value={editingEquipment.description || ""}
                     onChange={(e) => setEditingEquipment({ ...editingEquipment, description: e.target.value })}
                   />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="editEquipmentLength">Length (meters)</Label>
-                    <Input
-                      id="editEquipmentLength"
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      placeholder="e.g., 2.5"
-                      value={editingEquipment.length || ""}
-                      onChange={(e) =>
-                        setEditingEquipment({
-                          ...editingEquipment,
-                          length: e.target.value ? parseFloat(e.target.value) : undefined,
-                        })
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="editEquipmentPrice">Price (USD)</Label>
-                    <Input
-                      id="editEquipmentPrice"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      placeholder="e.g., 1500.00"
-                      value={editingEquipment.price || ""}
-                      onChange={(e) =>
-                        setEditingEquipment({
-                          ...editingEquipment,
-                          price: e.target.value ? parseFloat(e.target.value) : undefined,
-                        })
-                      }
-                    />
-                  </div>
                 </div>
                 <div className="flex justify-end space-x-2">
                   <Button variant="outline" onClick={() => setShowEditEquipment(false)}>

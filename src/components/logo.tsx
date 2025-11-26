@@ -6,7 +6,7 @@ interface LogoProps {
   height?: number;
 }
 
-export function Logo({ className = "", width = 150, height = 50 }: LogoProps) {
+export function Logo({ className = "" }: LogoProps) {
   const combinedClassName = className ? `flex items-center ${className}`.trim() : "flex items-center";
 
   return (

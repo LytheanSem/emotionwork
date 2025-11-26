@@ -82,9 +82,9 @@ export default function EquipmentMediaUpload({
     try {
       const formData = new FormData();
       formData.append("files", selectedFile);
-      formData.append("folder", "stages");
+      formData.append("folder", "equipment");
       formData.append("config", "primary");
-      formData.append("tags", "stage,portfolio");
+      formData.append("tags", "equipment");
 
       const response = await fetch("/api/cloudinary/upload", {
         method: "POST",

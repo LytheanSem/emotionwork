@@ -1,10 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useCart } from "@/contexts/CartContext";
 import { Equipment } from "@/lib/db";
-import { Plus, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
@@ -38,9 +35,7 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
   const imageSrc = resolveImageSrc(equipment);
   const [isImageVisible, setIsImageVisible] = useState(false);
   const [isImageLoaded, setIsImageLoaded] = useState(false);
-  const [showAddToCart, setShowAddToCart] = useState(false);
   const imageRef = useRef<HTMLDivElement>(null);
-  const { addToCart } = useCart();
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -63,17 +58,10 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
     return () => observer.disconnect();
   }, []);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
-    addToCart(equipment, 1, "daily", 1);
-  };
-
   return (
     <div
       className="bg-gradient-to-br from-slate-800/90 to-slate-700/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border border-cyan-500/20 relative group hover:scale-105 hover:border-cyan-400/40"
       onClick={onClick}
-      onMouseEnter={() => setShowAddToCart(true)}
-      onMouseLeave={() => setShowAddToCart(false)}
     >
       {imageSrc && (
         <div ref={imageRef} className="aspect-square overflow-hidden bg-slate-600/50">
@@ -101,19 +89,6 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
         </div>
       )}
 
-      {/* Add to Cart Button Overlay */}
-      {showAddToCart && equipment.status === "available" && (
-        <div className="absolute top-2 right-2 z-10">
-          <Button
-            size="sm"
-            onClick={handleAddToCart}
-            className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
           <h3 className="text-lg font-semibold text-white line-clamp-2">{equipment.name}</h3>
@@ -138,12 +113,6 @@ export function EquipmentCard({ equipment, onClick }: EquipmentCardProps) {
           <div className="flex items-center justify-between">
             <span className="text-sm text-cyan-100/80">Quantity: {equipment.quantity}</span>
           </div>
-
-          {equipment.length && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-cyan-100/80">Length: {equipment.length}m</span>
-            </div>
-          )}
         </div>
       </div>
     </div>

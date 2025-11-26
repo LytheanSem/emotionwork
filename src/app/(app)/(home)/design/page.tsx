@@ -1,22 +1,22 @@
 "use client";
 import { OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
-import { PDFDocument, rgb } from "pdf-lib";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import ControlsPanel from "@/app/(app)/(home)/design/components/ControlsPanel";
 import { Equipment } from "@/app/(app)/(home)/design/components/Equipment";
 import { EquipmentLibrary } from "@/app/(app)/(home)/design/components/EquipmentLibrary";
 import { FullGrid } from "@/app/(app)/(home)/design/components/FullGrid";
-import { calculateTotalCost } from "@/app/(app)/(home)/design/config/equipmentPricing";
 import { useDesignStore } from "@/app/(app)/(home)/design/hooks/useDesignStore";
 import { loadTemplate } from "@/app/(app)/(home)/design/templates/stageTemplates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useSession } from "next-auth/react";
 import { shouldHandleGlobalShortcut } from "@/lib/keyboard-utils";
 import { Grid3x3, PanelLeft, PanelRight } from "lucide-react";
 
 export default function StageDesigner() {
+  const { status } = useSession();
   const {
     equipment,
     setEquipment,
@@ -99,336 +99,6 @@ export default function StageDesigner() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedEquipmentId, moveUpSelected, moveDownSelected, moveLeftSelected, moveRightSelected, deleteSelected]);
 
-  const exportDesign = useCallback(
-    async (format: "png" | "jpeg" | "svg" | "pdf") => {
-      // Store original grid visibility outside try block
-      const originalGridVisible = gridVisible;
-
-      try {
-        // Hide grid for clean export
-        setGridVisible(false);
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // Get the Three.js canvas
-        let canvas = document.querySelector("canvas");
-        if (!canvas) {
-          const canvasContainer = canvasRef.current;
-          if (canvasContainer) {
-            canvas = canvasContainer.querySelector("canvas");
-          }
-        }
-        if (!canvas) {
-          throw new Error("Canvas not found");
-        }
-
-        // Create a temporary renderer for export with fixed camera angle
-        if (rendererRef.current && sceneRef.current) {
-          // Calculate stage bounds to fit everything in view
-          const bounds = {
-            minX: -venueDimensions.width / 2 - 5,
-            maxX: venueDimensions.width / 2 + 5,
-            minZ: -venueDimensions.depth / 2 - 5,
-            maxZ: venueDimensions.depth / 2 + 5,
-            minY: 0,
-            maxY: venueDimensions.height + 5,
-          };
-
-          // Create orthographic camera for consistent top-down view
-          const aspect = canvas.width / canvas.height;
-          const frustumSize =
-            Math.max(bounds.maxX - bounds.minX, bounds.maxZ - bounds.minZ, bounds.maxY - bounds.minY) * 1.2; // Add some padding
-
-          const camera = new (await import("three")).OrthographicCamera(
-            (-frustumSize * aspect) / 2,
-            (frustumSize * aspect) / 2,
-            frustumSize / 2,
-            -frustumSize / 2,
-            0.1,
-            1000
-          );
-
-          // Position camera for optimal top-down view
-          camera.position.set((bounds.minX + bounds.maxX) / 2, bounds.maxY + 10, (bounds.minZ + bounds.maxZ) / 2);
-          camera.lookAt((bounds.minX + bounds.maxX) / 2, 0, (bounds.minZ + bounds.maxZ) / 2);
-
-          // Render with the export camera
-          rendererRef.current.render(sceneRef.current, camera);
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
-
-        const link = document.createElement("a");
-        let dataUrl: string;
-
-        if (format === "pdf") {
-          // Create PDF with design information and pricing
-          const pdfDoc = await PDFDocument.create();
-          const page = pdfDoc.addPage([800, 1000]); // Larger page for more content
-          const { height, width } = page.getSize();
-
-          // Header
-          page.drawText(`Visual Emotionwork Co., Ltd`, {
-            x: 50,
-            y: height - 40,
-            size: 16,
-            color: rgb(0.2, 0.4, 0.8),
-          });
-
-          page.drawText(`Stage Design Quote: ${designName}`, {
-            x: 50,
-            y: height - 70,
-            size: 20,
-            color: rgb(0, 0, 0),
-          });
-
-          // Design Information
-          page.drawText(`Design Information:`, {
-            x: 50,
-            y: height - 110,
-            size: 14,
-            color: rgb(0, 0, 0),
-          });
-
-          page.drawText(`Equipment Count: ${equipment.length}`, {
-            x: 50,
-            y: height - 130,
-            size: 12,
-            color: rgb(0, 0, 0),
-          });
-
-          page.drawText(
-            `Venue Dimensions: ${venueDimensions.width}m x ${venueDimensions.depth}m x ${venueDimensions.height}m`,
-            {
-              x: 50,
-              y: height - 150,
-              size: 12,
-              color: rgb(0, 0, 0),
-            }
-          );
-
-          // Calculate pricing
-          const pricing = calculateTotalCost(equipment.map((item) => ({ type: item.type })));
-
-          // Pricing Section
-          page.drawText(`Equipment Pricing (${pricing.currency}):`, {
-            x: 50,
-            y: height - 190,
-            size: 14,
-            color: rgb(0, 0, 0),
-          });
-
-          // Group by category
-          const categories = pricing.breakdown.reduce(
-            (acc, item) => {
-              if (!acc[item.category]) acc[item.category] = [];
-              acc[item.category].push(item);
-              return acc;
-            },
-            {} as Record<string, typeof pricing.breakdown>
-          );
-
-          let yPos = height - 220;
-
-          Object.entries(categories).forEach(([category, items]) => {
-            // Category header
-            page.drawText(`${category}:`, {
-              x: 50,
-              y: yPos,
-              size: 12,
-              color: rgb(0.2, 0.4, 0.8),
-            });
-            yPos -= 20;
-
-            // Items in category
-            items.forEach((item) => {
-              if (yPos > 100) {
-                const itemText = `${item.name} (${item.quantity}x)`;
-                const priceText = `${pricing.currency} ${item.totalPrice.toFixed(2)}`;
-
-                page.drawText(itemText, {
-                  x: 70,
-                  y: yPos,
-                  size: 10,
-                  color: rgb(0, 0, 0),
-                });
-
-                page.drawText(priceText, {
-                  x: width - 120,
-                  y: yPos,
-                  size: 10,
-                  color: rgb(0, 0, 0),
-                });
-
-                yPos -= 15;
-              }
-            });
-
-            yPos -= 10;
-          });
-
-          // Total
-          page.drawText(`Total Cost: ${pricing.currency} ${pricing.total.toFixed(2)}`, {
-            x: 50,
-            y: yPos - 20,
-            size: 16,
-            color: rgb(0.8, 0.2, 0.2),
-          });
-
-          // Pricing options
-          const dailyPricing = calculateTotalCost(
-            equipment.map((item) => ({ type: item.type })),
-            "daily"
-          );
-          const weeklyPricing = calculateTotalCost(
-            equipment.map((item) => ({ type: item.type })),
-            "weekly"
-          );
-          const monthlyPricing = calculateTotalCost(
-            equipment.map((item) => ({ type: item.type })),
-            "monthly"
-          );
-
-          yPos -= 60;
-          page.drawText(`Pricing Options:`, {
-            x: 50,
-            y: yPos,
-            size: 14,
-            color: rgb(0, 0, 0),
-          });
-
-          page.drawText(`Daily Rate: ${dailyPricing.currency} ${dailyPricing.total.toFixed(2)}`, {
-            x: 50,
-            y: yPos - 20,
-            size: 12,
-            color: rgb(0, 0, 0),
-          });
-
-          page.drawText(`Weekly Rate: ${weeklyPricing.currency} ${weeklyPricing.total.toFixed(2)}`, {
-            x: 50,
-            y: yPos - 40,
-            size: 12,
-            color: rgb(0, 0, 0),
-          });
-
-          page.drawText(`Monthly Rate: ${monthlyPricing.currency} ${monthlyPricing.total.toFixed(2)}`, {
-            x: 50,
-            y: yPos - 60,
-            size: 12,
-            color: rgb(0, 0, 0),
-          });
-
-          // Contact Information
-          yPos -= 100;
-          page.drawText(`Contact Information:`, {
-            x: 50,
-            y: yPos,
-            size: 14,
-            color: rgb(0, 0, 0),
-          });
-
-          page.drawText(`Phone: (+855) 98 505079`, {
-            x: 50,
-            y: yPos - 20,
-            size: 12,
-            color: rgb(0, 0, 0),
-          });
-
-          page.drawText(`Email: visualemotion@gmail.com`, {
-            x: 50,
-            y: yPos - 40,
-            size: 12,
-            color: rgb(0, 0, 0),
-          });
-
-          page.drawText(`Address: #633, St 75K, S/K Kakap, Khan Posenchey, Phnom Penh City`, {
-            x: 50,
-            y: yPos - 60,
-            size: 12,
-            color: rgb(0, 0, 0),
-          });
-
-          const pdfBytes = await pdfDoc.save();
-          dataUrl = `data:application/pdf;base64,${btoa(String.fromCharCode(...pdfBytes))}`;
-        } else if (format === "svg") {
-          // Create SVG representation
-          const svgContent = `
-            <svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
-              <rect width="800" height="600" fill="#f8fafc"/>
-              <text x="50" y="40" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#1e293b">${designName}</text>
-              <text x="50" y="70" font-family="Arial, sans-serif" font-size="14" fill="#64748b">Equipment Count: ${equipment.length} | Generated: ${new Date().toLocaleDateString()}</text>
-              
-              ${equipment
-                .map((item, index) => {
-                  const x = 50 + (index % 8) * 90;
-                  const y = 120 + Math.floor(index / 8) * 80;
-                  const colors = {
-                    speaker: "#3b82f6",
-                    light: "#f59e0b",
-                    stage: "#10b981",
-                    microphone: "#ef4444",
-                    truss: "#6b7280",
-                    platform: "#8b5cf6",
-                    ledPar: "#06b6d4",
-                    movingHead: "#f97316",
-                    djBooth: "#ec4899",
-                    laser: "#dc2626",
-                    smoke: "#64748b",
-                    videoScreen: "#1f2937",
-                    fog: "#9ca3af",
-                    strobe: "#fbbf24",
-                    monitorSpeaker: "#3b82f6",
-                    micStand: "#6b7280",
-                    subwoofer: "#1e40af",
-                    cableRamp: "#fbbf24",
-                    powerDistribution: "#059669",
-                    stageRiser: "#7c3aed",
-                  };
-                  const color = colors[item.type as keyof typeof colors] || "#6b7280";
-                  return `
-                  <g>
-                    <rect x="${x}" y="${y}" width="80" height="60" fill="${color}" stroke="#374151" stroke-width="1" rx="4"/>
-                    <text x="${x + 5}" y="${y + 20}" font-family="Arial, sans-serif" font-size="10" fill="white" font-weight="bold">${item.type.replace(/([A-Z])/g, " $1").trim()}</text>
-                    <text x="${x + 5}" y="${y + 35}" font-family="Arial, sans-serif" font-size="8" fill="white">Pos: ${item.position.map((p) => p.toFixed(1)).join(", ")}</text>
-                    <text x="${x + 5}" y="${y + 50}" font-family="Arial, sans-serif" font-size="8" fill="white">Scale: ${item.scale.map((s) => s.toFixed(1)).join(", ")}</text>
-                  </g>
-                `;
-                })
-                .join("")}
-            </svg>
-          `;
-          dataUrl = URL.createObjectURL(new Blob([svgContent], { type: "image/svg+xml" }));
-        } else {
-          // For PNG/JPEG, capture the canvas
-          dataUrl = canvas.toDataURL(`image/${format === "jpeg" ? "jpeg" : format}`, 1.0);
-        }
-
-        const fileName = `${designName.replace(/[^a-z0-9]/gi, "_")}_${new Date().toISOString().split("T")[0]}.${format}`;
-        link.download = fileName;
-        link.href = dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        // Clean up the URL after a delay
-        setTimeout(() => URL.revokeObjectURL(dataUrl), 1000);
-
-        // Show success message
-        alert(`Design exported successfully as ${fileName}`);
-
-        // Restore grid visibility
-        setGridVisible(originalGridVisible);
-      } catch (error) {
-        console.error(`Error exporting ${format}:`, error);
-        alert(
-          `Failed to export as ${format}. Please try again. Error: ${error instanceof Error ? error.message : "Unknown error"}`
-        );
-
-        // Restore grid visibility even if export failed
-        setGridVisible(originalGridVisible);
-      }
-    },
-    [designName, equipment, venueDimensions, gridVisible, setGridVisible]
-  );
-
   const handleLoadTemplate = useCallback(
     (templateId: string) => {
       try {
@@ -443,6 +113,39 @@ export default function StageDesigner() {
     },
     [setEquipment, setSelectedEquipmentId, setDesignName]
   );
+
+  // Auth gating: only allow logged-in users to access the playground
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-cyan-100/80 text-lg">Loading your playground...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center px-4 z-0">
+        <div className="max-w-md w-full bg-white/95 rounded-2xl shadow-2xl border border-cyan-500/20 p-8 text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Playground access</h1>
+          <p className="text-gray-600 mb-6">
+            Sign in to use the interactive 3D playground and experiment with stage designs.
+          </p>
+          <div className="flex flex-col gap-3">
+            <Button
+              onClick={() => (window.location.href = "/sign-in")}
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500"
+            >
+              Go to sign in
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const selectedEquipment = equipment.find((item) => item.id === selectedEquipmentId);
 
@@ -461,7 +164,7 @@ export default function StageDesigner() {
             >
               <PanelLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-xl font-medium text-gray-900">Stage Designer</h1>
+            <h1 className="text-xl font-medium text-gray-900">Playground</h1>
           </div>
 
           {/* Center */}
@@ -470,7 +173,7 @@ export default function StageDesigner() {
               value={designName}
               onChange={(e) => setDesignName(e.target.value)}
               className="text-center border-gray-200 focus:border-gray-400 transition-colors"
-              placeholder="Untitled Design"
+              placeholder="Untitled playground"
             />
           </div>
 
@@ -621,7 +324,6 @@ export default function StageDesigner() {
             setVenueBoundaryVisible={setVenueBoundaryVisible}
             lightingColor={lightingColor}
             setLightingColor={setLightingColor}
-            exportDesign={exportDesign}
           />
         </aside>
       </main>
