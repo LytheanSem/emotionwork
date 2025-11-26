@@ -90,8 +90,8 @@ export const SignInView = () => {
               size="sm"
               className="text-base border-none underline"
             >
-              <Link prefetch href="/sign-up">
-                Sign Up
+              <Link prefetch href="/">
+                Back to home
               </Link>
             </Button>
           </div>

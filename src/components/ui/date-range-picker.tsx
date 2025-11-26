@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 interface DateRange {
@@ -28,14 +28,13 @@ export function DateRangePicker({
   onChange,
   minDate,
   maxDate,
-  placeholder,
   label = "Event Dates",
-  required = false
+  required = false,
 }: DateRangePickerProps) {
   const [ranges, setRanges] = useState<DateRange[]>([]);
   const [currentRange, setCurrentRange] = useState<DateRange>({
     startDate: "",
-    endDate: ""
+    endDate: "",
   });
 
   // Convert date array to ranges on mount
@@ -77,12 +76,12 @@ export function DateRangePicker({
   // Convert ranges back to date array
   const rangesToDates = (ranges: DateRange[]): string[] => {
     const dates: string[] = [];
-    ranges.forEach(range => {
+    ranges.forEach((range) => {
       const start = new Date(range.startDate);
       const end = new Date(range.endDate);
-      
+
       for (let d = new Date(start); d <= end; d = addDays(d, 1)) {
-        dates.push(d.toISOString().split('T')[0]);
+        dates.push(d.toISOString().split("T")[0]);
       }
     });
     return [...new Set(dates)].sort();
@@ -129,22 +128,22 @@ export function DateRangePicker({
   const formatDateRange = (range: DateRange): string => {
     const start = new Date(range.startDate);
     const end = new Date(range.endDate);
-    
+
     if (range.startDate === range.endDate) {
       return start.toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
-        day: "numeric"
+        day: "numeric",
       });
     }
-    
+
     return `${start.toLocaleDateString("en-US", {
       month: "short",
-      day: "numeric"
+      day: "numeric",
     })} - ${end.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-      year: "numeric"
+      year: "numeric",
     })}`;
   };
 
@@ -163,7 +162,7 @@ export function DateRangePicker({
       <Label htmlFor="dateRangePicker">
         {label} {required && <span className="text-red-500">*</span>}
       </Label>
-      
+
       {/* Add new range */}
       <Card>
         <CardContent className="p-4">
@@ -172,7 +171,7 @@ export function DateRangePicker({
               <Calendar className="h-4 w-4" />
               Add Date Range
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <Label htmlFor="startDate" className="text-xs text-gray-600">
@@ -184,11 +183,11 @@ export function DateRangePicker({
                   value={currentRange.startDate}
                   min={minDate}
                   max={maxDate}
-                  onChange={(e) => setCurrentRange(prev => ({ ...prev, startDate: e.target.value }))}
+                  onChange={(e) => setCurrentRange((prev) => ({ ...prev, startDate: e.target.value }))}
                   className="text-sm"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="endDate" className="text-xs text-gray-600">
                   End Date
@@ -199,11 +198,11 @@ export function DateRangePicker({
                   value={currentRange.endDate}
                   min={currentRange.startDate || minDate}
                   max={maxDate}
-                  onChange={(e) => setCurrentRange(prev => ({ ...prev, endDate: e.target.value }))}
+                  onChange={(e) => setCurrentRange((prev) => ({ ...prev, endDate: e.target.value }))}
                   className="text-sm"
                 />
               </div>
-              
+
               <div className="flex items-end">
                 <Button
                   type="button"
@@ -229,7 +228,7 @@ export function DateRangePicker({
               Selected Date Ranges ({getTotalDays()} days total)
             </Label>
           </div>
-          
+
           <div className="space-y-2">
             {ranges.map((range, index) => (
               <div
@@ -238,20 +237,18 @@ export function DateRangePicker({
               >
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">
-                    {formatDateRange(range)}
-                  </span>
+                  <span className="text-sm font-medium text-blue-800">{formatDateRange(range)}</span>
                   <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
                     {(() => {
                       const start = new Date(range.startDate);
                       const end = new Date(range.endDate);
                       const diffTime = end.getTime() - start.getTime();
                       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-                      return `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+                      return `${diffDays} day${diffDays > 1 ? "s" : ""}`;
                     })()}
                   </span>
                 </div>
-                
+
                 <Button
                   type="button"
                   variant="ghost"
@@ -279,13 +276,13 @@ export function DateRangePicker({
             min={minDate}
             max={maxDate}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
+              if (e.key === "Enter") {
                 e.preventDefault();
                 const input = e.target as HTMLInputElement;
                 if (input.value && !value.includes(input.value)) {
                   const newDates = [...value, input.value].sort();
                   onChange(newDates);
-                  input.value = '';
+                  input.value = "";
                   toast.success("Date added successfully");
                 }
               }

@@ -1,6 +1,6 @@
 import { authOptions } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { ObjectId } from "mongodb";
+import { createObjectId, isValidObjectId } from "@/lib/validation";
 import { getServerSession } from "next-auth";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -10,6 +10,11 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
+
+    // Validate ObjectId format
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ error: "Invalid equipment ID format" }, { status: 400 });
+    }
 
     const session = await getServerSession(authOptions);
     if (!session?.user?.isAdmin && !session?.user?.isManager) {
@@ -71,7 +76,7 @@ export async function PUT(
 
     // Get current equipment to check if we should keep existing image
     const currentEquipment = await db.collection("equipment").findOne({
-      _id: new ObjectId(id),
+      _id: createObjectId(id),
     });
 
     if (!currentEquipment) {
@@ -127,7 +132,7 @@ export async function PUT(
 
     // Update equipment
     const result = await db.collection("equipment").updateOne(
-      { _id: new ObjectId(id) },
+      { _id: createObjectId(id) },
       { $set: updateData }
     );
 
@@ -158,6 +163,11 @@ export async function DELETE(
   try {
     const { id } = await params;
 
+    // Validate ObjectId format
+    if (!isValidObjectId(id)) {
+      return NextResponse.json({ error: "Invalid equipment ID format" }, { status: 400 });
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.isAdmin && !session?.user?.isManager) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -173,7 +183,7 @@ export async function DELETE(
 
     const result = await db
       .collection("equipment")
-      .deleteOne({ _id: new ObjectId(id) });
+      .deleteOne({ _id: createObjectId(id) });
 
     if (result.deletedCount === 0) {
       return NextResponse.json(

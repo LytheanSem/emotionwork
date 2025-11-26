@@ -27,6 +27,18 @@ export async function POST(request: NextRequest) {
     const availableConfigs = cloudinaryService.getAvailableConfigs();
     const actualConfig = config === "secondary" && !availableConfigs.includes("secondary") ? "primary" : config;
 
+    // File validation constants
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    const ALLOWED_MIME_TYPES = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "video/mp4",
+      "video/quicktime", // MOV
+    ];
+
     for (const file of files) {
       try {
         // Guard against undefined files
@@ -39,6 +51,22 @@ export async function POST(request: NextRequest) {
         if (typeof file !== "object" || !file.name || typeof file.name !== "string") {
           console.error("Invalid file object:", file);
           return NextResponse.json({ error: "Invalid file object" }, { status: 400 });
+        }
+
+        // Validate file size
+        if (file.size > MAX_FILE_SIZE) {
+          return NextResponse.json(
+            { error: `File ${file.name} exceeds maximum size of 10MB` },
+            { status: 400 }
+          );
+        }
+
+        // Validate file type
+        if (file.type && !ALLOWED_MIME_TYPES.includes(file.type)) {
+          return NextResponse.json(
+            { error: `File type ${file.type} is not allowed. Allowed types: JPG, PNG, GIF, MP4, MOV` },
+            { status: 400 }
+          );
         }
 
         const service = actualConfig === "secondary" ? stageBookingCloudinaryService : cloudinaryService;

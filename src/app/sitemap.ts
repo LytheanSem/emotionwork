@@ -52,19 +52,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.6,
     },
-    {
-      url: `${baseUrl}/book-stage`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
     // Add missing pages that Google is trying to index
-    {
-      url: `${baseUrl}/my-stage-bookings`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
     {
       url: `${baseUrl}/manage-booking`,
       lastModified: new Date(),

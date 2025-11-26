@@ -50,10 +50,7 @@ const NavbarItem = ({ href, children, isActive }: NavbarItemProps) => {
 const BookingDropdown = () => {
   const pathname = usePathname();
   const isBookingActive =
-    pathname.startsWith("/book-meeting") ||
-    pathname.startsWith("/book-stage") ||
-    pathname.startsWith("/my-stage-bookings") ||
-    pathname.startsWith("/manage-booking");
+    pathname.startsWith("/book-meeting") || pathname.startsWith("/manage-booking");
 
   return (
     <DropdownMenu>
@@ -86,22 +83,6 @@ const BookingDropdown = () => {
             className="flex items-center text-sm text-white/80 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors duration-200"
           >
             <span>Book Meeting</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            href="/book-stage"
-            className="flex items-center text-sm text-white/80 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors duration-200"
-          >
-            <span>Book a Stage</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link
-            href="/my-stage-bookings"
-            className="flex items-center text-sm text-white/80 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors duration-200"
-          >
-            <span>My Stage Bookings</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
@@ -183,7 +164,7 @@ export function Navbar() {
       { href: "/equipment", children: "Equipment" },
       { href: "/portfolio", children: "Portfolio" },
       { href: "/contact", children: "Contact" },
-      { href: "/design", children: "Design" },
+      { href: "/design", children: "Playground" },
     ];
 
     return baseItems;
@@ -274,23 +255,12 @@ export function Navbar() {
           <div className="flex items-center gap-1 sm:gap-2">
             <Button
               onClick={() => isClient && router.push("/sign-in")}
-              variant="outline"
-              size="sm"
-              className="group relative bg-transparent text-white/80 border-white/20 hover:bg-white/10 hover:text-white hover:border-white/40 font-inter text-xs px-2 sm:px-3 transition-all duration-300"
-            >
-              <span className="relative z-10">
-                <span className="hidden sm:inline">Log in</span>
-                <span className="sm:hidden">In</span>
-              </span>
-            </Button>
-            <Button
-              onClick={() => isClient && router.push("/sign-up")}
               size="sm"
               className="group relative bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-inter text-xs px-2 sm:px-3 transition-all duration-300 hover:scale-105 shadow-lg overflow-hidden"
             >
               <span className="relative z-10">
-                <span className="hidden sm:inline">Sign up</span>
-                <span className="sm:hidden">Up</span>
+                <span className="hidden sm:inline">Sign in</span>
+                <span className="sm:hidden">In</span>
               </span>
               <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <div className="absolute inset-0 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>

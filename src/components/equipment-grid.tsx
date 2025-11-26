@@ -2,13 +2,10 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/contexts/CartContext";
 import { Equipment } from "@/lib/db";
-import { ShoppingCart } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import React, { Suspense, useState } from "react";
-import { CartModal } from "./CartModal";
 import { EquipmentFallback } from "./equipment-fallback";
 
 const LazyEquipmentCard = dynamic(() => import("./equipment-card").then((mod) => ({ default: mod.EquipmentCard })), {
@@ -28,21 +25,15 @@ const LazyEquipmentCard = dynamic(() => import("./equipment-card").then((mod) =>
 interface EquipmentGridProps {
   equipment: Equipment[];
   categories: Array<{ id: string; name: string; slug: string }>;
-  redirectUrl?: string; // Custom redirect URL for cart
-  buttonText?: string; // Custom button text for cart
 }
 
 export function EquipmentGrid({
   equipment,
   categories,
-  redirectUrl = "/book-stage",
-  buttonText = "Proceed to Book Stage",
 }: EquipmentGridProps) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [showCartModal, setShowCartModal] = useState(false);
-  const { getCartItemCount } = useCart();
 
   const filteredEquipment = selectedCategory ? equipment.filter((eq) => eq.categoryId === selectedCategory) : equipment;
 
@@ -61,7 +52,7 @@ export function EquipmentGrid({
 
   return (
     <div className="space-y-6">
-      {/* Header with Cart Button */}
+      {/* Header */}
       <div className="flex justify-between items-center">
         <div className="flex flex-wrap gap-2">
           <Button
@@ -91,19 +82,6 @@ export function EquipmentGrid({
           ))}
         </div>
 
-        {/* Cart Button */}
-        <Button
-          onClick={() => setShowCartModal(true)}
-          className="relative bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-lg hover:shadow-xl transition-all duration-300"
-        >
-          <ShoppingCart className="h-4 w-4 mr-2" />
-          Cart
-          {getCartItemCount() > 0 && (
-            <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-lg">
-              {getCartItemCount()}
-            </span>
-          )}
-        </Button>
       </div>
 
       {/* Equipment Count */}
@@ -246,13 +224,6 @@ export function EquipmentGrid({
         </div>
       )}
 
-      {/* Cart Modal */}
-      <CartModal
-        isOpen={showCartModal}
-        onClose={() => setShowCartModal(false)}
-        redirectUrl={redirectUrl}
-        buttonText={buttonText}
-      />
     </div>
   );
 }
