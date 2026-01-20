@@ -1,4 +1,4 @@
-import Chatbot from "@/components/chatbot";
+// import Chatbot from "@/components/chatbot";
 import { Providers } from "@/components/providers/session-provider";
 import { StructuredData } from "@/components/structured-data";
 import { Toaster } from "@/components/ui/sonner";
@@ -6,6 +6,8 @@ import { TRPCReactProvider } from "@/trpc/client";
 import type { Metadata } from "next";
 import { Source_Sans_3 } from "next/font/google";
 import "./globals.css";
+
+// Chatbot cam be removed since we're not using it anymore
 
 const sourceSans3 = Source_Sans_3({
   subsets: ["latin"],
@@ -95,7 +97,7 @@ export default function RootLayout({
           <TRPCReactProvider>
             {children}
             <Toaster />
-            <Chatbot />
+            {/* <Chatbot /> */}
           </TRPCReactProvider>
         </Providers>
       </body>
