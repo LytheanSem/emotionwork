@@ -97,7 +97,7 @@ class EmailService {
       const subject = this.sanitizeHeader(
         isOnlineMeeting
           ? `Online Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime}`
-          : `In-Person Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime}`
+          : `In-Person Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime}`,
       );
 
       const mailOptions = {
@@ -220,7 +220,7 @@ class EmailService {
           <h3>🔧 Manage Your Booking</h3>
           <p>Need to cancel or modify your booking? Follow these steps:</p>
           <ol style="margin: 15px 0; padding-left: 20px;">
-            <li>Visit our website: <strong>${process.env.NEXT_PUBLIC_BASE_URL || "https://emotionwork.vercel.app"}</strong></li>
+            <li>Visit our website: <strong>https://www.visualemotionwork.com</strong></li>
             <li>Click on <strong>"Manage Booking"</strong> in the navigation menu</li>
             <li>Enter your Booking ID and email address</li>
           </ol>
@@ -278,7 +278,7 @@ ${
   bookingData.bookingId
     ? `
 MANAGE YOUR BOOKING:
-1. Visit our website: ${process.env.NEXT_PUBLIC_BASE_URL || "https://emotionwork.vercel.app"}
+1. Visit our website: https://www.visualemotionwork.com/
 2. Click on "Manage Booking" in the navigation menu
 3. Enter your Booking ID and email address below:
 
@@ -398,7 +398,7 @@ This is an automated confirmation email. Please do not reply to this email.
           <h3>🔧 Manage Your Booking</h3>
           <p>Need to cancel or modify your booking? Follow these steps:</p>
           <ol style="margin: 15px 0; padding-left: 20px;">
-            <li>Visit our website: <strong>${process.env.NEXT_PUBLIC_BASE_URL || "https://emotionwork.vercel.app"}</strong></li>
+            <li>Visit our website: <strong>https://www.visualemotionwork.com/</strong></li>
             <li>Click on <strong>"Manage Booking"</strong> in the navigation menu</li>
             <li>Enter your Booking ID and email address</li>
           </ol>
@@ -547,7 +547,7 @@ This is an automated confirmation email. Please do not reply to this email.
           <h3>🔧 Manage Your Booking</h3>
           <p>Need to cancel or modify your booking? Follow these steps:</p>
           <ol style="margin: 15px 0; padding-left: 20px;">
-            <li>Visit our website: <strong>${process.env.NEXT_PUBLIC_BASE_URL || "https://emotionwork.vercel.app"}</strong></li>
+            <li>Visit our website: <strong>https://www.visualemotionwork.com</strong></li>
             <li>Click on <strong>"Manage Booking"</strong> in the navigation menu</li>
             <li>Enter your Booking ID and email address</li>
           </ol>
@@ -613,7 +613,7 @@ ${
     ? `
 MANAGE YOUR BOOKING:
 Need to cancel or modify your booking? Follow these steps:
-1. Visit our website: ${process.env.NEXT_PUBLIC_BASE_URL || "https://emotionwork.vercel.app"}
+1. Visit our website: https://www.visualemotionwork.com
 2. Click on "Manage Booking" in the navigation menu
 3. Enter your Booking ID and email address
 
@@ -681,7 +681,7 @@ ${
     ? `
 MANAGE YOUR BOOKING:
 Need to cancel or modify your booking? Follow these steps:
-1. Visit our website: ${process.env.NEXT_PUBLIC_BASE_URL || "https://emotionwork.vercel.app"}
+1. Visit our website: https://www.visualemotionwork.com/
 2. Click on "Manage Booking" in the navigation menu
 3. Enter your Booking ID and email address
 

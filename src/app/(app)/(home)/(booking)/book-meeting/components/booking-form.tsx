@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar as CalendarIcon, Clock, Mail, MapPin, MessageSquare, Phone, User, Video } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Info, Mail, MapPin, MessageSquare, Phone, User, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { bookingService } from "../services/booking-service";
 
@@ -384,6 +384,13 @@ export function BookingForm({ onSubmit }: BookingFormProps) {
               <Clock className="h-5 w-5" />
               Select Date & Time
             </h3>
+            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+              <Info className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <p className="text-sm font-semibold">
+                All times are in <span className="font-bold underline">Cambodia time (ICT, UTC+7)</span>. Please convert
+                to your local time before selecting a slot to avoid booking the wrong time.
+              </p>
+            </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
