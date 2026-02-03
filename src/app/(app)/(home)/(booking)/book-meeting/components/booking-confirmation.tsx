@@ -82,7 +82,7 @@ export function BookingConfirmation({ bookingData, onEdit, onConfirm, isLoading 
                 <span className="text-sm font-medium">Time</span>
               </div>
               <Badge variant="outline" className="text-lg px-3 py-1">
-                {bookingData.selectedTime}
+                {bookingData.selectedTime} (Cambodia time, ICT, UTC+7)
               </Badge>
             </div>
           </div>
@@ -153,7 +153,7 @@ export function BookingConfirmation({ bookingData, onEdit, onConfirm, isLoading 
               ) : (
                 <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
                   <p className="text-sm text-yellow-800">
-                    <strong>Meeting link will be provided closer to the meeting time.</strong>
+                    <strong>Meeting link will be provided alongside the confirmation email.</strong>
                   </p>
                 </div>
               )}

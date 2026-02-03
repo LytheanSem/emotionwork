@@ -96,8 +96,8 @@ class EmailService {
 
       const subject = this.sanitizeHeader(
         isOnlineMeeting
-          ? `Online Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime}`
-          : `In-Person Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime}`,
+          ? `Online Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime} (Cambodia time, ICT, UTC+7)`
+          : `In-Person Meeting Confirmed - ${formattedDate} at ${bookingData.selectedTime} (Cambodia time, ICT, UTC+7)`
       );
 
       const mailOptions = {
@@ -177,7 +177,7 @@ class EmailService {
           </div>
           <div class="detail-row">
             <span class="detail-label">Time:</span>
-            <span class="detail-value">${this.escape(bookingData.selectedTime)}</span>
+            <span class="detail-value">${this.escape(bookingData.selectedTime)} (Cambodia time, ICT, UTC+7)</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">Duration:</span>
@@ -263,7 +263,7 @@ Thank you for booking a meeting with us! We're excited to discuss your project n
 
 MEETING DETAILS:
 - Date: ${formattedDate}
-- Time: ${bookingData.selectedTime}
+- Time: ${bookingData.selectedTime} (Cambodia time, ICT, UTC+7)
 - Duration: 1 hour
 - Phone: ${bookingData.phoneNumber}
 ${bookingData.description ? `- Discussion Topic: ${bookingData.description}` : ""}
@@ -342,7 +342,7 @@ This is an automated confirmation email. Please do not reply to this email.
           </div>
           <div class="detail-row">
             <span class="detail-label">Time:</span>
-            <span class="detail-value">${this.escape(bookingData.selectedTime)}</span>
+            <span class="detail-value">${this.escape(bookingData.selectedTime)} (Cambodia time, ICT, UTC+7)</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">Duration:</span>
@@ -471,7 +471,7 @@ This is an automated confirmation email. Please do not reply to this email.
           </div>
           <div class="detail-row">
             <span class="detail-label">Time:</span>
-            <span class="detail-value">${this.escape(bookingData.selectedTime)}</span>
+            <span class="detail-value">${this.escape(bookingData.selectedTime)} (Cambodia time, ICT, UTC+7)</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">Duration:</span>
@@ -586,7 +586,7 @@ Thank you for booking an in-person meeting with us! We're excited to discuss you
 
 MEETING DETAILS:
 - Date: ${formattedDate}
-- Time: ${bookingData.selectedTime}
+- Time: ${bookingData.selectedTime} (Cambodia time, ICT, UTC+7)
 - Duration: 1 hour
 - Meeting Type: In-Person
 ${bookingData.description ? `- Discussion Topic: ${bookingData.description}` : ""}
@@ -643,7 +643,7 @@ Thank you for booking an online meeting with us! We're excited to discuss your p
 
 MEETING DETAILS:
 - Date: ${formattedDate}
-- Time: ${bookingData.selectedTime}
+- Time: ${bookingData.selectedTime} (Cambodia time, ICT, UTC+7)
 - Duration: 1 hour
 - Meeting Type: Online (Zoom)
 ${bookingData.description ? `- Discussion Topic: ${bookingData.description}` : ""}

@@ -1,5 +1,6 @@
 /**
- * Service for managing Zoom meeting operations
+ * Zoom meeting service (Server-to-Server OAuth)
+ * Safe timezone handling for GMT+07:00 (Asia/Bangkok)
  */
 
 export interface ZoomMeetingData {
@@ -16,147 +17,138 @@ export interface ZoomMeetingResponse {
   error?: string;
 }
 
+const ZOOM_TIMEZONE = "Asia/Bangkok";
+const ZOOM_TIME_OFFSET = "+07:00";
+
 class ZoomService {
-  private apiKey: string;
-  private apiSecret: string;
-  private accountId: string;
-  private baseUrl: string;
-
-  constructor() {
-    this.apiKey = process.env.ZOOM_API_KEY || "";
-    this.apiSecret = process.env.ZOOM_API_SECRET || "";
-    this.accountId = process.env.ZOOM_ACCOUNT_ID || "";
-    this.baseUrl = "https://api.zoom.us/v2";
-  }
+  private apiKey = process.env.ZOOM_API_KEY || "";
+  private apiSecret = process.env.ZOOM_API_SECRET || "";
+  private accountId = process.env.ZOOM_ACCOUNT_ID || "";
+  private baseUrl = "https://api.zoom.us/v2";
 
   /**
-   * Generate a JWT token for Zoom API authentication
+   * =========================
+   * Public API
+   * =========================
    */
-  private async generateJWT(): Promise<string> {
-    const header = {
-      alg: "HS256",
-      typ: "JWT",
-    };
 
-    const payload = {
-      iss: this.apiKey,
-      exp: Math.floor(Date.now() / 1000) + 3600, // 1 hour expiration
-    };
-
-    // Encode header and payload
-    const encodedHeader = Buffer.from(JSON.stringify(header)).toString("base64url");
-    const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
-
-    // Create signature using HMAC-SHA256
-    const { createHmac } = await import("crypto");
-    const signature = createHmac("sha256", this.apiSecret)
-      .update(`${encodedHeader}.${encodedPayload}`)
-      .digest("base64url");
-
-    return `${encodedHeader}.${encodedPayload}.${signature}`;
-  }
-
-  /**
-   * Create an instant Zoom meeting for a booking
-   */
-  async createInstantMeeting(bookingData: {
+  async createInstantMeeting(data: {
     firstName: string;
     lastName: string;
-    selectedDate: string;
-    selectedTime: string;
+    selectedDate: string; // YYYY-MM-DD
+    selectedTime: string; // e.g. "2:00 PM"
     description?: string;
   }): Promise<ZoomMeetingResponse> {
     try {
-      // Check if credentials are available
       if (!this.validateCredentials()) {
-        console.warn("Zoom API credentials not configured");
-        if (process.env.NODE_ENV !== "production") {
-          console.warn("Using mock Zoom meeting (non-production)");
-          return this.createMockMeeting(bookingData);
-        }
-        return { success: false, error: "Zoom API credentials not configured" };
+        return this.devFallback(data, "Zoom credentials not configured");
       }
 
-      // For Server-to-Server OAuth, we need to get an access token first
       const accessToken = await this.getAccessToken();
       if (!accessToken) {
-        throw new Error("Failed to get access token");
+        throw new Error("Failed to obtain Zoom access token");
       }
 
-      // Format the meeting time
-      const meetingTime = this.formatMeetingTime(bookingData.selectedDate, bookingData.selectedTime);
+      const startTime = this.formatMeetingTime(data.selectedDate, data.selectedTime);
 
-      // Create meeting payload
-      const meetingPayload = {
-        topic: `Meeting with ${bookingData.firstName} ${bookingData.lastName}`,
-        type: 2, // Scheduled meeting
-        start_time: meetingTime, // format: YYYY-MM-DDTHH:mm:ss (no Z)
-        duration: 60, // 1 hour
-        timezone: process.env.ZOOM_TIMEZONE || "Asia/Phnom_Penh",
-        settings: {
-          host_video: true,
-          participant_video: true,
-          join_before_host: false, // Disable to prevent meeting hijacking
-          mute_upon_entry: false,
-          waiting_room: true, // Enable waiting room for security
-          auto_recording: "none",
-          enforce_login: false, // Allow guest access
-          // Removed: auto_end_meeting and close_registration (not supported by Zoom API)
-        },
-        agenda: bookingData.description || "Business consultation meeting",
-      };
-
-      // Create meeting via Zoom API
       const response = await fetch(`${this.baseUrl}/users/me/meetings`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(meetingPayload),
+        body: JSON.stringify({
+          topic: `Meeting with ${data.firstName} ${data.lastName}`,
+          type: 2, // Scheduled meeting
+          start_time: startTime,
+          duration: 60,
+          timezone: ZOOM_TIMEZONE,
+          agenda: data.description || "Consultation meeting",
+          settings: {
+            host_video: true,
+            participant_video: true,
+            join_before_host: false,
+            waiting_room: true,
+            mute_upon_entry: false,
+            auto_recording: "none",
+            enforce_login: false,
+          },
+        }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Zoom API error: ${errorData.message || response.statusText}`);
+        const err = await response.json();
+        throw new Error(err.message || "Zoom API error");
       }
 
-      const meetingData = await response.json();
-
-      const result: ZoomMeetingData = {
-        meetingId: meetingData.id.toString(),
-        joinUrl: meetingData.join_url,
-        password: meetingData.password || "",
-        startTime: meetingTime,
-        duration: 60,
-      };
+      const meeting = await response.json();
 
       return {
         success: true,
-        meetingData: result,
+        meetingData: {
+          meetingId: String(meeting.id),
+          joinUrl: meeting.join_url,
+          password: meeting.password || "",
+          startTime,
+          duration: 60,
+        },
       };
     } catch (error) {
-      console.error("Error creating Zoom meeting:", error);
-      if (process.env.NODE_ENV !== "production") {
-        console.warn("Falling back to mock meeting data (non-production)");
-        return this.createMockMeeting(bookingData);
+      console.error("Zoom create meeting error:", error);
+      return this.devFallback(data, error instanceof Error ? error.message : "Unknown error");
+    }
+  }
+
+  async deleteMeeting(meetingId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      if (!this.validateCredentials()) {
+        return { success: false, error: "Zoom credentials not configured" };
       }
-      return { success: false, error: error instanceof Error ? error.message : "Failed to create Zoom meeting" };
+
+      const accessToken = await this.getAccessToken();
+      if (!accessToken) {
+        return { success: false, error: "Failed to get access token" };
+      }
+
+      const res = await fetch(`${this.baseUrl}/meetings/${meetingId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Zoom delete failed");
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to delete meeting",
+      };
     }
   }
 
   /**
-   * Get access token for Server-to-Server OAuth
+   * =========================
+   * Internal helpers
+   * =========================
    */
+
+  private validateCredentials(): boolean {
+    return Boolean(this.apiKey && this.apiSecret && this.accountId);
+  }
+
   private async getAccessToken(): Promise<string | null> {
     try {
-      // For Server-to-Server OAuth, we need to encode credentials and include account_id
-      const credentials = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString("base64");
+      const basicAuth = Buffer.from(`${this.apiKey}:${this.apiSecret}`).toString("base64");
 
-      const response = await fetch("https://zoom.us/oauth/token", {
+      const res = await fetch("https://zoom.us/oauth/token", {
         method: "POST",
         headers: {
-          Authorization: `Basic ${credentials}`,
+          Authorization: `Basic ${basicAuth}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: new URLSearchParams({
@@ -165,132 +157,65 @@ class ZoomService {
         }),
       });
 
-      if (!response.ok) {
-        await response.json();
-        console.error("Failed to get access token");
-        return null;
-      }
+      if (!res.ok) return null;
 
-      const tokenData = await response.json();
-      return tokenData.access_token;
-    } catch (error) {
-      console.error("Error getting access token:", error);
+      const data = await res.json();
+      return data.access_token || null;
+    } catch {
       return null;
     }
   }
 
   /**
-   * Create mock meeting data as fallback
+   * Converts date + time to Zoom-safe ISO string
+   * Example: 2026-02-03T23:00:00+07:00
    */
-  private createMockMeeting(bookingData: {
-    firstName: string;
-    lastName: string;
-    selectedDate: string;
-    selectedTime: string;
-    description?: string;
-  }): ZoomMeetingResponse {
-    const meetingId = this.generateMeetingId();
-    const joinUrl = `https://zoom.us/j/${meetingId}`;
-    const meetingTime = this.formatMeetingTime(bookingData.selectedDate, bookingData.selectedTime);
+  private formatMeetingTime(date: string, time: string): string {
+    const [year, month, day] = date.split("-").map(Number);
 
-    const meetingData: ZoomMeetingData = {
-      meetingId,
-      joinUrl,
-      password: "",
-      startTime: meetingTime,
-      duration: 60,
-    };
-
-    return {
-      success: true,
-      meetingData,
-    };
-  }
-
-  /**
-   * Generate a unique meeting ID
-   */
-  private generateMeetingId(): string {
-    // Generate a 9-11 digit meeting ID (Zoom format)
-    const min = 100000000;
-    const max = 99999999999;
-    return Math.floor(Math.random() * (max - min + 1)) + min + "";
-  }
-
-  /**
-   * Format meeting time for Zoom API
-   */
-  private formatMeetingTime(dateString: string, timeString: string): string {
-    // Convert date and time to local format (no UTC conversion)
-    const [year, month, day] = dateString.split("-").map(Number);
-
-    // Parse time (e.g., "2:00 PM" -> 14:00)
-    const timeMatch = timeString.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-    if (!timeMatch) {
+    const match = time.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!match) {
       throw new Error("Invalid time format");
     }
 
-    let hour = parseInt(timeMatch[1], 10);
-    const minute = parseInt(timeMatch[2], 10);
-    const period = timeMatch[3].toUpperCase();
+    let hour = Number(match[1]);
+    const minute = Number(match[2]);
+    const period = match[3].toUpperCase();
 
-    if (period === "PM" && hour !== 12) {
-      hour += 12;
-    } else if (period === "AM" && hour === 12) {
-      hour = 0;
-    }
+    if (period === "PM" && hour !== 12) hour += 12;
+    if (period === "AM" && hour === 12) hour = 0;
 
-    // Format as YYYY-MM-DDTHH:mm:ss (no Z suffix for local time)
     const pad = (n: number) => String(n).padStart(2, "0");
-    return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00`;
+
+    return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00${ZOOM_TIME_OFFSET}`;
   }
 
   /**
-   * Delete a Zoom meeting
+   * Dev-only fallback (prevents app crashes)
    */
-  async deleteMeeting(meetingId: string): Promise<{ success: boolean; error?: string }> {
-    try {
-      // Check if credentials are available
-      if (!this.validateCredentials()) {
-        console.warn("Zoom API credentials not configured, cannot delete meeting");
-        return { success: false, error: "Zoom API credentials not configured" };
-      }
-
-      // Get access token
-      const accessToken = await this.getAccessToken();
-      if (!accessToken) {
-        return { success: false, error: "Failed to get access token" };
-      }
-
-      // Delete meeting via Zoom API
-      const response = await fetch(`${this.baseUrl}/meetings/${meetingId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Zoom API error: ${errorData.message || response.statusText}`);
-      }
-
-      console.log("Zoom meeting deleted successfully");
-      return { success: true };
-    } catch (error) {
-      console.error("Error deleting Zoom meeting:", error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to delete Zoom meeting",
-      };
+  private devFallback(
+    data: {
+      selectedDate: string;
+      selectedTime: string;
+    },
+    reason: string
+  ): ZoomMeetingResponse {
+    if (process.env.NODE_ENV === "production") {
+      return { success: false, error: reason };
     }
-  }
 
-  /**
-   * Validate Zoom API credentials
-   */
-  validateCredentials(): boolean {
-    return !!(this.apiKey && this.apiSecret && this.accountId);
+    const startTime = this.formatMeetingTime(data.selectedDate, data.selectedTime);
+
+    return {
+      success: true,
+      meetingData: {
+        meetingId: String(Math.floor(100000000 + Math.random() * 900000000)),
+        joinUrl: "https://zoom.us/j/mock",
+        password: "",
+        startTime,
+        duration: 60,
+      },
+    };
   }
 }
 
