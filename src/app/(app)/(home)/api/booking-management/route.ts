@@ -122,7 +122,27 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === "cancel") {
-      // Cancel the booking
+      // Get booking first so we can delete the Zoom meeting if it was online (before we remove the row)
+      const existingBooking = await googleSheetsService.findBookingByIdAndEmail(bookingId, email);
+
+      if (existingBooking.success && existingBooking.booking) {
+        const { meetingType, meetingLink } = existingBooking.booking;
+        if (meetingType === "online" && meetingLink) {
+          const meetingIdMatch = meetingLink.match(/\/j\/(\d+)/);
+          if (meetingIdMatch) {
+            const zoomMeetingId = meetingIdMatch[1];
+            const deleteResult = await zoomService.deleteMeeting(zoomMeetingId);
+            if (deleteResult.success) {
+              console.log("Zoom meeting deleted on cancel:", zoomMeetingId);
+            } else {
+              console.warn("Failed to delete Zoom meeting on cancel:", deleteResult.error);
+              // Don't fail the cancellation if Zoom delete fails
+            }
+          }
+        }
+      }
+
+      // Cancel the booking (remove from Google Sheet)
       const result = await googleSheetsService.cancelBooking(bookingId, email);
 
       if (!result.success) {
@@ -134,8 +154,7 @@ export async function POST(request: NextRequest) {
 
       // Send cancellation confirmation email
       try {
-        const booking = await googleSheetsService.findBookingByIdAndEmail(bookingId, email);
-        if (booking.success && booking.booking) {
+        if (existingBooking.success && existingBooking.booking) {
           console.log("Booking cancelled by user");
           // Note: We'll need to create a cancellation email template
         }
